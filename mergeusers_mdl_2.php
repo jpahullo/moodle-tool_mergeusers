@@ -134,7 +134,7 @@
     	}
     	$idsGoByebye =  implode(',',$idsToRemove);	
  		$sql = 'DELETE FROM '.$CFG->prefix.'grade_grades WHERE id IN ('.$idsGoByebye.')';
- 		if($DB->execute($sql))
+ 		if($idsGoByebye && $DB->execute($sql))
  		{
  			//ok, now remove those ids from the greater records list. 
  			for($i=0;$i<count($recordsToModify);$i++)
