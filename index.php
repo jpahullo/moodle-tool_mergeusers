@@ -114,9 +114,16 @@ if ($data = $mergeuserform->get_data()) {
         // MSSQL
         $tableNames = $DB->get_records_sql("SELECT name FROM sys.Tables WHERE name LIKE '".$CFG->prefix."%' AND type = 'U' ORDER BY name");
     }
-    else {
+    else if ($CFG->dbtype == 'mysql') {
         // MySQL
         $tableNames = $DB->get_records_sql('SHOW TABLES like "'.$CFG->prefix.'%"');
+    }
+    else if ($CFG->dbtype == 'pgsql') {
+        // PGSQL
+        $tableNames = $DB->get_records_sql("SELECT table_name FROM information_schema.tables WHERE table_name LIKE '".$CFG->prefix."%' AND table_schema = 'public'");
+    }
+    else {
+         print_error('errordatabase', 'report_mergeusers');
     }
 
 //    $numtables = sizeof($tableNames);
@@ -137,9 +144,16 @@ if ($data = $mergeuserform->get_data()) {
             // MSSQL
             $columnList = "SELECT * FROM INFORMATION_SCHEMA.Columns WHERE TABLE_NAME = '".$table_name."' AND COLUMN_NAME IN ('userid', 'user_id', 'id_user', 'user')";
         }
-        else {
+        else if ($CFG->dbtype == 'mysql') {
             // MySQL
             $columnList = "SHOW COLUMNS FROM ".$table_name." where Field IN ('userid', 'user_id', 'id_user', 'user')";
+        }
+        else if ($CFG->dbtype == 'pgsql') {
+            // PGSQL
+            $columnList = "SELECT column_name FROM information_schema.columns WHERE table_name ='". $table_name ."' and column_name IN ('userid', 'user_id', 'id_user', 'user');";
+        }
+        else {
+            print_error('errordatabase', 'report_mergeusers');
         }
 
         $columns = $DB->get_records_sql($columnList);
@@ -148,14 +162,22 @@ if ($data = $mergeuserform->get_data()) {
             // no matching or multiple matching fields in this table, move onto the next table.
             continue;
         }
+
         // Now we have the appropriate fieldname and we know what to update!
         if ($CFG->dbtype == 'sqlsrv') {
             // MSSQL
             $field_name = array_shift($columns)->column_name; // get the fieldname
         }
-        else {
+        else if ($CFG->dbtype == 'mysql') {
             // MySQL
             $field_name = array_shift($columns)->field; // get the fieldname
+        }
+        else if ($CFG->dbtype == 'pgsql') {
+            // PGSQL
+            $field_name = array_shift($columns)->column_name; // get the fieldname
+        }
+        else {
+            print_error('errordatabase', 'report_mergeusers');
         }
 
         $recordsToUpdate = $DB->get_records_sql("SELECT ".PRIMARY_KEY." FROM ".$table_name." WHERE ".$field_name." = '".$currentUser."'");

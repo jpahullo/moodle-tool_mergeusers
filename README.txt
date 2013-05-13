@@ -40,8 +40,8 @@ This. Is. Bad. Practice safe script. Always backup first.
  
  
 MINIMUM REQUIREMENTS:
-- MySQL v5.0
-- Moodle v2.0
+- MySQL v5.x or MSSQL or Postgres
+- Moodle v2.x
  
 Based on the mergeusers_v2.php script written by Nicolas Dunand.
 Updated for Moodle 2.0 by Mike Holzer [mike.holzer AT psu DOT edu]
