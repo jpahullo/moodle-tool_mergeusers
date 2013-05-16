@@ -44,7 +44,7 @@ MINIMUM REQUIREMENTS:
 - Moodle v2.x
  
 Based on the mergeusers_v2.php script written by Nicolas Dunand.
-Updated for Moodle 2.0 by Mike Holzer [mike.holzer AT psu DOT edu]
+Updated for Moodle 2.0 by Mike Holzer [m DOT e DOT holzer AT gmail DOT com]
 Moodle 2.x report by Forrest Gaston
 Plugin maintained by Nicolas Dunand [nicolas.dunand AT unil DOT ch]
 
