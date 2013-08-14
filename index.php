@@ -114,7 +114,7 @@ if ($data = $mergeuserform->get_data()) {
         // MSSQL
         $tableNames = $DB->get_records_sql("SELECT name FROM sys.Tables WHERE name LIKE '".$CFG->prefix."%' AND type = 'U' ORDER BY name");
     }
-    else if ($CFG->dbtype == 'mysql') {
+    else if ($CFG->dbtype == 'mysqli') {
         // MySQL
         $tableNames = $DB->get_records_sql('SHOW TABLES like "'.$CFG->prefix.'%"');
     }
@@ -123,7 +123,7 @@ if ($data = $mergeuserform->get_data()) {
         $tableNames = $DB->get_records_sql("SELECT table_name FROM information_schema.tables WHERE table_name LIKE '".$CFG->prefix."%' AND table_schema = 'public'");
     }
     else {
-         print_error('errordatabase', 'report_mergeusers');
+         print_error('errordatabase', 'report_mergeusers', '', $CFG->dbtype);
     }
 
 //    $numtables = sizeof($tableNames);
