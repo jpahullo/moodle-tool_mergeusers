@@ -1,30 +1,37 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Form definition for mergeusers report
- *  
- * @package    report
+ * Version information
+ *
+ * @package    tool
  * @subpackage mergeusers
- * @author     Forrest Gaston & Juan Pablo Torres Herrera
+ * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
+ * @author     Mike Holzer
+ * @author     Forrest Gaston
+ * @author     Juan Pablo Torres Herrera
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @version    2012052300
- *
- * Based on:
- *
- * @author Shane Elliott, Pukunui Technology
- * @link http://moodle.org/mod/forum/discuss.php?d=103425
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @package admin-report-mergeusers
- * @version 2010092300
- *
  */
-
+ 
 require_once($CFG->libdir.'/formslib.php'); /// forms library
 
 /**
  * Define form snippet for getting the userids of the two users to merge
  */
-class mergeuserform extends moodleform{
+class mergeuserform extends moodleform {
 
     /**
      * Form definition
@@ -51,3 +58,4 @@ class mergeuserform extends moodleform{
     }
 
 }
+

@@ -18,7 +18,6 @@ $string['description'] = '
     <p>Etant donné un ID utilisateur à supprimer et un ID utilisateur à conserver, ceci fusionnera toutes les données utilisateur vers le compte de l\'utilisateur à conserver. Les deux ID utilisateur doivent exister dans la base d\'utilisateurs de Moodle, et aucun compte n\'est supprimé par cet utilitaire (ceci est laissé au loisir de l\'administrateur).</p>
     <p>Ce procédé utilise certaines fonctions variant d\'un système de bases de données à l\'autre, et peut ne pas avoir été testé correctement pour votre type de base de données. <strong>N\'utilisez ceci que si vous en comprenez les implications, car les opérations réalisées ici ne sont pas réversibles !</strong></p>';
 $string['errornouserid'] = 'Impossible de trouver l\'ID utilisateur';
-$string['errordatabase'] = 'Type de base de données non supporté : {$a}';
 $string['mergeusers'] = 'Fusionner des comptes utilisateur';
 $string['merging'] = 'Fusion';
 $string['into'] = 'vers';
