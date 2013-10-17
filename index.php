@@ -181,7 +181,7 @@ if ($data) {
 //            echo '<p style="color:#0c0;">'.get_string('tableok', 'tool_mergeusers', $table_name).'</p>';
         }
         else {
-            echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', $table_name).': '.mysql_error().'</p>';
+            echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', $table_name).': '.$dberror_func().'</p>';
 
             $mergeusers_errors++;
         }

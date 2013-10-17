@@ -27,6 +27,20 @@
  */
  
  
+if ($CFG->dbtype == 'sqlsrv') {
+    // MSSQL
+    $dberror_func = 'mssql_get_last_message';
+}
+else if ($CFG->dbtype == 'mysqli') {
+    // MySQL
+    $dberror_func = 'mysqli_error';
+}
+else if ($CFG->dbtype == 'pgsql') {
+    // PGSQL
+    $dberror_func = 'pg_result_error';
+}
+ 
+ 
 /**
  * Merges the grade_grades table for two users.
  *
@@ -48,7 +62,7 @@
  * @param $recordsToModify      The list of records to be updated to the new user. Passed by reference
  */
 function mergeGrades($newId, $currentId, &$recordsToModify) {
-    global $CFG, $DB, $mergeusers_errors, $mergeusers_queries;
+    global $CFG, $DB, $mergeusers_errors, $mergeusers_queries, $dberror_func;
 
     $sql = 'SELECT id, itemid, userid from '.$CFG->prefix.'grade_grades WHERE userid in ('.$currentId.', '.$newId.')';
     $result = $DB->get_records_sql($sql);
@@ -81,7 +95,7 @@ function mergeGrades($newId, $currentId, &$recordsToModify) {
     }
     else if($idsGoByebye) {
         // an error occured during DB query
-        echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', 'grade_grades').': '.mysql_error().'</p>';
+        echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', 'grade_grades').': '.$dberror_func().'</p>';
         $mergeusers_errors++;
     }
     if ($idsGoByebye) {
@@ -102,7 +116,7 @@ function mergeGrades($newId, $currentId, &$recordsToModify) {
  * @param $currentId    The user being replaced
  */
 function disableOldUserEnrollments($newId, $currentId) {
-    global $CFG, $DB, $mergeusers_errors, $mergeusers_queries;
+    global $CFG, $DB, $mergeusers_errors, $mergeusers_queries, $dberror_func;
 
     $sql = 'SELECT id, enrolid, userid,status from '.$CFG->prefix.'user_enrolments WHERE userid in ('.$currentId.', '.$newId.') AND status !=2';
     $result = $DB->get_records_sql($sql);
@@ -142,7 +156,7 @@ function disableOldUserEnrollments($newId, $currentId) {
 //            echo '<p style="color:#0c0;">'.get_string('tableok', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#1)").'</p>';
         }
         else {
-            echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#1)").': '.mysql_error().'</p>';
+            echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#1)").': '.$dberror_func().'</p>';
             $mergeusers_errors++;
         }
         $mergeusers_queries[] = $sql;
@@ -156,7 +170,7 @@ function disableOldUserEnrollments($newId, $currentId) {
 //            echo '<p style="color:#0c0;">'.get_string('tableok', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#2)").'</p>';
         }
         else {
-            echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#2)").': '.mysql_error().'</p>';
+            echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#2)").': '.$dberror_func().'</p>';
             $mergeusers_errors++;
         }
         $mergeusers_queries[] = $sql;
