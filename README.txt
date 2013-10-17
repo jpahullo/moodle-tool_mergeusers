@@ -48,4 +48,3 @@ Updated for Moodle 2.0 by Mike Holzer [m.e.holzer AT gmail DOT com]
 Moodle 2.x report by Forrest Gaston
 Plugin maintained by Nicolas Dunand [nicolas.dunand AT unil DOT ch]
 
-

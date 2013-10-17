@@ -1,5 +1,32 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Version information
+ *
+ * @package    tool
+ * @subpackage mergeusers
+ * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
+ * @author     Mike Holzer
+ * @author     Forrest Gaston
+ * @author     Juan Pablo Torres Herrera
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+ 
+ 
 /**
  * Merges the grade_grades table for two users.
  *
@@ -109,8 +136,8 @@ function disableOldUserEnrollments($newId, $currentId) {
     if(!empty($enrollmentsToUpdate)) { // it's possible we won't have any
         // First, let's move the courses belonging to the old user over to the new one.
         $updateIds = implode(', ', $enrollmentsToUpdate);
-        $sql = 'UPDATE '.$CFG->prefix.'user_enrolments SET userid = '.$newId.' WHERE id IN ('.$updateIds.')';
-        if($DB->execute($sql)) {
+        $sql = 'UPDATE '.$CFG->prefix.'user_enrolments SET userid = "'.$newId.'" WHERE id IN ('.$updateIds.')';
+       if($DB->execute($sql)) {
 //            echo($sql);
 //            echo '<p style="color:#0c0;">'.get_string('tableok', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#1)").'</p>';
         }
