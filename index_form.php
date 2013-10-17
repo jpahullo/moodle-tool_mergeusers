@@ -46,15 +46,15 @@ class mergeuserform extends moodleform {
         $strrequired = get_string('required');
 
         // Add elements
-        $mform->addElement('text', 'olduserid', get_string('olduserid', 'report_mergeusers'), 'size="10"');
+        $mform->addElement('text', 'olduserid', get_string('olduserid', 'tool_mergeusers'), 'size="10"');
         $mform->setType('olduserid', PARAM_INT);
         $mform->addRule('olduserid', $strrequired, 'required', null, 'client');
 
-        $mform->addElement('text', 'newuserid', get_string('newuserid', 'report_mergeusers'), 'size="10"');
+        $mform->addElement('text', 'newuserid', get_string('newuserid', 'tool_mergeusers'), 'size="10"');
         $mform->setType('newuserid', PARAM_INT);
         $mform->addRule('newuserid', $strrequired, 'required', null, 'client');
 
-        $this->add_action_buttons(false, get_string('mergeusers', 'report_mergeusers'));
+        $this->add_action_buttons(false, get_string('mergeusers', 'tool_mergeusers'));
     }
 
 }
