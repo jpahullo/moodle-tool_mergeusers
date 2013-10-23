@@ -100,7 +100,7 @@ if ($data) {
         $tableNames = $DB->get_records_sql("SELECT table_name FROM information_schema.tables WHERE table_name LIKE '".$CFG->prefix."%' AND table_schema = 'public'");
     }
     else {
-         print_error('errordatabase', 'report_mergeusers', '', $CFG->dbtype);
+         print_error('errordatabase', 'tool_mergeusers', '', $CFG->dbtype);
     }
 
 //    $numtables = sizeof($tableNames);
@@ -128,7 +128,7 @@ if ($data) {
             $columnList = "SELECT column_name FROM information_schema.columns WHERE table_name ='". $table_name ."' and column_name IN ('userid', 'user_id', 'id_user', 'user');";
         }
         else {
-            print_error('errordatabase', 'report_mergeusers');
+            print_error('errordatabase', 'tool_mergeusers');
         }
 
         $columns = $DB->get_records_sql($columnList);
@@ -152,7 +152,7 @@ if ($data) {
             $field_name = array_shift($columns)->column_name; // get the fieldname
         }
         else {
-            print_error('errordatabase', 'report_mergeusers');
+            print_error('errordatabase', 'tool_mergeusers');
         }
 
         $recordsToUpdate = $DB->get_records_sql("SELECT ".PRIMARY_KEY." FROM ".$table_name." WHERE ".$field_name." = '".$currentUser."'");
