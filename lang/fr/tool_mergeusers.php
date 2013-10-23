@@ -31,3 +31,4 @@ $string['dbqueries'] = '<h2>Voici les requêtes qui ont été faites sur la base
 $string['dbok'] = '<h1 style="color:#0c0;">La fusion a réussi</h1>';
 $string['dbko'] = '<h1 style="color:#f00;">La fusion a ECHOUE !</h1><p>Si votre moteur de base de données supporte les transactions, toute l\'opération a été annulée et aucune modification n\'a été faite à votre base de données.</p>';
 $string['tableskipped'] = 'Pour des raisons de traçabilité ou de sécurité, la table <strong>{$a}</strong> n\'est pas traités.<br />Pour supprimer ces entrées, supprimez l\'ancien compte utilisateur une fois la fusion réussie.';
+$string['errordatabase'] = 'Type de base de données non supporté : {$a}';

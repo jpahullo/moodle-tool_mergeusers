@@ -31,3 +31,4 @@ $string['dbqueries'] = '<h2>Here are the queries that have been sent to the DB</
 $string['dbok'] = '<h1 style="color:#0c0;">Merge succesful</h1>';
 $string['dbko'] = '<h1 style="color:#f00;">Merge FAILED!</h1><p>If your database engine supports transactions, the whole current transaction has been rolled back and no modification has been made to your database records.</p>';
 $string['tableskipped'] = 'For logging or security reasons we are skipping <strong>{$a}</strong>.<br />To remove these entries, delete the old user once this script has run successfully.';
+$string['errordatabase'] = 'Database type not supported: {$a}';
