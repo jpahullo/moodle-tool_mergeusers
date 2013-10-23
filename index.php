@@ -83,8 +83,10 @@ if ($data) {
     $tablesToSkip = array(
         $CFG->prefix.'user_lastaccess',
         $CFG->prefix.'user_preferences',
-	$CFG->prefix.'user_private_key',
-	$CFG->prefix.'user_info_data'
+        $CFG->prefix.'user_private_key',
+        $CFG->prefix.'user_info_data',
+        $CFG->prefix.'user_info_data',
+        $CFG->prefix.'journal_entries',
     );
 
     if ($CFG->dbtype == 'sqlsrv') {
