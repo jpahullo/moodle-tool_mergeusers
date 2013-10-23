@@ -91,11 +91,11 @@ function mergeGrades($newId, $currentId, &$recordsToModify) {
                 unset($recordsToModify[$i]);
             }
         }
-//        echo '<p style="color:#0c0;">'.get_string('tableok', 'report_mergeusers', 'grade_grades').'</p>';
+//        echo '<p style="color:#0c0;">'.get_string('tableok', 'tool_mergeusers', 'grade_grades').'</p>';
     }
     else if($idsGoByebye) {
         // an error occured during DB query
-        echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', 'grade_grades').': '.$dberror_func().'</p>';
+        echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', 'grade_grades').': '.$dberror_func().'</p>';
         $mergeusers_errors++;
     }
     if ($idsGoByebye) {
@@ -153,10 +153,10 @@ function disableOldUserEnrollments($newId, $currentId) {
         $sql = 'UPDATE '.$CFG->prefix.'user_enrolments SET userid = "'.$newId.'" WHERE id IN ('.$updateIds.')';
        if($DB->execute($sql)) {
 //            echo($sql);
-//            echo '<p style="color:#0c0;">'.get_string('tableok', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#1)").'</p>';
+//            echo '<p style="color:#0c0;">'.get_string('tableok', 'tool_mergeusers', "{$CFG->prefix}user_enrolments (#1)").'</p>';
         }
         else {
-            echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#1)").': '.$dberror_func().'</p>';
+            echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', "{$CFG->prefix}user_enrolments (#1)").': '.$dberror_func().'</p>';
             $mergeusers_errors++;
         }
         $mergeusers_queries[] = $sql;
@@ -167,10 +167,10 @@ function disableOldUserEnrollments($newId, $currentId) {
         $sql = 'UPDATE '.$CFG->prefix.'user_enrolments SET status = 2 WHERE id IN ('.$idsGoByebye.')  AND status = 0';
         if($DB->execute($sql)) {
 //            echo($sql);
-//            echo '<p style="color:#0c0;">'.get_string('tableok', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#2)").'</p>';
+//            echo '<p style="color:#0c0;">'.get_string('tableok', 'tool_mergeusers', "{$CFG->prefix}user_enrolments (#2)").'</p>';
         }
         else {
-            echo '<p style="color:#f00;">'.get_string('tableko', 'report_mergeusers', "{$CFG->prefix}user_enrolments (#2)").': '.$dberror_func().'</p>';
+            echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', "{$CFG->prefix}user_enrolments (#2)").': '.$dberror_func().'</p>';
             $mergeusers_errors++;
         }
         $mergeusers_queries[] = $sql;
