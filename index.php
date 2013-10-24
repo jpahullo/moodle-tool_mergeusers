@@ -176,6 +176,9 @@ if ($data) {
             continue;
             // go onto next table
         }
+        if($table_name == $CFG->prefix.'groups_members') {
+            mergeGroupMembers($newUser, $currentUser, $recordsToModify);
+        }
 
         $idString = implode(', ', $recordsToModify);
         $updateRecords = "UPDATE ".$table_name." SET ".$field_name." = '".$newUser."' WHERE ".PRIMARY_KEY." IN (".$idString.")";
