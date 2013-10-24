@@ -25,8 +25,8 @@
  * @author     Juan Pablo Torres Herrera
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
- 
- 
+
+
 if ($CFG->dbtype == 'sqlsrv') {
     // MSSQL
     $dberror_func = 'mssql_get_last_message';
@@ -39,8 +39,8 @@ else if ($CFG->dbtype == 'pgsql') {
     // PGSQL
     $dberror_func = 'pg_result_error';
 }
- 
- 
+
+
 /**
  * Merges the grade_grades table for two users.
  *
@@ -174,6 +174,79 @@ function disableOldUserEnrollments($newId, $currentId) {
             $mergeusers_errors++;
         }
         $mergeusers_queries[] = $sql;
+    }
+}
+
+/**
+ * Both users may appear in the same group when you are merging them.
+ *
+ * Possible scenarios:
+ *
+ * <ul>
+ *   <li>$currentId only appears in a given groupid: we have to update it.</li>
+ *   <li>$newId only appears in a given groupid: do nothing, skip.</li>
+ *   <li>$currentId and $newId appears in the given groupId: delete the record for the $currentId.</li>
+ * </ul>
+ *
+ * This function extracts the groupid's that have to be updated to the $newId, appearing only the
+ * $currentId, and deletes the records for the $currentId when both appear.
+ *
+ * @global object $CFG
+ * @global moodle_database $DB
+ * @global array $mergeusers_errors
+ * @global array $mergeusers_queries
+ * @global function $dberror_func
+ * @param int $newId
+ * @param int $currentId
+ * @param array $recordsToModify
+ */
+function mergeGroupMembers($newId, $currentId, &$recordsToModify) {
+    global $CFG, $DB, $mergeusers_errors, $mergeusers_queries, $dberror_func;
+
+    $sql = 'SELECT id, groupid, userid from '.$CFG->prefix.'groups_members WHERE userid in ('.$currentId.', '.$newId.')';
+    $result = $DB->get_records_sql($sql);
+
+    $itemArr = array();
+    $idsToRemove = array();
+    foreach($result as $id => $resObj) {
+        $itemArr[$resObj->groupid][$resObj->userid] = $id;
+    }
+
+    foreach($itemArr as $groupId => $groupInfo) {
+        //iff we have only one result appears and it is from the current user => update record
+        if(sizeof($groupInfo) == 1) {
+            if (isset($groupInfo[$currentId])){
+                $recordsToModify[$groupInfo[$currentId]] = $groupInfo[$currentId];
+            }
+        } else { // both users appears in the group
+            //confirm both records exist, preventing problems from inconsistent data in database
+            if (isset($groupInfo[$newId]) && isset($groupInfo[$currentId])) {
+                $idsToRemove[$groupInfo[$currentId]] = $groupInfo[$currentId];
+            }
+        }
+    }
+
+    $toMod = array_flip($recordsToModify);
+    // we know that idsToRemove have always to be removed and not to be updated.
+    foreach($idsToRemove as $id) {
+        if (isset($toMod[$id])) {
+            unset($recordsToModify[$toMod[$id]]);
+        }
+    }
+    unset($toMod);
+
+    $idsGoByebye =  implode(', ', $idsToRemove);
+    $sql = 'DELETE FROM '.$CFG->prefix.'groups_members WHERE id IN ('.$idsGoByebye.')';
+    if($idsGoByebye) {
+        if ($DB->execute($sql)) {
+//            echo($sql);
+//            echo '<p style="color:#0c0;">'.get_string('tableok', 'tool_mergeusers', 'groups_members').'</p>';
+            $mergeusers_queries[] = $sql;
+        } else {
+            // an error occured during DB query
+            echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', 'groups_members').': '.$dberror_func().'</p>';
+            $mergeusers_errors++;
+        }
     }
 }
 
