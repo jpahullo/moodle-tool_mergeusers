@@ -168,6 +168,11 @@ if ($data) {
             // Grades must be specially adjusted.
             /* pass $recordsToModify by reference so that the function can take care of some of our work for us */
             mergeGrades($newUser, $currentUser, $recordsToModify);
+            //ensure we have records to update
+            if (count($recordsToModify) == 0) {
+                //no records to update... go into the next table.
+                continue;
+            }
         }
         if($table_name == $CFG->prefix.'user_enrolments') {
             // User enrollments must be specially adjusted
@@ -177,6 +182,11 @@ if ($data) {
         }
         if($table_name == $CFG->prefix.'groups_members') {
             mergeGroupMembers($newUser, $currentUser, $recordsToModify);
+            //ensure we have records to update
+            if (count($recordsToModify) == 0) {
+                //no records to update... go into the next table.
+                continue;
+            }
         }
 
         $idString = implode(', ', $recordsToModify);
