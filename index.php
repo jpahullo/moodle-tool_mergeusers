@@ -64,13 +64,13 @@ if ($data) {
     $transaction = $DB->start_delegated_transaction();
 
    // Get the userids
-   $user1 = $DB->get_record('user', array('id' => $data->olduserid));
+   $user1 = $DB->get_record('user', array($data->oldusergroup['olduseridtype'] => $data->oldusergroup['olduserid']));
    if (!$user1) {
         print_error('errornouserid', 'tool_mergeusers');
    }
    $currentUser = $user1->id;
    $currentUserName = $user1->username;
-   $user2 = $DB->get_record('user', array('id' => $data->newuserid));
+   $user2 = $DB->get_record('user', array($data->newusergroup['newuseridtype'] => $data->newusergroup['newuserid']));
    if (!$user2) {
        print_error('errornouserid', 'tool_mergeusers');
     }
@@ -83,8 +83,8 @@ if ($data) {
     $tablesToSkip = array(
         $CFG->prefix.'user_lastaccess',
         $CFG->prefix.'user_preferences',
-	$CFG->prefix.'user_private_key',
-	$CFG->prefix.'user_info_data'
+        $CFG->prefix.'user_private_key',
+        $CFG->prefix.'user_info_data',
     );
 
     if ($CFG->dbtype == 'sqlsrv') {
@@ -166,13 +166,34 @@ if ($data) {
         if($table_name == $CFG->prefix.'grade_grades') {
             // Grades must be specially adjusted.
             /* pass $recordsToModify by reference so that the function can take care of some of our work for us */
-            mergeGrades($newUser, $currentUser, $recordsToModify);
+            mergeCompoundIndex($newUser, $currentUser, 'grade_grades', 'userid', 'itemid', $recordsToModify);
+            //ensure we have records to update
+            if (count($recordsToModify) == 0) {
+                //no records to update... go into the next table.
+                continue;
+            }
         }
         if($table_name == $CFG->prefix.'user_enrolments') {
             // User enrollments must be specially adjusted
             disableOldUserEnrollments($newUser, $currentUser);
             continue;
             // go onto next table
+        }
+        if($table_name == $CFG->prefix.'groups_members') {
+            mergeCompoundIndex($newUser, $currentUser, 'groups_members', 'userid', 'groupid', $recordsToModify);
+            //ensure we have records to update
+            if (count($recordsToModify) == 0) {
+                //no records to update... go into the next table.
+                continue;
+            }
+        }
+        if($table_name == $CFG->prefix.'journal_entries') {
+            mergeCompoundIndex($newUser, $currentUser, 'journal_entries', 'userid', 'groupid', $recordsToModify);
+            //ensure we have records to update
+            if (count($recordsToModify) == 0) {
+                //no records to update... go into the next table.
+                continue;
+            }
         }
 
         $idString = implode(', ', $recordsToModify);
