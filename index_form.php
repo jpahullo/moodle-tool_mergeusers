@@ -25,7 +25,7 @@
  * @author     Juan Pablo Torres Herrera
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
- 
+
 require_once($CFG->libdir.'/formslib.php'); /// forms library
 
 /**
@@ -45,14 +45,34 @@ class mergeuserform extends moodleform {
 
         $strrequired = get_string('required');
 
-        // Add elements
-        $mform->addElement('text', 'olduserid', get_string('olduserid', 'tool_mergeusers'), 'size="10"');
-        $mform->setType('olduserid', PARAM_INT);
-        $mform->addRule('olduserid', $strrequired, 'required', null, 'client');
+        $idstype = array(
+            'username' => get_string('username'),
+            'idnumber' => get_string('idnumber'),
+            'id'       => 'Id',
+        );
 
-        $mform->addElement('text', 'newuserid', get_string('newuserid', 'tool_mergeusers'), 'size="10"');
+        // Add elements
+        $olduser = array();
+        $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
+        $olduser[] = $mform->createElement('select', 'olduseridtype', '', $idstype, '');
+        $mform->addGroup($olduser, 'oldusergroup', get_string('olduserid', 'tool_mergeusers'));
+        $mform->setType('olduserid', PARAM_INT);
+        $mform->addGroupRule('oldusergroup', array(array(
+            'olduserid' => array($strrequired, 'required', null, 'client'),
+            'olduseridtype' => array($strrequired, 'required', null, 'client'),
+        )));
+
+
+        $newuser = array();
+        $newuser[] = $mform->createElement('text', 'newuserid', "", 'size="10"');
+        $newuser[] = $mform->createElement('select', 'newuseridtype', '', $idstype, '');
+        $mform->addGroup($newuser, 'newusergroup', get_string('newuserid', 'tool_mergeusers'));
         $mform->setType('newuserid', PARAM_INT);
-        $mform->addRule('newuserid', $strrequired, 'required', null, 'client');
+        $mform->addGroupRule('newusergroup', array(array(
+            'newuserid' => array($strrequired, 'required', null, 'client'),
+            'newuseridtype' => array($strrequired, 'required', null, 'client'),
+        )));
+
 
         $this->add_action_buttons(false, get_string('mergeusers', 'tool_mergeusers'));
     }
