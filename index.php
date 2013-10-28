@@ -64,13 +64,13 @@ if ($data) {
     $transaction = $DB->start_delegated_transaction();
 
    // Get the userids
-   $user1 = $DB->get_record('user', array('id' => $data->olduserid));
+   $user1 = $DB->get_record('user', array($data->oldusergroup['olduseridtype'] => $data->oldusergroup['olduserid']));
    if (!$user1) {
         print_error('errornouserid', 'tool_mergeusers');
    }
    $currentUser = $user1->id;
    $currentUserName = $user1->username;
-   $user2 = $DB->get_record('user', array('id' => $data->newuserid));
+   $user2 = $DB->get_record('user', array($data->newusergroup['newuseridtype'] => $data->newusergroup['newuserid']));
    if (!$user2) {
        print_error('errornouserid', 'tool_mergeusers');
     }
@@ -84,7 +84,6 @@ if ($data) {
         $CFG->prefix.'user_lastaccess',
         $CFG->prefix.'user_preferences',
         $CFG->prefix.'user_private_key',
-        $CFG->prefix.'user_info_data',
         $CFG->prefix.'user_info_data',
         $CFG->prefix.'journal_entries',
     );
