@@ -85,7 +85,6 @@ if ($data) {
         $CFG->prefix.'user_preferences',
         $CFG->prefix.'user_private_key',
         $CFG->prefix.'user_info_data',
-        $CFG->prefix.'journal_entries',
     );
 
     if ($CFG->dbtype == 'sqlsrv') {
@@ -167,7 +166,7 @@ if ($data) {
         if($table_name == $CFG->prefix.'grade_grades') {
             // Grades must be specially adjusted.
             /* pass $recordsToModify by reference so that the function can take care of some of our work for us */
-            mergeGrades($newUser, $currentUser, $recordsToModify);
+            mergeCompoundIndex($newUser, $currentUser, 'grade_grades', 'userid', 'itemid', $recordsToModify);
             //ensure we have records to update
             if (count($recordsToModify) == 0) {
                 //no records to update... go into the next table.
@@ -181,7 +180,15 @@ if ($data) {
             // go onto next table
         }
         if($table_name == $CFG->prefix.'groups_members') {
-            mergeGroupMembers($newUser, $currentUser, $recordsToModify);
+            mergeCompoundIndex($newUser, $currentUser, 'groups_members', 'userid', 'groupid', $recordsToModify);
+            //ensure we have records to update
+            if (count($recordsToModify) == 0) {
+                //no records to update... go into the next table.
+                continue;
+            }
+        }
+        if($table_name == $CFG->prefix.'journal_entries') {
+            mergeCompoundIndex($newUser, $currentUser, 'journal_entries', 'userid', 'groupid', $recordsToModify);
             //ensure we have records to update
             if (count($recordsToModify) == 0) {
                 //no records to update... go into the next table.

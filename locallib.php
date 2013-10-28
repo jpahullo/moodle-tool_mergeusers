@@ -42,69 +42,6 @@ else if ($CFG->dbtype == 'pgsql') {
 
 
 /**
- * Merges the grade_grades table for two users.
- *
- * The intial problem in this table, grade_grades is that we have a
- * compound key on userid and itemid which means we can't just update
- * the userid because it's likely that the 2 users have completed at
- * least some of the same activities.
- *
- * What we're going to attempt to do is to look for the 2 users
- * completing the same activity. If we find a match, we'll delete the
- * record for the old user. That record can still be found in the
- * grade_grades_history table so we won't be losing any history. RELAX.
- *
- * Any activity completed by one but not the other will be updated in
- * the normal process.
- *
- * @param $newId                The user inheriting the data
- * @param $currentId            The user being replaced
- * @param $recordsToModify      The list of records to be updated to the new user. Passed by reference
- */
-function mergeGrades($newId, $currentId, &$recordsToModify) {
-    global $CFG, $DB, $mergeusers_errors, $mergeusers_queries, $dberror_func;
-
-    $sql = 'SELECT id, itemid, userid from '.$CFG->prefix.'grade_grades WHERE userid in ('.$currentId.', '.$newId.')';
-    $result = $DB->get_records_sql($sql);
-
-    $itemArr = array();
-    $idsToRemove = array();
-    foreach($result as $id => $resObj) {
-        $itemArr[$resObj->itemid][$resObj->userid] = $id;
-    }
-
-    foreach($itemArr as $itemId => $itemInfo) {
-        if(sizeof($itemInfo) != 2){
-            // if we don't have 2 results, then these users did not both complete this activity.
-            continue;
-        }
-        $idsToRemove[] = $itemInfo[$currentId];
-    }
-
-    $idsGoByebye =  implode(', ', $idsToRemove);
-    $sql = 'DELETE FROM '.$CFG->prefix.'grade_grades WHERE id IN ('.$idsGoByebye.')';
-    if($idsGoByebye && $DB->execute($sql)) {
-//      echo($sql);
-        // ok, now remove those ids from the greater records list.
-        for($i=0; $i < count($recordsToModify); $i++) {
-            if(in_array($recordsToModify[$i], $idsToRemove)) {
-                unset($recordsToModify[$i]);
-            }
-        }
-//        echo '<p style="color:#0c0;">'.get_string('tableok', 'tool_mergeusers', 'grade_grades').'</p>';
-    }
-    else if($idsGoByebye) {
-        // an error occured during DB query
-        echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', 'grade_grades').': '.$dberror_func().'</p>';
-        $mergeusers_errors++;
-    }
-    if ($idsGoByebye) {
-        $mergeusers_queries[] = $sql;
-    }
-}
-
-
-/**
  * Disables course enrollments for the old user.
  *
  * The user_enrolments table is similar to grade_grades in that it also
@@ -178,17 +115,21 @@ function disableOldUserEnrollments($newId, $currentId) {
 }
 
 /**
- * Both users may appear in the same group when you are merging them.
+ * Both users may appear in the same table under the same database index or so,
+ * making some kind of conflict on Moodle and the database model. For simplicity, we always
+ * use "compound index" to refer to it below.
+ *
+ * The merging operation for these cases are treated as follows:
  *
  * Possible scenarios:
  *
  * <ul>
- *   <li>$currentId only appears in a given groupid: we have to update it.</li>
- *   <li>$newId only appears in a given groupid: do nothing, skip.</li>
- *   <li>$currentId and $newId appears in the given groupId: delete the record for the $currentId.</li>
+ *   <li>$currentId only appears in a given compound index: we have to update it.</li>
+ *   <li>$newId only appears in a given compound index: do nothing, skip.</li>
+ *   <li>$currentId and $newId appears in the given compount index: delete the record for the $currentId.</li>
  * </ul>
  *
- * This function extracts the groupid's that have to be updated to the $newId, appearing only the
+ * This function extracts the records' ids that have to be updated to the $newId, appearing only the
  * $currentId, and deletes the records for the $currentId when both appear.
  *
  * @global object $CFG
@@ -198,35 +139,39 @@ function disableOldUserEnrollments($newId, $currentId) {
  * @global function $dberror_func
  * @param int $newId
  * @param int $currentId
+ * @param string $table table to check
+ * @param string $userfield table's field name that refers to the user id.
+ * @param string $otherfield table's field name tha refers to the other member of the coumpunt index.
  * @param array $recordsToModify
  */
-function mergeGroupMembers($newId, $currentId, &$recordsToModify) {
+function mergeCompoundIndex($newId, $currentId, $table, $userfield, $otherfield, &$recordsToModify) {
     global $CFG, $DB, $mergeusers_errors, $mergeusers_queries, $dberror_func;
 
-    $sql = 'SELECT id, groupid, userid from '.$CFG->prefix.'groups_members WHERE userid in ('.$currentId.', '.$newId.')';
+    $sql = 'SELECT id, '.$userfield.', '.$otherfield.' from '.$CFG->prefix.$table.' WHERE '.$userfield.' in ('.$currentId.', '.$newId.')';
     $result = $DB->get_records_sql($sql);
 
     $itemArr = array();
     $idsToRemove = array();
     foreach($result as $id => $resObj) {
-        $itemArr[$resObj->groupid][$resObj->userid] = $id;
+        $itemArr[$resObj->$otherfield][$resObj->$userfield] = $id;
     }
 
-    foreach($itemArr as $groupId => $groupInfo) {
+    foreach($itemArr as $otherfieldid => $otherInfo) {
         //iff we have only one result appears and it is from the current user => update record
-        if(sizeof($groupInfo) == 1) {
-            if (isset($groupInfo[$currentId])){
-                $recordsToModify[$groupInfo[$currentId]] = $groupInfo[$currentId];
+        if(sizeof($otherInfo) == 1) {
+            if (isset($otherInfo[$currentId])){
+                $recordsToModify[$otherInfo[$currentId]] = $otherInfo[$currentId];
             }
         } else { // both users appears in the group
             //confirm both records exist, preventing problems from inconsistent data in database
-            if (isset($groupInfo[$newId]) && isset($groupInfo[$currentId])) {
-                $idsToRemove[$groupInfo[$currentId]] = $groupInfo[$currentId];
+            if (isset($otherInfo[$newId]) && isset($otherInfo[$currentId])) {
+                $idsToRemove[$otherInfo[$currentId]] = $otherInfo[$currentId];
             }
         }
     }
 
     $toMod = array_flip($recordsToModify);
+
     // we know that idsToRemove have always to be removed and not to be updated.
     foreach($idsToRemove as $id) {
         if (isset($toMod[$id])) {
@@ -236,7 +181,7 @@ function mergeGroupMembers($newId, $currentId, &$recordsToModify) {
     unset($toMod);
 
     $idsGoByebye =  implode(', ', $idsToRemove);
-    $sql = 'DELETE FROM '.$CFG->prefix.'groups_members WHERE id IN ('.$idsGoByebye.')';
+    $sql = 'DELETE FROM '.$CFG->prefix.$table.' WHERE id IN ('.$idsGoByebye.')';
     if($idsGoByebye) {
         if ($DB->execute($sql)) {
 //            echo($sql);
@@ -244,9 +189,8 @@ function mergeGroupMembers($newId, $currentId, &$recordsToModify) {
             $mergeusers_queries[] = $sql;
         } else {
             // an error occured during DB query
-            echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', 'groups_members').': '.$dberror_func().'</p>';
+            echo '<p style="color:#f00;">'.get_string('tableko', 'tool_mergeusers', $table).': '.$dberror_func().'</p>';
             $mergeusers_errors++;
         }
     }
 }
-
