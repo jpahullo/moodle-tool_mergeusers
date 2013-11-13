@@ -21,13 +21,12 @@ $string['description'] = '
     <p>Este proceso usa funciones que dependen de la base de dadtos y puede ser que su funcionamiento
     no esté totalmente comprobado para vuestra base de datos. <strong>Recuerda que esta acción es
     irreversible!</strong></p>';
-$string['errornouserid'] = 'No se ha podido obtener el ID de usuario';
+$string['errorsameuser'] = 'Tratando de combinar el mismo usuario';
 $string['mergeusers'] = 'Fusiona cuentas de usuario';
 $string['merging'] = 'Fusionando';
 $string['into'] = 'dentro';
 $string['newuserid'] = 'ID de usuario a mantener';
 $string['olduserid'] = 'ID de usuario a eliminar';
-$string['useridnotexist'] = 'El ID de usuario no existe';
 $string['mergeusers:view'] = 'Fusión de cuentas de usuario';
 $string['tableok'] = 'Tabla {$a} : correctamente actualizada';
 $string['tableko'] = 'Tabla {$a} : no se ha podido actualizar correctamente!';

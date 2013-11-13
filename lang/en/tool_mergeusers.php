@@ -17,13 +17,12 @@ $string['description'] = '
     <h1>Merge two users into a single account.</h1>
     <p>Given a user ID to be deleted and a user ID to keep, this will merge the user data associated with the former user ID into the latter user ID. Note that both user IDs must already exist and no accounts will actually be deleted. That process is left to the administrator to do manually.</p>
     <p>This process involves some database dependant functions and may not have been fully tested on your particular choice of database. <strong>Only do this if you know what you are doing as it is not reversable!</strong></p>';
-$string['errornouserid'] = 'Cannot retrieve user ID';
+$string['errorsameuser'] = 'Trying to merge the same user';
 $string['mergeusers'] = 'Merge user accounts';
 $string['merging'] = 'Merging';
 $string['into'] = 'into';
 $string['newuserid'] = 'User ID to be kept';
 $string['olduserid'] = 'User ID to be removed';
-$string['useridnotexist'] = 'User ID does not exist';
 $string['mergeusers:view'] = 'Merge User Accounts';
 $string['tableok'] = 'Table {$a} : update OK';
 $string['tableko'] = 'Table {$a} : update NOT OK!';

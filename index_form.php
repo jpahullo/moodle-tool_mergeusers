@@ -56,7 +56,7 @@ class mergeuserform extends moodleform {
         $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
         $olduser[] = $mform->createElement('select', 'olduseridtype', '', $idstype, '');
         $mform->addGroup($olduser, 'oldusergroup', get_string('olduserid', 'tool_mergeusers'));
-        $mform->setType('olduserid', PARAM_INT);
+        $mform->setType('oldusergroup[olduserid]', PARAM_USERNAME);
         $mform->addGroupRule('oldusergroup', array(array(
             'olduserid' => array($strrequired, 'required', null, 'client'),
             'olduseridtype' => array($strrequired, 'required', null, 'client'),
@@ -67,7 +67,7 @@ class mergeuserform extends moodleform {
         $newuser[] = $mform->createElement('text', 'newuserid', "", 'size="10"');
         $newuser[] = $mform->createElement('select', 'newuseridtype', '', $idstype, '');
         $mform->addGroup($newuser, 'newusergroup', get_string('newuserid', 'tool_mergeusers'));
-        $mform->setType('newuserid', PARAM_INT);
+        $mform->setType('newusergroup[newuserid]', PARAM_USERNAME);
         $mform->addGroupRule('newusergroup', array(array(
             'newuserid' => array($strrequired, 'required', null, 'client'),
             'newuseridtype' => array($strrequired, 'required', null, 'client'),
