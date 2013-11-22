@@ -85,6 +85,30 @@ if ($data) {
         $CFG->prefix.'user_private_key',
         $CFG->prefix.'user_info_data',
     );
+    $tablesWithCompoundIndex = array(
+        // Grades must be specially adjusted.
+        /* pass $recordsToModify by reference so that the function can take care of some of our work for us */
+        $CFG->prefix.'grade_grades' => array(
+            'table' => 'grade_grades',
+            'userfield' => 'userid',
+            'otherfield' => 'itemid',
+        ),
+        $CFG->prefix.'groups_members' => array(
+            'table' => 'grade_grades',
+            'userfield' => 'userid',
+            'otherfield' => 'groupid',
+        ),
+        $CFG->prefix.'journal_entries' => array(
+            'table' => 'journal_entries',
+            'userfield' => 'userid',
+            'otherfield' => 'journal',
+        ),
+        $CFG->prefix.'course_completions' => array(
+            'table' => 'course_completions',
+            'userfield' => 'userid',
+            'otherfield' => 'course',
+        ),
+    );
 
     if ($CFG->dbtype == 'sqlsrv') {
         // MSSQL
@@ -162,32 +186,20 @@ if ($data) {
 
         $recordsToModify = array_keys($recordsToUpdate); // get the 'id' field from the resultset
 
-        if($table_name == $CFG->prefix.'grade_grades') {
-            // Grades must be specially adjusted.
-            /* pass $recordsToModify by reference so that the function can take care of some of our work for us */
-            mergeCompoundIndex($newUser, $currentUser, 'grade_grades', 'userid', 'itemid', $recordsToModify);
-            //ensure we have records to update
-            if (count($recordsToModify) == 0) {
-                //no records to update... go into the next table.
-                continue;
-            }
-        }
+        // Special case of user_enrolments
         if($table_name == $CFG->prefix.'user_enrolments') {
             // User enrollments must be specially adjusted
             disableOldUserEnrollments($newUser, $currentUser);
             continue;
             // go onto next table
         }
-        if($table_name == $CFG->prefix.'groups_members') {
-            mergeCompoundIndex($newUser, $currentUser, 'groups_members', 'userid', 'groupid', $recordsToModify);
-            //ensure we have records to update
-            if (count($recordsToModify) == 0) {
-                //no records to update... go into the next table.
-                continue;
-            }
-        }
-        if($table_name == $CFG->prefix.'journal_entries') {
-            mergeCompoundIndex($newUser, $currentUser, 'journal_entries', 'userid', 'groupid', $recordsToModify);
+        // Other special cases with user field as part of a compound index.
+        if(isset($tablesWithCompoundIndex[$table_name])) {
+            mergeCompoundIndex($newUser, $currentUser,
+                    $tablesWithCompoundIndex[$table_name]['table'],
+                    $tablesWithCompoundIndex[$table_name]['userfield'],
+                    $tablesWithCompoundIndex[$table_name]['otherfield'],
+                    $recordsToModify);
             //ensure we have records to update
             if (count($recordsToModify) == 0) {
                 //no records to update... go into the next table.
@@ -240,7 +252,6 @@ if ($data) {
 
 }
 
-// $OUTPUT->heading($strmergeusers);
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer();
 
