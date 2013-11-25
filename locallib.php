@@ -87,7 +87,7 @@ function disableOldUserEnrollments($newId, $currentId) {
     if(!empty($enrollmentsToUpdate)) { // it's possible we won't have any
         // First, let's move the courses belonging to the old user over to the new one.
         $updateIds = implode(', ', $enrollmentsToUpdate);
-        $sql = 'UPDATE '.$CFG->prefix.'user_enrolments SET userid = "'.$newId.'" WHERE id IN ('.$updateIds.')';
+        $sql = 'UPDATE '.$CFG->prefix.'user_enrolments SET userid = '.$newId.' WHERE id IN ('.$updateIds.')';
        if($DB->execute($sql)) {
 //            echo($sql);
 //            echo '<p style="color:#0c0;">'.get_string('tableok', 'tool_mergeusers', "{$CFG->prefix}user_enrolments (#1)").'</p>';
