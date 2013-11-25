@@ -43,7 +43,7 @@ require_once('./index_form.php');
 require('./locallib.php');
 
 require_login();
-require_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM));
+require_capability('moodle/site:config', context_system::instance());
 
 admin_externalpage_setup('toolmergeusers');
 
@@ -64,18 +64,17 @@ if ($data) {
     $transaction = $DB->start_delegated_transaction();
 
    // Get the userids
-   $user1 = $DB->get_record('user', array($data->oldusergroup['olduseridtype'] => $data->oldusergroup['olduserid']));
-   if (!$user1) {
-        print_error('errornouserid', 'tool_mergeusers');
-   }
+   $user1 = $DB->get_record('user', array($data->oldusergroup['olduseridtype'] => $data->oldusergroup['olduserid']), '*', MUST_EXIST);
    $currentUser = $user1->id;
    $currentUserName = $user1->username;
-   $user2 = $DB->get_record('user', array($data->newusergroup['newuseridtype'] => $data->newusergroup['newuserid']));
-   if (!$user2) {
-       print_error('errornouserid', 'tool_mergeusers');
-    }
+   $user2 = $DB->get_record('user', array($data->newusergroup['newuseridtype'] => $data->newusergroup['newuserid']), '*', MUST_EXIST);
     $newUser = $user2->id;
     $newUserName = $user2->username;
+
+    // Make sure we aren't trying to merge the same user.
+    if ($user1->id == $user2->id) {
+        print_error('errorsameuser', 'tool_mergeusers');
+    }
 
     echo('<h2>'.get_string('merging', 'tool_mergeusers').' &laquo;'.$currentUserName.'&raquo; (user ID = '.$currentUser.') '.get_string('into', 'tool_mergeusers').' &laquo;'.$newUserName.'&raquo; (user ID = '.$newUser.')</h2>');
 
