@@ -94,7 +94,7 @@ if ($data) {
             'otherfield' => 'itemid',
         ),
         $CFG->prefix.'groups_members' => array(
-            'table' => 'grade_grades',
+            'table' => 'groups_members',
             'userfield' => 'userid',
             'otherfield' => 'groupid',
         ),
