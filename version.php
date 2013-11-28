@@ -17,20 +17,19 @@
 /**
  * Version information
  *
- * @package    tool
- * @subpackage mergeusers
+ * @package    tool_mergeusers
  * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
  * @author     Mike Holzer
  * @author     Forrest Gaston
  * @author     Juan Pablo Torres Herrera
+ * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2013100100;
+$plugin->version   = 2013112812;
 $plugin->requires  = 2011120500;
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_BETA;
-$plugin->release = '1.2';
- 
+$plugin->release = '1.3 (Build: 2013112812)';
