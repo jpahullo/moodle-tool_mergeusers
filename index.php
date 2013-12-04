@@ -53,11 +53,12 @@ admin_externalpage_setup('toolmergeusers');
 
 // Define the form
 $mergeuserform = new mergeuserform();
-$mut = new MergeUserTool();
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 
 $data = $mergeuserform->get_data();
-$mut->init();
+
+$mut = new MergeUserTool(); //may abort execution if database not supported, for security
+
 
 // Any submitted data?
 if ($data) {
@@ -82,9 +83,9 @@ if ($data) {
     }
 
     if ($success) {
-        list($success, $log) = $mut->merge($touser->id, $fromuser->id);
+        list($success, $log, $logid) = $mut->merge($touser->id, $fromuser->id);
     }
-    echo $renderer->results_page($touser, $fromuser, $success, $log);
+    echo $renderer->results_page($touser, $fromuser, $success, $log, $logid);
 
 }  else {
 

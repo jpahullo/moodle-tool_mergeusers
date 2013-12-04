@@ -32,9 +32,9 @@ $string['olduserid'] = 'ID utilisateur à supprimer';
 $string['mergeusers:view'] = 'Fusionner les comptes utilisateur';
 $string['tableok'] = 'Table {$a} : mise à jour OK';
 $string['tableko'] = 'Table {$a} : mise à jour PAS OK!';
-$string['logok'] = '<p><strong>Voici les requêtes qui ont été faites sur la base de données</strong><br/>
- Veuillez sauvegarder cette page pour référence.</p>';
+$string['logok'] = 'Voici les requêtes qui ont été faites sur la base de données:';
 $string['logko'] = 'Il ya eu les erreurs suivantes:';
+$string['logid'] = 'Pour référence ultérieure, ces données apparaissent dans le dossier avec l\'id {$a}.';
 $string['dbok'] = 'La fusion a réussi';
 $string['dbko'] = 'La fusion a ECHOUE !<br/>Si votre moteur de base de
  données supporte les transactions, toute l\'opération a été annulée et aucune modification n\'a été
@@ -44,3 +44,8 @@ $string['tableskipped'] = 'Pour des raisons de traçabilité ou de sécurité, l
  compte utilisateur une fois la fusion réussie.';
 $string['errordatabase'] = 'Type de base de données non supporté : {$a}';
 $string['invaliduser'] = 'Utilisateur non valide';
+$string['cligathering:description'] = "Entrez les paires d'ID utilisateur de fusionner le premier sur le second.
+La première (fromid) perdre toutes vos données et passer la deuxième (toid) intégrant les données à la fois.";
+$string['cligathering:stopping'] = 'Enfin, Ctrl+C ou entrez -1 dans les deux fromid ou toid.';
+$string['cligathering:fromid'] = 'Origine Id de l\'utilisateur      (fromid):';
+$string['cligathering:toid'] =   'Destination de Id de l\'utilisateur (toid):';

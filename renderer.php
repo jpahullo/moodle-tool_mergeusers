@@ -24,13 +24,19 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Renderer for the merge user plugin.
  *
- * @package    tool_mergeuser
+ * @package    tool
+ * @subpackage mergeuser
  * @copyright  2013 Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tool_mergeusers_renderer extends plugin_renderer_base
 {
 
+    /**
+     * Shows form for merging users.
+     * @param moodleform $mform form for merging users.
+     * @return string html to show on index page.
+     */
     public function index_page(moodleform $mform)
     {
         $output = $this->header();
@@ -40,7 +46,16 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         return $output;
     }
 
-    public function results_page($to, $from, $success, array $data)
+    /**
+     * Shows the result of a merging action.
+     * @param object $to stdClass with at least id and username fields.
+     * @param object $from stdClass with at least id and username fields.
+     * @param bool $success true if merging was ok; false otherwise.
+     * @param array $data logs of actions done if success, or list of errors on failure.
+     * @param id $logid id of the record with the whole detail of this merging action.
+     * @return string html with the results.
+     */
+    public function results_page($to, $from, $success, array $data, $logid)
     {
         if ($success) {
             $resulttype = 'ok';
@@ -61,8 +76,11 @@ class tool_mergeusers_renderer extends plugin_renderer_base
                     get_string('usermergingheader', 'tool_mergeusers', $to);
         }
         $output .= html_writer::empty_tag('br') . html_writer::empty_tag('br');
+        $output .= get_string('logid', 'tool_mergeusers', $logid);
+        $output .= html_writer::empty_tag('br');
         $output .= get_string('log' . $resulttype, 'tool_mergeusers');
         $output .= html_writer::end_tag('div');
+        $output .= html_writer::empty_tag('br');
 
         $output .= html_writer::start_tag('div', array('class' => 'resultset' . $resulttype));
         foreach ($data as $item) {

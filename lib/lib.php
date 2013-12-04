@@ -15,22 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
- *
- * @package    tool
+ * @package tool
  * @subpackage mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+defined("MOODLE_INTERNAL") || die();
 
-$plugin->version   = 2013120413;
-$plugin->requires  = 2011120500;
-$plugin->component = 'tool_mergeusers';
-$plugin->maturity = MATURITY_BETA;
-$plugin->release = '1.4 (Build: 2013120413)';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/merger.php';
+require_once __DIR__ . '/logger.php';
+require_once __DIR__ . '/gathering.php';
+require_once __DIR__ . '/cligathering.php';

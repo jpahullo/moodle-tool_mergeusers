@@ -28,9 +28,9 @@ $string['olduserid'] = 'ID d\'usuari a eliminar';
 $string['mergeusers:view'] = 'Fusió de comptes d\'usuari';
 $string['tableok'] = 'Taula {$a} : correctament actualitzada';
 $string['tableko'] = 'Taula {$a} : no s\'ha pogut actualitzar correctament!';
-$string['logok'] = '<p><strong>Aquestes són les operacions realitzades a la base de dades</strong><br/>
- Si us plau, guardeu aquesta pàgina per futures referències.</p>';
+$string['logok'] = 'Aquestes són les operacions realitzades a la base de dades:';
 $string['logko'] = 'S\'han produït els següents errors:';
+$string['logid'] = 'Per futures referències, aquestes dades apareixen en el registre amb id {$a}.';
 $string['dbok'] = 'Fusió satisfactòria';
 $string['dbko'] = 'Fusió fallida! <br/>Si la teva base de dades suporta transaccions,
  la teva base de dades no s\'ha modificat.';
@@ -39,3 +39,8 @@ $string['tableskipped'] = 'Per guardar registres i seguretat, no processem la ta
  hagi finalitzat correctament.';
 $string['errordatabase'] = 'Error en la base de datos de tipo {$a}';
 $string['invaliduser'] = 'Usuari invàlid';
+$string['cligathering:description'] = "Introdueix parells d'identificadors d'usuari per fusionar el primer sobre el segon.
+El primer (fromid) perdrà totes les seves dades i es passaran al segon (toid) que inclourà les dades d'ambdós.";
+$string['cligathering:stopping'] = 'Per concloure, Ctrl+C o introdueix un -1 tant en el fromid o en el toid.';
+$string['cligathering:fromid'] = 'Id d\'usuari font (fromid):';
+$string['cligathering:toid'] =   'Id d\'usuari destí  (toid):';

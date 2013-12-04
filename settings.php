@@ -25,10 +25,12 @@
  * @author     Juan Pablo Torres Herrera
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
- 
+
 defined('MOODLE_INTERNAL') || die;
 
 if ($hassiteconfig) {
-    $ADMIN->add('accounts', new admin_externalpage('toolmergeusers', get_string('pluginname', 'tool_mergeusers'), $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/index.php', 'moodle/site:config'));
+    $ADMIN->add('accounts',
+            new admin_externalpage('toolmergeusers', get_string('pluginname', 'tool_mergeusers'),
+            $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/index.php',
+            'moodle/site:config'));
 }
-
