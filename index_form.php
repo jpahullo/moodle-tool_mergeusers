@@ -23,6 +23,7 @@
  * @author     Mike Holzer
  * @author     Forrest Gaston
  * @author     Juan Pablo Torres Herrera
+ * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -39,7 +40,6 @@ class mergeuserform extends moodleform {
      * @uses $CFG
      */
     public function definition() {
-        global $CFG;
 
         $mform =& $this->_form;
 
@@ -51,23 +51,23 @@ class mergeuserform extends moodleform {
             'id'       => 'Id',
         );
 
+        $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));
+        $mform->addElement('html', get_string('description', 'tool_mergeusers'));
+
         // Add elements
         $olduser = array();
         $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
         $olduser[] = $mform->createElement('select', 'olduseridtype', '', $idstype, '');
         $mform->addGroup($olduser, 'oldusergroup', get_string('olduserid', 'tool_mergeusers'));
-        $mform->setType('oldusergroup[olduserid]', PARAM_USERNAME);
         $mform->addGroupRule('oldusergroup', array(array(
             'olduserid' => array($strrequired, 'required', null, 'client'),
             'olduseridtype' => array($strrequired, 'required', null, 'client'),
         )));
 
-
         $newuser = array();
         $newuser[] = $mform->createElement('text', 'newuserid', "", 'size="10"');
         $newuser[] = $mform->createElement('select', 'newuseridtype', '', $idstype, '');
         $mform->addGroup($newuser, 'newusergroup', get_string('newuserid', 'tool_mergeusers'));
-        $mform->setType('newusergroup[newuserid]', PARAM_USERNAME);
         $mform->addGroupRule('newusergroup', array(array(
             'newuserid' => array($strrequired, 'required', null, 'client'),
             'newuseridtype' => array($strrequired, 'required', null, 'client'),
@@ -76,6 +76,5 @@ class mergeuserform extends moodleform {
 
         $this->add_action_buttons(false, get_string('mergeusers', 'tool_mergeusers'));
     }
-
 }
 
