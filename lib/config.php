@@ -73,7 +73,6 @@ class Config {
             $config = array_replace_recursive($config, $localconfig);
         }
         $this->config = $config;
-        var_dump($this->config); die;
     }
 
     /**
