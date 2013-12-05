@@ -21,7 +21,7 @@ $string['description'] =
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Tractant de combinar el mateix usuari';
 $string['mergeusers'] = 'Fusiona comptes d\'usuari';
-$string['merging'] = 'Fusionant';
+$string['merging'] = 'Fusionat';
 $string['into'] = 'dins';
 $string['newuserid'] = 'ID d\'usuari a mantenir';
 $string['olduserid'] = 'ID d\'usuari a eliminar';
@@ -44,3 +44,10 @@ El primer (fromid) perdrà totes les seves dades i es passaran al segon (toid) q
 $string['cligathering:stopping'] = 'Per concloure, Ctrl+C o introdueix un -1 tant en el fromid o en el toid.';
 $string['cligathering:fromid'] = 'Id d\'usuari font (fromid):';
 $string['cligathering:toid'] =   'Id d\'usuari destí  (toid):';
+$string['viewlog'] = 'Veure registre de fusions';
+$string['loglist'] = 'Aquest és el llistat de fusions, indicant també si el resultat fou satisfactori:';
+$string['newuseridonlog'] = 'ID d\'usuari mantingut';
+$string['olduseridonlog'] = 'ID d\'usuari eliminat';
+$string['nologs'] = 'No hi ha registres de fusions d\'usuari. Bé per tu!';
+$string['wronglogid'] = 'No existeix el registre que estàs demanant.';
+$string['deleted'] = 'Usuari {$a} eliminat';

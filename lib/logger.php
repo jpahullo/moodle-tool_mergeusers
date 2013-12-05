@@ -66,14 +66,24 @@ class Logger {
     }
 
     /**
-     *
+     * Gets the merging logs and stores on to and from attributes the related user records.
      * @param array $filter associative array with conditions to match for getting results.
      * If empty, this will return all logs.
+     * @param int $limitfrom starting number of record to get. 0 to get all.
+     * @param int $limitnum maximum number of records to get. 0 to get all.
      * @param string $order SQL ordering, defaults to "timemodified DESC"
      */
-    public function get($filter, $sort = "timemodified DESC", $limitfrom=0, $limitnum=0) {
+    public function get($filter = null, $limitfrom=0, $limitnum=0, $sort = "timemodified DESC") {
         global $DB;
-        return $DB->get_records('tool_mergeusers', $filter, $sort, 'id, touserid, fromuserid, success, timemodified', $limitfrom, $limitnum);
+        $logs = $DB->get_records('tool_mergeusers', $filter, $sort, 'id, touserid, fromuserid, success, timemodified', $limitfrom, $limitnum);
+        if (!$logs) {
+            return $logs;
+        }
+        foreach ($logs as $id => &$log) {
+            $log->to = $DB->get_record('user', array('id' => $log->touserid));
+            $log->from = $DB->get_record('user', array('id' => $log->fromuserid));
+        }
+        return $logs;
     }
 
     /**

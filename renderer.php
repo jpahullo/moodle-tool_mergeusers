@@ -112,4 +112,61 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         return $o;
     }
 
+    public function logs_page($logs)
+    {
+        global $CFG;
+
+        $output  = $this->header();
+        $output .= $this->heading(get_string('viewlog', 'tool_mergeusers'));
+        $output .= html_writer::start_tag('div', array('class' => 'result'));
+        if (empty($logs)) {
+            $output .= get_string('nologs', 'tool_mergeusers');
+        } else {
+            $output .= html_writer::tag('div', get_string('loglist', 'tool_mergeusers'), array('class' => 'title'));
+
+            //i/cross_red_big
+            $flags = array();
+            $flags[] = html_writer::empty_tag('img', array('src' => $this->pix_url('i/cross_red_big'))); //failure icon
+            $flags[] = html_writer::empty_tag('img', array('src' => $this->pix_url('i/tick_green_big'))); //ok icon
+
+            $table = new html_table();
+            $table->align = array('center', 'center', 'center', 'center', 'center', 'center');
+            $table->head = array(get_string('olduseridonlog', 'tool_mergeusers'), get_string('newuseridonlog', 'tool_mergeusers'), get_string('date'), get_string('status'), '');
+
+            $rows = array();
+            foreach ($logs as $i => $log) {
+                $row = new html_table_row();
+                $row->cells = array(
+                    ($log->from)
+                        ? html_writer::link(
+                            new moodle_url('/user/view.php',
+                                array('id'=> $log->fromuserid, 'sesskey' =>sesskey())),
+                                fullname($log->from) . ' (' . $log->from->username . ')')
+                        : get_string('deleted', 'tool_mergeusers', $log->fromuserid),
+                    ($log->to)
+                        ? html_writer::link(
+                            new moodle_url('/user/view.php',
+                                array('id'=> $log->touserid, 'sesskey' =>sesskey())),
+                                fullname($log->to) . ' (' . $log->to->username . ')')
+                        : get_string('deleted', 'tool_mergeusers', $log->fromuserid),
+                    userdate($log->timemodified, get_string('strftimedaydatetime', 'langconfig')),
+                    $flags[$log->success],
+                    html_writer::link(
+                        new moodle_url('/' . $CFG->admin . '/tool/mergeusers/log.php',
+                            array('id'=> $log->id, 'sesskey' =>sesskey())),
+                        get_string('more'),
+                        array('target' => '_blank')),
+                );
+                $rows[] = $row;
+            }
+
+            $table->data = $rows;
+            $output .= html_writer::table($table);
+        }
+
+        $output .= html_writer::end_tag('div');
+        $output .= $this->footer();
+
+        return $output;
+    }
 }

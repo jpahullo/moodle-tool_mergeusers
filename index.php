@@ -23,6 +23,7 @@
  * @author     Mike Holzer
  * @author     Forrest Gaston
  * @author     Juan Pablo Torres Herrera
+ * @author     Jordi Pujol-Ahulló, Sred, Universitat Rovira i Virgili
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -49,7 +50,7 @@ require_once('./locallib.php');
 require_login();
 require_capability('moodle/site:config', context_system::instance());
 
-admin_externalpage_setup('toolmergeusers');
+admin_externalpage_setup('tool_mergeusers_merge');
 
 // Define the form
 $mergeuserform = new mergeuserform();

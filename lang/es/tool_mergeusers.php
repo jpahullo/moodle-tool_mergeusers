@@ -21,7 +21,7 @@ $string['description'] =
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Tratando de combinar el mismo usuario';
 $string['mergeusers'] = 'Fusiona cuentas de usuario';
-$string['merging'] = 'Fusionando';
+$string['merging'] = 'Fusionado';
 $string['into'] = 'dentro';
 $string['newuserid'] = 'ID de usuario a mantener';
 $string['olduserid'] = 'ID de usuario a eliminar';
@@ -44,3 +44,10 @@ El primero (fromid) perderá todos sus datos y se pasaran al segundo (toid) que 
 $string['cligathering:stopping'] = 'Para finalizar, Ctrl+C o introduce un -1 tanto en el fromid o en el toid.';
 $string['cligathering:fromid'] = 'Id de usuario origen (fromid):';
 $string['cligathering:toid'] =   'Id de usuario destino  (toid):';
+$string['viewlog'] = 'Ver registro de fusiones';
+$string['loglist'] = 'Este es el listado de fusiones, indicando si se llevaron a cabo satisfactoriamente:';
+$string['newuseridonlog'] = 'ID de usuario mantenido';
+$string['olduseridonlog'] = 'ID de usuario eliminado';
+$string['nologs'] = 'No hay registros de fusión de usuarios. Bien por ti!';
+$string['wronglogid'] = 'No existe el registro que estás solicitando.';
+$string['deleted'] = 'Usuario {$a} eliminado';

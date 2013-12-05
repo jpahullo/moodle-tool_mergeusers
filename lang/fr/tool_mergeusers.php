@@ -49,3 +49,10 @@ La première (fromid) perdre toutes vos données et passer la deuxième (toid) i
 $string['cligathering:stopping'] = 'Enfin, Ctrl+C ou entrez -1 dans les deux fromid ou toid.';
 $string['cligathering:fromid'] = 'Origine Id de l\'utilisateur      (fromid):';
 $string['cligathering:toid'] =   'Destination de Id de l\'utilisateur (toid):';
+$string['viewlog'] = 'Voir fusions dossiers';
+$string['loglist'] = 'Il s\'agit de la liste des fusions, indiquant si effectuée avec succès:';
+$string['newuseridonlog'] = 'ID de l\'utilisateur maintenu';
+$string['olduseridonlog'] = 'ID d\'utilisateur supprimé';
+$string['nologs'] = 'Pas de records de fusion de utilisateurs. Bon pour vous!';
+$string['wronglogid'] = 'Il n\'existe aucun enregistrement que vous demandez.';
+$string['deleted'] = 'ID utilisateur {$a} a été éliminé';

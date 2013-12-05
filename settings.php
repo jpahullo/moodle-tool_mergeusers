@@ -30,7 +30,13 @@ defined('MOODLE_INTERNAL') || die;
 
 if ($hassiteconfig) {
     $ADMIN->add('accounts',
-            new admin_externalpage('toolmergeusers', get_string('pluginname', 'tool_mergeusers'),
+            new admin_category('tool_mergeusers', get_string('pluginname', 'tool_mergeusers')));
+    $ADMIN->add('tool_mergeusers',
+            new admin_externalpage('tool_mergeusers_merge', get_string('pluginname', 'tool_mergeusers'),
             $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/index.php',
+            'moodle/site:config'));
+    $ADMIN->add('tool_mergeusers',
+            new admin_externalpage('tool_mergeusers_viewlog', get_string('viewlog', 'tool_mergeusers'),
+            $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/view.php',
             'moodle/site:config'));
 }
