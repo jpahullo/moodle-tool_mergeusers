@@ -21,16 +21,16 @@ $string['description'] =
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Tratando de combinar el mismo usuario';
 $string['mergeusers'] = 'Fusiona cuentas de usuario';
-$string['merging'] = 'Fusionando';
+$string['merging'] = 'Fusionado';
 $string['into'] = 'dentro';
 $string['newuserid'] = 'ID de usuario a mantener';
 $string['olduserid'] = 'ID de usuario a eliminar';
 $string['mergeusers:view'] = 'Fusión de cuentas de usuario';
 $string['tableok'] = 'Tabla {$a} : correctamente actualizada';
 $string['tableko'] = 'Tabla {$a} : no se ha podido actualizar correctamente!';
-$string['logok'] = '<p><strong>Estas son las operaciones realizadas en la base de datos</strong><br/>
- Por favor, guarde esta página para futuras referencias.</p>';
+$string['logok'] = 'Estas son las operaciones realizadas en la base de datos:';
 $string['logko'] = 'Se han producido los siguientes errores:';
+$string['logid'] = 'Para futuras referencias, estos datos aparecen en el registro con id {$a}.';
 $string['dbok'] = 'Fusión realizada correctamente';
 $string['dbko'] = 'Error en la fusión! <br/>Si vuestra base de datos soporta transacciones,
  no se han realizado cambios en ella.';
@@ -39,3 +39,15 @@ $string['tableskipped'] = 'Para guardar registros y por seguredad, no procesamos
  haya finalizado correctamente.';
 $string['errordatabase'] = 'Error en la base de dades de tipus {$a}';
 $string['invaliduser'] = 'Usuario inválido';
+$string['cligathering:description'] = "Introduce pares de identificadores de usuario para fusionar el primero sobre el segundo.\n
+El primero (fromid) perderá todos sus datos y se pasaran al segundo (toid) que incorporará los datos de ambos.";
+$string['cligathering:stopping'] = 'Para finalizar, Ctrl+C o introduce un -1 tanto en el fromid o en el toid.';
+$string['cligathering:fromid'] = 'Id de usuario origen (fromid):';
+$string['cligathering:toid'] =   'Id de usuario destino  (toid):';
+$string['viewlog'] = 'Ver registro de fusiones';
+$string['loglist'] = 'Este es el listado de fusiones, indicando si se llevaron a cabo satisfactoriamente:';
+$string['newuseridonlog'] = 'ID de usuario mantenido';
+$string['olduseridonlog'] = 'ID de usuario eliminado';
+$string['nologs'] = 'No hay registros de fusión de usuarios. Bien por ti!';
+$string['wronglogid'] = 'No existe el registro que estás solicitando.';
+$string['deleted'] = 'Usuario {$a} eliminado';

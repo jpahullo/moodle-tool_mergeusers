@@ -23,6 +23,7 @@
  * @author     Mike Holzer
  * @author     Forrest Gaston
  * @author     Juan Pablo Torres Herrera
+ * @author     Jordi Pujol-Ahulló, Sred, Universitat Rovira i Virgili
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -49,15 +50,16 @@ require_once('./locallib.php');
 require_login();
 require_capability('moodle/site:config', context_system::instance());
 
-admin_externalpage_setup('toolmergeusers');
+admin_externalpage_setup('tool_mergeusers_merge');
 
 // Define the form
 $mergeuserform = new mergeuserform();
-$mut = new MergeUserTool();
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 
 $data = $mergeuserform->get_data();
-$mut->init();
+
+$mut = new MergeUserTool(); //may abort execution if database not supported, for security
+
 
 // Any submitted data?
 if ($data) {
@@ -82,9 +84,9 @@ if ($data) {
     }
 
     if ($success) {
-        list($success, $log) = $mut->merge($touser->id, $fromuser->id);
+        list($success, $log, $logid) = $mut->merge($touser->id, $fromuser->id);
     }
-    echo $renderer->results_page($touser, $fromuser, $success, $log);
+    echo $renderer->results_page($touser, $fromuser, $success, $log, $logid);
 
 }  else {
 
