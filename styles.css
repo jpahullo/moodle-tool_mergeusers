@@ -1,0 +1,16 @@
+/*
+    Document   : styles
+    Created on : 28/11/2013, 09:59:27
+    Author     : Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+    Description:
+        Format merging results.
+*/
+
+.result > .title {
+    display: block;
+    font-weight: bold;
+}
+
+.result > .resultsetko {
+    color: red;
+}
