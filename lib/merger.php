@@ -22,8 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once __DIR__ . '/../locallib.php';
-require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/autoload.php';
 
 class Merger {
     /**
@@ -38,6 +37,21 @@ class Merger {
     public function __construct(MergeUserTool $mut) {
         $this->mut = $mut;
         $this->logger = new Logger();
+
+        // to catch Ctrl+C interruptions, we need this stuff.
+        declare(ticks = 1);
+        pcntl_signal(SIGINT, array($this, 'aborting'));
+    }
+
+    /**
+     * Called when aborting from command-line on Ctrl+C interruption.
+     * @param int $signo only SIGINT.
+     */
+    public function aborting($signo) {
+        if (defined("CLI_SCRIPT")) {
+            echo "\n\n" . get_string('ok') . ", exit!\n\n";
+        }
+        exit(0); //quiting normally after all ;-)
     }
 
     /**

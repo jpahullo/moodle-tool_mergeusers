@@ -31,12 +31,12 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-require_once __DIR__ . '/../../../config.php';
+require_once dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php';
 
 global $CFG;
 
 require_once $CFG->dirroot . '/lib/clilib.php';
-require_once __DIR__ . '/lib/lib.php';
+require_once __DIR__ . '/autoload.php';
 
 define('PRIMARY_KEY', 'id');
 
@@ -220,8 +220,8 @@ class MergeUserTool
                     $recordsToModify = array_keys($recordsToUpdate); // get the 'id' field from the resultset
                     // Special case of user_enrolments
                     if ($tableName == 'user_enrolments') {
-                        // User enrollments must be specially adjusted
-                        $this->disableOldUserEnrollments($toid, $fromid, $actionLog, $errorMessages);
+                        // User enrolments must be specially adjusted
+                        $this->disableOldUserEnrolments($toid, $fromid, $actionLog, $errorMessages);
                         continue;
                         // go onto next field or table
                     }
@@ -341,7 +341,7 @@ class MergeUserTool
     }
 
     /**
-     * Disables course enrollments for the old user.
+     * Disables course enrolments for the old user.
      *
      * The user_enrolments table is similar to grade_grades in that it also
      * has a compound unique key. The approach here is not to replace the
@@ -353,44 +353,54 @@ class MergeUserTool
      * @param array $actionLog Array where to append the list of actions done.
      * @param array $errorMessages Array where to append any error occurred.
      */
-    private function disableOldUserEnrollments($toid, $fromid, &$actionLog, &$errorMessages)
+    private function disableOldUserEnrolments($toid, $fromid, &$actionLog, &$errorMessages)
     {
         global $CFG, $DB;
 
-        $sql = 'SELECT id, enrolid, userid,status from ' . $CFG->prefix . 'user_enrolments WHERE userid in (' .
-                $fromid . ', ' . $toid . ') AND status !=2';
+        $sql = 'SELECT id, enrolid, userid, status from ' . $CFG->prefix . 'user_enrolments WHERE userid in (' .
+                $fromid . ', ' . $toid . ')';
         $result = $DB->get_records_sql($sql);
+
         if (empty($result)) {
             return;
         }
+
         $enrolArr = array();
         $idsToDisable = array();
-        $enrollmentsToUpdate = array();
+        $enrolmentsToUpdate = array();
+        $enrolmentsToReactivate = array();
 
         foreach ($result as $id => $resObj) {
             $enrolArr[$resObj->enrolid][$resObj->userid] = $id;
         }
-        unset($result); //free memory
 
         foreach ($enrolArr as $enrolId => $enrolInfo) {
             if (sizeof($enrolInfo) != 2) {
                 //if we don't have 2 results, then these users did not both complete this activity.
                 if (key($enrolInfo) == $fromid) {
                     //if we have the old user, we have to assign this course to the new user.
-                    $enrollmentsToUpdate[] = $enrolInfo[$fromid];
+                    $enrolmentsToUpdate[] = $enrolInfo[$fromid]; //disable the old user
                     continue;
                 } else {
                     //we don't have anything here for this course. We actually shouldn't get to this point ever.
                     continue;
                 }
             }
-            $idsToDisable[] = $enrolInfo[$fromid];
+            // check if it is actually enabled
+            if ($result[$enrolInfo[$fromid]]->status != 2) {
+                $idsToDisable[] = $enrolInfo[$fromid];
+            }
+            //check if it was already disabled
+            if ($result[$enrolInfo[$toid]]->status == 2) {
+                $enrolmentsToReactivate[] = $enrolInfo[$toid]; // reactivate new user.
+            }
         }
         unset($enrolArr); //free memory
+        unset($result); //free memory
 
-        if (!empty($enrollmentsToUpdate)) { // it's possible we won't have any
+        if (!empty($enrolmentsToUpdate)) { // it's possible we won't have any
             // First, let's move the courses belonging to the old user over to the new one.
-            $updateIds = implode(', ', $enrollmentsToUpdate);
+            $updateIds = implode(', ', $enrolmentsToUpdate);
             $sql = 'UPDATE ' . $CFG->prefix . 'user_enrolments SET userid = ' . $toid .
                     ' WHERE id IN (' . $updateIds . ')';
             if ($DB->execute($sql)) {
@@ -402,7 +412,7 @@ class MergeUserTool
                         ': ' . $DB->get_last_error();
             }
         }
-        unset($enrollmentsToUpdate); //free memory
+        unset($enrolmentsToUpdate); //free memory
         unset($sql);
 
         // ok, now let's lock this user out from using the common courses.
@@ -420,6 +430,24 @@ class MergeUserTool
             }
         }
         unset($idsToDisable); //free memory
+        unset($sql);
+
+        // the enrolment was deactivated before by us.
+        // reactivate it again.
+        if (!empty($enrolmentsToReactivate)) {
+            $idsReactivate = implode(', ', $enrolmentsToReactivate);
+            $sql = 'UPDATE ' . $CFG->prefix . 'user_enrolments SET status = 0 WHERE id IN (' .
+                    $idsReactivate . ')  AND status = 2';
+            if ($DB->execute($sql)) {
+                //all was ok: action done.
+                $actionLog[] = $sql;
+            } else {
+                // a database error occurred.
+                $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#3)") .
+                        ': ' . $DB->get_last_error();
+            }
+        }
+        unset($enrolmentsToReactivate); //free memory
         unset($sql);
     }
 

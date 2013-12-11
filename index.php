@@ -45,7 +45,7 @@ require_once($CFG->libdir.'/accesslib.php');
 require_once($CFG->libdir.'/weblib.php');
 
 require_once('./index_form.php');
-require_once('./locallib.php');
+require_once(__DIR__ . '/lib/autoload.php');
 
 require_login();
 require_capability('moodle/site:config', context_system::instance());
