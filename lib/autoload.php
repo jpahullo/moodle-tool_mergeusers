@@ -22,10 +22,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined("MOODLE_INTERNAL") || die();
+spl_autoload_register(function ($class) {
 
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/merger.php';
-require_once __DIR__ . '/logger.php';
-require_once __DIR__ . '/gathering.php';
-require_once __DIR__ . '/cligathering.php';
+    $fileName = strtolower($class) . '.php';
+    $fileDirname = dirname(__FILE__);
+
+    if(is_file($fileDirname.'/'.$fileName)) {
+        require_once $fileDirname.'/'.$fileName;
+        if(class_exists($class)) {
+            return true;
+        }
+    }
+    return false;
+});

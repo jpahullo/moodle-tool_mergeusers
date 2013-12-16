@@ -54,18 +54,6 @@ class CLIGathering implements Gathering {
     {
         $this->index = -1;
         $this->end = false;
-        // to catch Ctrl+C interruptions, we need this stuff.
-        declare(ticks = 1);
-        pcntl_signal(SIGINT, array($this, 'aborting'));
-    }
-
-    /**
-     * Called when aborting from command-line on Ctrl+C interruption.
-     * @param int $signo only SIGINT.
-     */
-    public function aborting($signo) {
-        echo "\n\n" . get_string('ok') . ", exit!\n\n";
-        exit(0); //quiting normally after all ;-)
     }
 
     /**

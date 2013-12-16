@@ -32,7 +32,7 @@ ini_set('error_reporting', E_ALL | E_STRICT);
 global $CFG;
 
 require_once $CFG->dirroot . '/lib/clilib.php';
-require_once __DIR__ . '/../lib/lib.php';
+require_once __DIR__ . '/../lib/autoload.php';
 
 // loads current configuration
 $config = Config::instance();

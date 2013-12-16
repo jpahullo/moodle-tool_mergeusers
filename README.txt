@@ -59,6 +59,7 @@ You can go further and develop your own CLI script by extending the Gathering in
 (see lib/cligathering.php for an example). Ok, but let us explain how to do it step by step:
 
 1. Develop a class, namely MyGathering, in lib/mygathering.php, implementing the interface Gathering.
+Be sure the class name and the filename are the same, but filename all in lowercase ending with ".php".
 See lib/cligathering for an example.
 2. Create or edit the file config/config.local.php with at least the following content:
 ```php
@@ -70,11 +71,7 @@ return array(
     'gathering' => 'MyGathering',
 );
 ```
-3. Add your file to the library, appending a line in lib/lib.php like this:
-```php
-require_once __DIR__ . '/mygathering.php';
-```
-4. Run as a command line in a form like this: *$ time php cli/climerger.php*.
+3. Run as a command line in a form like this: *$ time php cli/climerger.php*.
 
 
 Correct way of testing this plugin
