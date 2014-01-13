@@ -35,9 +35,6 @@ require_once $CFG->libdir . '/gdlib.php';
 function tool_mergeusers_old_user_suspend($event) {
     global $DB;
 
-    ini_set('display_errors', true);
-    ini_set('error_reporting', E_ALL | E_STRICT);
-
     // 1. update auth type
     $olduser = new stdClass();
     $olduser->id = $event->oldid;
