@@ -78,6 +78,27 @@ return array(
 3. Run as a command line in a form like this: *$ time php cli/climerger.php*.
 
 
+Events and event management
+---
+
+Once the merging action is completed, an event 'merging_success' is triggered if it was ok,
+or an event 'merging_failed' otherwise. The available data on the event are as follows:
+
+* oldid: the user.id of the "user A" to be removed from all his/her activity.
+* newid: the user.id of the "user B" which will gather the activity of both users.
+* log: string with the list of actions performed.
+* timemodified: time in which the event is generated, after the merging action.
+
+The goal of this event triggering is the ability to be detected by other parts of Moodle.
+
+This plugin also manages the 'merging_success' event is trigered, what includes:
+
+1. Suspending the user (user.suspended = 1). This prevents the person to log in with the old account.
+2. Changing the old user's profile picture by the given on pix/suspended.jpg. It is a simple
+   white image with the text "suspended user", which could help to teachers and
+   managers to rapidly detect them.
+
+
 Correct way of testing this plugin
 ---
 
