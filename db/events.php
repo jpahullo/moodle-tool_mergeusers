@@ -15,22 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
- *
- * @package    tool
+ * @package tool
  * @subpackage mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
-
-$plugin->version   = 2014011012;
-$plugin->requires  = 2011120500;
-$plugin->component = 'tool_mergeusers';
-$plugin->maturity = MATURITY_BETA;
-$plugin->release = '1.6 (Build: 2014011012)';
+/**
+ * @var array Available handlers for merging events.
+ *
+ * Available events: merging_sucess, merging_failed
+ */
+$handlers = array (
+    'merging_success' => array (
+        'handlerfile'      => '/admin/tool/mergeusers/lib/events/olduser.php',
+        'handlerfunction'  => 'tool_mergeusers_old_user_suspend',
+        'schedule'         => 'instant',
+        'internal'         => 1,
+    ),
+);

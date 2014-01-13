@@ -168,6 +168,14 @@ class MergeUserTool
     public function merge($toid, $fromid)
     {
         $result = $this->_merge($toid, $fromid);
+
+        $event = new stdClass();
+        $event->newid = $toid;
+        $event->oldid = $fromid;
+        $event->log = $result[1];
+        $event->timemodified = time();
+        events_trigger(($result[0])?'merging_success':'merging_failed', $event);
+
         $result[] = $this->logger->log($toid, $fromid, $result[0], $result[1]);
         return $result;
     }
