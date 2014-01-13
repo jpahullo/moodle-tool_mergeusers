@@ -24,7 +24,7 @@ cases:
     together I recomend disabling or deleting the entire old user account once
     the migration has been successful.
 * Special Case #3: There are 3 logging/preference tables
-    (user_lastaccess, user_preferences,user_private_key) which exist in
+    (user_lastaccess, user_preferences, user_private_key) which exist in
     Moodle 2.0. This script is simply skipping these tables since there's no
     legitimate purpose to updating the userid value here. This would lead to
     duplicate rows for the new user which is silly. Again, if you want to
@@ -47,6 +47,10 @@ cases:
     so we can securely remove the old record. In addition, this checking is performed
     for both column names (userid and contactid) looking for matching on both
     in the same way.
+* Special case #8: role_assignments table has a three-field unique index,
+    including context, role and userid. As before, it always updates records to
+    be the new one. If only old id exists, it is updated; if only new id exists,
+    it does nothing; if both ids exist, the record with the old id is removed.
 
 
 Command-line script

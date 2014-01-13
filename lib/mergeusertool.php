@@ -228,7 +228,7 @@ class MergeUserTool
                     // Other special cases with user field as part of a compound index.
                     if (isset($this->tablesWithCompoundIndex[$tableName])) {
                         $this->mergeCompoundIndex($toid, $fromid, $tableName, $fieldName,
-                                $this->getOtherFieldOnCompoundIndex($tableName, $fieldName),
+                                $this->getOtherFieldsOnCompoundIndex($tableName, $fieldName),
                                 $recordsToModify, $actionLog, $errorMessages);
                         //ensure we have records to update
                         if (count($recordsToModify) == 0) {
@@ -475,28 +475,34 @@ class MergeUserTool
      * @param int $fromid
      * @param string $table table to check
      * @param string $userfield table's field name that refers to the user id.
-     * @param string $otherfield table's field name tha refers to the other member of the coumpund index.
+     * @param array $otherfields table's field names that refers to the other members of the coumpund index.
      * @param array $recordsToModify array with current $table's id to update.
      * @param array $actionLog Array where to append the list of actions done.
      * @param array $errorMessages Array where to append any error occurred.
      */
-    private function mergeCompoundIndex($toid, $fromid, $table, $userfield, $otherfield,
+    private function mergeCompoundIndex($toid, $fromid, $table, $userfield, $otherfields,
             &$recordsToModify, &$actionLog, &$errorMessages)
     {
         global $CFG, $DB;
 
-        $sql = 'SELECT id, ' . $userfield . ', ' . $otherfield . ' from ' . $CFG->prefix . $table .
+        $otherfieldsstr = implode(', ', $otherfields);
+        $sql = 'SELECT id, ' . $userfield . ', ' . $otherfieldsstr . ' from ' . $CFG->prefix . $table .
                 ' WHERE ' . $userfield . ' in (' . $fromid . ', ' . $toid . ')';
         $result = $DB->get_records_sql($sql);
 
         $itemArr = array();
         $idsToRemove = array();
         foreach ($result as $id => $resObj) {
-            $itemArr[$resObj->$otherfield][$resObj->$userfield] = $id;
+            $keyfromother = array();
+            foreach ($otherfields as $of) {
+                $keyfromother[] = $resObj->$of;
+            }
+            $keyfromotherstr = implode('-', $keyfromother);
+            $itemArr[$keyfromotherstr][$resObj->$userfield] = $id;
         }
         unset($result); //free memory
 
-        foreach ($itemArr as $otherfieldid => $otherInfo) {
+        foreach ($itemArr as $otherfieldsid => $otherInfo) {
             //iff we have only one result and it is from the current user => update record
             if (sizeof($otherInfo) == 1) {
                 if (isset($otherInfo[$fromid])) {
@@ -538,25 +544,32 @@ class MergeUserTool
     }
 
     /**
-     * Gets the field name on a compound index case. If the compound index only has a
-     * user-related field, always returns the 'otherfield' of the $this->tablesWithCompoundIndex.
+     * Gets the fields name on a compound index case. If the compound index only has a
+     * user-related field, always returns the 'otherfields' of the $this->tablesWithCompoundIndex.
      * If both fields are user-related, gets the opposite field name.
      * @param string $tableName current table name without $DB->prefix.
      * @param string $userField current user-related field being analyized.
-     * @return string the other field name of the compound index.
+     * @return array an array with the other field names of the compound index.
      */
-    private function getOtherFieldOnCompoundIndex($tableName, $userField)
+    private function getOtherFieldsOnCompoundIndex($tableName, $userField)
     {
-        $otherfield =
-                // we can alternate column names when both fields are user-related.
-                (isset($this->tablesWithCompoundIndex[$tableName]['both']) &&
-                 $this->tablesWithCompoundIndex[$tableName]['both'])
-                ? (($userField == $this->tablesWithCompoundIndex[$tableName]['userfield'])
-                        ? 'otherfield'
-                        : 'userfield')
-                // if only 'userid' field is user-related, always return the other one ;-)
-                : 'otherfield';
-        return $this->tablesWithCompoundIndex[$tableName][$otherfield];
+        // we can alternate column names when both fields are user-related.
+        if (isset($this->tablesWithCompoundIndex[$tableName]['both']) &&
+            $this->tablesWithCompoundIndex[$tableName]['both'] &&
+            $userField != $this->tablesWithCompoundIndex[$tableName]['userfield']) {
+
+            // get the list of other fields.
+            $others = array_flip($this->tablesWithCompoundIndex[$tableName]['otherfields']);
+            // remove the given $userField
+            unset($others[$userField]);
+            $others = array_flip($others);
+            // append the 'userfield'
+            $others[] = $this->tablesWithCompoundIndex[$tableName]['userfield'];
+            // return all except $userField
+            return $others;
+        }
+        // default behavior
+        return $this->tablesWithCompoundIndex[$tableName]['otherfields'];
     }
 
     /**

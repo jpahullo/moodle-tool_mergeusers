@@ -49,29 +49,34 @@ return array(
     // List of compound indexes.
     // This list may vary from Moodle instance to another, given that the Moodle version,
     // local changes and non-core plugins may add new special cases to be processed.
+    // When 'both' field is set, this means that user.id values may appear in the list of 'otherfields' too.
     // See README.txt for details on special cases.
     // Table names must be without $CFG->prefix.
     'compoundindexes' => array(
         'grade_grades' => array(
             'userfield' => 'userid',
-            'otherfield' => 'itemid',
+            'otherfields' => array('itemid'),
         ),
         'groups_members' => array(
             'userfield' => 'userid',
-            'otherfield' => 'groupid',
+            'otherfields' => array('groupid'),
         ),
         'journal_entries' => array(
             'userfield' => 'userid',
-            'otherfield' => 'journal',
+            'otherfields' => array('journal'),
         ),
         'course_completions' => array(
             'userfield' => 'userid',
-            'otherfield' => 'course',
+            'otherfields' => array('course'),
         ),
         'message_contacts' => array(//both fields are user.id values
             'userfield' => 'userid',
-            'otherfield' => 'contactid',
+            'otherfields' => array('contactid'),
             'both' => true,
+        ),
+        'role_assignments' => array(
+            'userfield' => 'userid',
+            'otherfields' => array('contextid', 'roleid'),
         ),
     ),
 
