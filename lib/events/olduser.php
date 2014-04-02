@@ -18,6 +18,7 @@
  * @package tool
  * @subpackage mergeusers
  * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @author John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -35,24 +36,33 @@ require_once $CFG->libdir . '/gdlib.php';
 function tool_mergeusers_old_user_suspend($event) {
     global $DB;
 
-    // 1. update auth type
-    $olduser = new stdClass();
-    $olduser->id = $event->oldid;
-    $olduser->suspended = 1;
-    $olduser->timemodified = time();
-    $DB->update_record('user', $olduser);
+    // Add configuration so that the old user may not get suspended
+    $config = get_config('tool_mergeusers', 'suspenduser');
+    if($config){ // may be false, so check for that
+        if($config === 1){ // If the configuration was set up to be checked this should be 1
 
-    // 2. update profile picture
-    // get source, common image
-    $fullpath = dirname(dirname(__DIR__))."/pix/suspended.jpg";
-    if (!file_exists($fullpath)) {
-        return; //do nothing; aborting, given that the image does not exist
-    }
+            // 1. update auth type
+            $olduser = new stdClass();
+            $olduser->id = $event->oldid;
+            $olduser->suspended = 1;
+            $olduser->timemodified = time();
+            $DB->update_record('user', $olduser);
 
-    // put the common image as the profile picture.
-    $context = context_user::instance($event->oldid);
-    if (($newrev = process_new_icon($context, 'user', 'icon', 0, $fullpath))) {
-        $DB->set_field('user', 'picture', $newrev, array('id'=>$event->oldid));
+            // 2. update profile picture
+            // get source, common image
+            $fullpath = dirname(dirname(__DIR__))."/pix/suspended.jpg";
+            if (!file_exists($fullpath)) {
+                return; //do nothing; aborting, given that the image does not exist
+            }
+
+            // put the common image as the profile picture.
+            $context = context_user::instance($event->oldid);
+            if (($newrev = process_new_icon($context, 'user', 'icon', 0, $fullpath))) {
+                $DB->set_field('user', 'picture', $newrev, array('id'=>$event->oldid));
+            }
+        }else{
+            return true; // return if the setting
+        }
     }
 
     return true;
