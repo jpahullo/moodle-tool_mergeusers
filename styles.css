@@ -35,3 +35,7 @@
 .result > .resultsetko {
     color: red;
 }
+
+.align-center{
+    text-align: center;
+}

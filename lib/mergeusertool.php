@@ -108,7 +108,7 @@ class MergeUserTool
      */
     public function __construct(Config $config = null, Logger $logger = null)
     {
-        global $CFG;
+        global $CFG, $DB;
 
         $this->logger = (is_null($logger))?new Logger():$logger;
         $config = (is_null($config))?Config::instance():$config;
@@ -120,7 +120,17 @@ class MergeUserTool
                     $CFG->prefix . "%' AND type = 'U' ORDER BY name";
         } else if ($CFG->dbtype == 'mysqli') {
             // MySQL
-            $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
+
+            // Only will accept transactions if using compatible storage engine (more engines can be added easily BDB, Falcon...)
+            $engine = $DB->get_dbengine(); // get the mysql table engine
+
+            if (in_array($engine, array('InnoDB', 'INNOBASE', 'BDB', 'XtraDB', 'Aria', 'Falcon'))) {
+                $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
+            }else{
+                $this->supportedDatabase = false;
+                $this->sqlListTables = "";
+            }
+
         } else if ($CFG->dbtype == 'pgsql') {
             // PGSQL
             $this->sqlListTables = "SELECT table_name FROM information_schema.tables WHERE table_name LIKE '" .

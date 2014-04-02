@@ -24,6 +24,7 @@
  * @author     Forrest Gaston
  * @author     Juan Pablo Torres Herrera
  * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -51,32 +52,47 @@ class mergeuserform extends moodleform {
             'id'       => 'Id',
         );
 
+        $searchfields = array(
+            ''          => get_string('allfields', 'tool_mergeusers'),
+            'id'        => 'Id',
+            'username'  => get_string('username'),
+            'firstname' => get_string('firstname'),
+            'lastname'  => get_string('lastname'),
+            'email'     => get_string('email'),
+        );
+
         $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));
         $mform->addHelpButton('mergeusers', 'header', 'tool_mergeusers');
 
         // Add elements
+        $searchuser = array();
+        $searchuser[] = $mform->createElement('text', 'searcharg');
+        $searchuser[] = $mform->createElement('select', 'searchfield', '', $searchfields, '');
+        $mform->addGroup($searchuser, 'searchgroup', get_string('searchuser', 'tool_mergeusers'));
+        $mform->setType('searchgroup[searcharg]', PARAM_ALPHANUMEXT);
+        $mform->addHelpButton('searchgroup', 'searchuser', 'tool_mergeusers');
+
+        $mform->addElement('static', 'mergeusersadvanced', get_string('mergeusersadvanced', 'tool_mergeusers'));
+        $mform->addHelpButton('mergeusersadvanced', 'mergeusersadvanced', 'tool_mergeusers');
+        $mform->setAdvanced('mergeusersadvanced');
+
         $olduser = array();
         $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
         $olduser[] = $mform->createElement('select', 'olduseridtype', '', $idstype, '');
         $mform->addGroup($olduser, 'oldusergroup', get_string('olduserid', 'tool_mergeusers'));
         $mform->setType('oldusergroup[olduserid]', PARAM_RAW_TRIMMED);
-        $mform->addGroupRule('oldusergroup', array(array(
-            'olduserid' => array($strrequired, 'required', null, 'client'),
-            'olduseridtype' => array($strrequired, 'required', null, 'client'),
-        )));
+        $mform->setAdvanced('oldusergroup');
+
 
         $newuser = array();
         $newuser[] = $mform->createElement('text', 'newuserid', "", 'size="10"');
         $newuser[] = $mform->createElement('select', 'newuseridtype', '', $idstype, '');
         $mform->addGroup($newuser, 'newusergroup', get_string('newuserid', 'tool_mergeusers'));
         $mform->setType('newusergroup[newuserid]', PARAM_RAW_TRIMMED);
-        $mform->addGroupRule('newusergroup', array(array(
-            'newuserid' => array($strrequired, 'required', null, 'client'),
-            'newuseridtype' => array($strrequired, 'required', null, 'client'),
-        )));
+        $mform->setAdvanced('newusergroup');
 
 
-        $this->add_action_buttons(false, get_string('mergeusers', 'tool_mergeusers'));
+        $this->add_action_buttons(false, get_string('searchbutton', 'tool_mergeusers'));
     }
 }
 
