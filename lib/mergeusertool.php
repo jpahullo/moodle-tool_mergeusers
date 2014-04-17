@@ -545,15 +545,25 @@ class MergeUserTool
         }
         unset($toMod); //free memory
 
-        $idsGoByebye = implode(', ', $idsToRemove);
-        $sql = 'DELETE FROM ' . $CFG->prefix . $table . ' WHERE id IN (' . $idsGoByebye . ')';
-        if ($idsGoByebye) {
-            if ($DB->execute($sql)) {
-                $actionLog[] = $sql;
-            } else {
-                // an error occured during DB query
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', $table) . ': ' .
+        if(isset($this->tablesWithCompoundIndex[$table]['customprocessing'])){// require custom processing file if config is set
+            // first make sure file exists
+            if(is_file($CFG->dirroot . '/admin/tool/mergeusers/lib/customproc/' . $table . '.php')){
+                require_once($CFG->dirroot  . '/admin/tool/mergeusers/lib/customproc/' . $table . '.php');
+            }else{
+                $errorMessages[] = 'Invalid custom processing file.  No file found... ' .
+                    $CFG->dirroot . '/admin/tool/mergeusers/lib/customproc/' . $table . '.php';
+            }
+        }else{ // do standard processing
+            $idsGoByebye = implode(', ', $idsToRemove);
+            $sql = 'DELETE FROM ' . $CFG->prefix . $table . ' WHERE id IN (' . $idsGoByebye . ')';
+            if ($idsGoByebye) {
+                if ($DB->execute($sql)) {
+                    $actionLog[] = $sql;
+                } else {
+                    // an error occured during DB query
+                    $errorMessages[] = get_string('tableko', 'tool_mergeusers', $table) . ': ' .
                         $DB->get_last_error();
+                }
             }
         }
         unset($idsGoByebye); //free memory
