@@ -64,7 +64,6 @@ class MergeUserSearch{
                     'userid' => '%' . $input . '%',
                 );
                 $sql = 'SELECT * FROM {user} WHERE id LIKE :userid';
-                $results = $DB->get_records_sql($sql, $params);
 
                 break;
             case 'username': // search on username
@@ -73,7 +72,6 @@ class MergeUserSearch{
                     'username' => '%' . $input . '%',
                 );
                 $sql = 'SELECT * FROM {user} WHERE username LIKE :username';
-                $results = $DB->get_records_sql($sql, $params);
 
                 break;
             case 'firstname': // search on firstname
@@ -82,7 +80,6 @@ class MergeUserSearch{
                     'firstname' => '%' . $input . '%',
                 );
                 $sql = 'SELECT * FROM {user} WHERE firstname LIKE :firstname';
-                $results = $DB->get_records_sql($sql, $params);
 
                 break;
             case 'lastname': // search on lastname
@@ -91,7 +88,6 @@ class MergeUserSearch{
                     'lastname' => '%' . $input . '%',
                 );
                 $sql = 'SELECT * FROM {user} WHERE lastname LIKE :lastname';
-                $results = $DB->get_records_sql($sql, $params);
 
                 break;
             case 'email': // search on email
@@ -100,12 +96,11 @@ class MergeUserSearch{
                     'email' => '%' . $input . '%',
                 );
                 $sql = 'SELECT * FROM {user} WHERE email LIKE :email';
-                $results = $DB->get_records_sql($sql, $params);
 
                 break;
             default: // search on all fields by default
 
-                $boundparams = array(
+                $params = array(
                     'userid'     => '%' . $input . '%',
                     'username'   => '%' . $input . '%',
                     'firstname'  => '%' . $input . '%',
@@ -115,11 +110,10 @@ class MergeUserSearch{
 
                 $sql = 'SELECT * FROM {user} WHERE id LIKE :userid OR username LIKE :username OR firstname LIKE :firstname OR lastname LIKE :lastname OR email LIKE :email';
 
-                $results = $DB->get_records_sql($sql, $boundparams);
-
                 break;
         }
 
+        $results = $DB->get_records_sql($sql, $params);
         return $results;
     }
 
@@ -143,7 +137,7 @@ class MergeUserSearch{
             $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
         } catch (Exception $e) {
             $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
-            return array(NULL, $message);
+            $user = NULL;
         }
 
         return array($user, $message);

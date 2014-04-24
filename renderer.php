@@ -109,37 +109,35 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         // UserReviewTable handles grabbing old/new users from session and as well as building/not building
         $reviewtable = new UserReviewTable();
 
-        // if there are rows in the table (won't be rows if both olduser and newuser are NULL in session stdClass)
-        if(!empty($reviewtable->data)){
-
-            $tablehtml = '';
-            $tablehtml .= html_writer::start_tag('fieldset', array('class'=>'generalbox align-center') );
-            $tablehtml .= html_writer::tag('legend', get_string('userreviewtable_legend', 'tool_mergeusers') );
-
-            $tablehtml .= html_writer::table($reviewtable);
-
-            // Build option buttons
-            $mergeurl = new moodle_url('/admin/tool/mergeusers/index.php'); // set up url here so the same url can be used more than once
-            $tablehtml .= html_writer::start_tag('p'); // encapsulate buttons in p tag.
-
-            if($reviewtable->show_button()){ // only show button if table allows for it by having both user accounts
-
-                $mergeurl->param('option', 'mergeusers');
-
-                $mergeusersbutton = new single_button($mergeurl, get_string('mergeusers', 'tool_mergeusers'));
-                $mergeusersbutton->add_confirm_action(get_string('mergeusers_confirm', 'tool_mergeusers'));
-                $tablehtml .= $this->output->render($mergeusersbutton);
-            }
-            // Set up clear selection button
-            $mergeurl->param('option', 'clearselection');
-            $mergeusersbutton = new single_button($mergeurl, get_string('clear_selection', 'tool_mergeusers'));
-            $tablehtml .= $this->output->render($mergeusersbutton);
-
-
-            $tablehtml .= html_writer::end_tag('p'); // end button paragraph tag
-
-            $tablehtml .= html_writer::end_tag('fieldset');
+        // if there are no rows in the table, return. (won't be rows if both olduser and newuser are NULL in session stdClass)
+        if(empty($reviewtable->data)){
+            return $tablehtml;
         }
+
+        $tablehtml .= html_writer::start_tag('fieldset', array('class'=>'generalbox align-center') );
+        $tablehtml .= html_writer::tag('legend', get_string('userreviewtable_legend', 'tool_mergeusers') );
+
+        $tablehtml .= html_writer::table($reviewtable);
+
+        // Build option buttons
+        $mergeurl = new moodle_url('/admin/tool/mergeusers/index.php'); // set up url here so the same url can be used more than once
+        $tablehtml .= html_writer::start_tag('p'); // encapsulate buttons in p tag.
+
+        if($reviewtable->show_button()){ // only show button if table allows for it by having both user accounts
+
+            $mergeurl->param('option', 'mergeusers');
+
+            $mergeusersbutton = new single_button($mergeurl, get_string('mergeusers', 'tool_mergeusers'));
+            $mergeusersbutton->add_confirm_action(get_string('mergeusers_confirm', 'tool_mergeusers'));
+            $tablehtml .= $this->output->render($mergeusersbutton);
+        }
+        // Set up clear selection button
+        $mergeurl->param('option', 'clearselection');
+        $mergeusersbutton = new single_button($mergeurl, get_string('clear_selection', 'tool_mergeusers'));
+        $tablehtml .= $this->output->render($mergeusersbutton);
+
+        $tablehtml .= html_writer::end_tag('p'); // end button paragraph tag
+        $tablehtml .= html_writer::end_tag('fieldset');
 
         return $tablehtml;
     }

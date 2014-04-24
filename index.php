@@ -84,16 +84,12 @@ if(!empty($option)){ // if there was a custom option submitted (by custom form) 
             //   data, unless a "new" old, or "new" new is specified
 
             // If session old user already has a user and we have a "new" old user, replace the sesson's old user
-            if(!empty($SESSION->mut->olduser) && !empty($olduser) ){
-                $SESSION->mut->olduser = $olduser;
-            }else if(empty($SESSION->mut->olduser)){ // If session's old user is empty add whatever $olduser is
+            if(empty($SESSION->mut->olduser) && !empty($olduser) ){
                 $SESSION->mut->olduser = $olduser;
             }
 
             // If session new user already has a user and we have a "new" new user, replace the sesson's new user
-            if(!empty($SESSION->mut->newuser) && !empty($newuser) ){
-                $SESSION->mut->newuser = $newuser;
-            }else if(empty($SESSION->mut->newuser)){ // If session's new user is empty add whatever $newuser is
+            if(empty($SESSION->mut->newuser) && !empty($newuser) ){
                 $SESSION->mut->newuser = $newuser;
             }
 
@@ -118,7 +114,7 @@ if(!empty($option)){ // if there was a custom option submitted (by custom form) 
             list($touser, $numessage) = $mus->verify_user($SESSION->mut->newuser->id, 'id');
             if($fromuser === NULL || $touser === NULL){
                 $renderer->mu_error($oumessage . '<br />' . $numessage);
-                exit(); // end execution for error
+                break; // break execution for error
             }
 
             // Merge the users
@@ -136,14 +132,14 @@ if(!empty($option)){ // if there was a custom option submitted (by custom form) 
         default:
 
             $renderer->mu_error(get_string('invalid_option', 'tool_mergeusers'));
-            exit(); // end execution for error
 
             break;
     }
 
 }else if ($data) { // Any submitted data?
 
-    if(!empty($data->searchgroup['searcharg'])){ // If there is a search argument use this instead of advanced form
+    // If there is a search argument use this instead of advanced form
+    if(!empty($data->searchgroup['searcharg'])){
 
         $search_users = $mus->search_users($data->searchgroup['searcharg'], $data->searchgroup['searchfield']);
         $user_select_table = new UserSelectTable($search_users);
@@ -175,3 +171,4 @@ if(!empty($option)){ // if there was a custom option submitted (by custom form) 
     // no form submitted data
     echo $renderer->index_page($mergeuserform);
 }
+
