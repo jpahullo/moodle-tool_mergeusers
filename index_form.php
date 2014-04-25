@@ -53,7 +53,7 @@ class mergeuserform extends moodleform {
         );
 
         $searchfields = array(
-            ''          => get_string('allfields', 'tool_mergeusers'),
+            ''          => get_string('all'),
             'id'        => 'Id',
             'username'  => get_string('username'),
             'firstname' => get_string('firstname'),
@@ -82,7 +82,6 @@ class mergeuserform extends moodleform {
         $mform->setType('oldusergroup[olduserid]', PARAM_RAW_TRIMMED);
         $mform->setAdvanced('oldusergroup');
 
-
         $newuser = array();
         $newuser[] = $mform->createElement('text', 'newuserid', "", 'size="10"');
         $newuser[] = $mform->createElement('select', 'newuseridtype', '', $idstype, '');
@@ -90,8 +89,6 @@ class mergeuserform extends moodleform {
         $mform->setType('newusergroup[newuserid]', PARAM_RAW_TRIMMED);
         $mform->setAdvanced('newusergroup');
 
-
-        $this->add_action_buttons(false, get_string('searchbutton', 'tool_mergeusers'));
+        $this->add_action_buttons(false, get_string('search'));
     }
 }
-

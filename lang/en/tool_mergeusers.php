@@ -85,34 +85,32 @@ $string['transactions_not_supported'] = 'For your information, your database
 
 // Form Strings
 $string['form_header'] = 'Find users to merge';
-$string['form_description'] = '<p>You may search for users here if you don\'t know the user\'s username/id number.' .
-    '  Otherwise you may expand the form to enter that information directly.  Please see help on fields for more information</p>';
-$string['allfields'] = 'All';
+$string['form_description'] = '<p>You may search for users here if you don\'t
+    know the user\'s username/id number. Otherwise you may expand the form to
+    enter that information directly.  Please see help on fields for more
+    information</p>';
 $string['searchuser'] = 'Search for User';
-$string['searchuser_help'] = 'Enter a username, first/last name, email address, user id, or database userid to search for potential users.' .
-    '  You may also specify if you only want to search through a particular field.';
-$string['searchbutton'] = 'Search';
+$string['searchuser_help'] = 'Enter a username, first/last name, email address
+    or user id to search for potential users. You may also specify if you only
+    want to search through a particular field.';
 $string['mergeusersadvanced'] = '<strong>Direct user input</strong>';
-$string['mergeusersadvanced_help'] = 'Here you can enter the below fields if you know exactly what users that you want to merge.<br /><br />
-Click the "search" button in order to verify/confirm that the input entered are in fact users.';
-$string['mergeusers_confirm'] = 'After confirming the merge process will start.  <strong>This will not be reversible!</strong>  Are you sure you want to continue?';
+$string['mergeusersadvanced_help'] = 'Here you can enter the below fields if
+    you know exactly what users that you want to merge.<br /><br />
+    Click the "search" button in order to verify/confirm that the input entered
+    are in fact users.';
+$string['mergeusers_confirm'] = 'After confirming the merge process will start.
+    <br /><strong>This will not be reversible!</strong>
+    Are you sure you want to continue?';
 $string['clear_selection'] = 'Clear current user selection';
 
 // Merge users select table
-$string['selecttable_select_user'] = 'Old user';
-$string['selecttable_select_master_user'] = 'New user';
-$string['selecttable_userid'] = 'UserID';
-$string['selecttable_username'] = 'Username';
-$string['selecttable_firstname'] = 'First name';
-$string['selecttable_lastname'] = 'Last name';
-$string['selecttable_email'] = 'Email';
+$string['olduser'] = 'User to remove';
+$string['newuser'] = 'User to keep';
 $string['saveselection_submit'] = 'Save selection';
 $string['userselecttable_legend'] = '<b>Select users to merge</b>';
 
 // Merge users review table
 $string['userreviewtable_legend'] = '<b>Review users to merge</b>';
-$string['old_user'] = 'old user';
-$string['new_user'] = 'new user';
 
 // Error string
 $string['error_return'] = 'Return to search form';
@@ -120,6 +118,19 @@ $string['no_saveselection'] = 'You did not select either an old or new user.';
 $string['invalid_option'] = 'Invalid form option';
 
 // Settings page
-$string['settings_page_name'] = 'Merge users settings';
 $string['suspenduser_setting'] = 'Suspend old user';
-$string['suspenduser_setting_desc'] = 'Suspend old user upon the merging of an old user.  This is done automatically after a successful merge process';
+$string['suspenduser_setting_desc'] = 'If enabled, it suspends the old user
+    automatically upon a succesful merging process, preventing the user
+    from logging in Moodle (recommended). If disabled, the old user remains active.
+    In both cases, old user will not have his/her related data.';
+$string['transactions_setting'] = 'Only transactions allowed';
+$string['transactions_setting_desc'] = 'If enabled, merge users will not work
+    at all on databases that do NOT support transactions (recommended).
+    Enabling it is necessary to ensure that your database remains consistent
+    in case of merging errors. <br />If disabled, you will always run merging actions.
+    In case of errors, the merging log will show you what was the problem.
+    Reporting it to the plugin supporters will give you a solution in short.
+    <br />Above all, core Moodle tables and some third party plugins are already
+    considered by this plugin. If you do not have any third party plugins
+    in your Moodle installation, you can be quiet on running this plugin
+    enabling or disabling this option.';

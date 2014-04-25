@@ -93,11 +93,11 @@ class UserReviewTable extends html_table implements renderable{
 
             $columns = array(
                 'col_label'          => '',
-                'col_userid'         => get_string('selecttable_userid', 'tool_mergeusers'),
-                'col_username'       => get_string('selecttable_username', 'tool_mergeusers'),
-                'col_firstname'      => get_string('selecttable_firstname', 'tool_mergeusers'),
-                'col_lastname'       => get_string('selecttable_lastname', 'tool_mergeusers'),
-                'col_email'          => get_string('selecttable_email', 'tool_mergeusers'),
+                'col_userid'         => 'Id',
+                'col_username'       => get_string('username'),
+                'col_firstname'      => get_string('firstname'),
+                'col_lastname'       => get_string('lastname'),
+                'col_email'          => get_string('email'),
             );
             $this->head = array_values($columns);
             $this->colclasses = array_keys($columns);
@@ -106,7 +106,7 @@ class UserReviewTable extends html_table implements renderable{
 
             // Add old user row
             $olduserrow = array();
-            $olduserrow[] = get_string('old_user', 'tool_mergeusers');
+            $olduserrow[] = get_string('olduser', 'tool_mergeusers');
             if(!empty($this->olduser)){ // if there is an old user display it
                 $olduserrow[] = $this->olduser->id;
                 $olduserrow[] = $this->olduser->username;
@@ -124,7 +124,7 @@ class UserReviewTable extends html_table implements renderable{
 
             // Add new user row
             $newuserrow = array();
-            $newuserrow[] = get_string('new_user', 'tool_mergeusers');
+            $newuserrow[] = get_string('newuser', 'tool_mergeusers');
             if(!empty($this->newuser)){ // if there is an new user display it
                 $newuserrow[] = $this->newuser->id;
                 $newuserrow[] = $this->newuser->username;
