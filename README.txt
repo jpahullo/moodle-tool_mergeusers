@@ -23,13 +23,18 @@ cases:
     completely unable to access the course. To remove these records all
     together I recomend disabling or deleting the entire old user account once
     the migration has been successful.
-* Special Case #3: There are 3 logging/preference tables
-    (user_lastaccess, user_preferences, user_private_key) which exist in
+* Special Case #3: There are 4 logging/preference tables
+    (user_lastaccess, user_preferences, user_private_key, my_pages) which exist in
     Moodle 2.0. This script is simply skipping these tables since there's no
     legitimate purpose to updating the userid value here. This would lead to
     duplicate rows for the new user which is silly. Again, if you want to
     remove these records I would recommend deleting the old user after this
-    script runs sucessfully.
+    script runs sucessfully. my_pages' records will not be deleted, but
+    this is something you find in Moodle, that not all records related to a
+    specific entity are clened up. We need to skip my_pages table too, since
+    that MyMoodle page of the old user have a relation of blocks appearing on it.
+    If we proceed with a normal merging action, resulting with two records
+    with the same userid, the user will not see correctly his/her MyMoodle page.
 * Special Case #4: mod/journal plugin has a record per user and journal on
     journal_entries table. In case there is a record for both users, we delete
     the record related to the old user. For the rest of cases, this operates as usual.
