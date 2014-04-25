@@ -84,12 +84,12 @@ if(!empty($option)){ // if there was a custom option submitted (by custom form) 
             //   data, unless a "new" old, or "new" new is specified
 
             // If session old user already has a user and we have a "new" old user, replace the sesson's old user
-            if(empty($SESSION->mut->olduser) && !empty($olduser) ){
+            if(empty($SESSION->mut->olduser) || !empty($olduser) ){
                 $SESSION->mut->olduser = $olduser;
             }
 
             // If session new user already has a user and we have a "new" new user, replace the sesson's new user
-            if(empty($SESSION->mut->newuser) && !empty($newuser) ){
+            if(empty($SESSION->mut->newuser) || !empty($newuser) ){
                 $SESSION->mut->newuser = $newuser;
             }
 
