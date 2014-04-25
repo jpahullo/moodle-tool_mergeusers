@@ -44,6 +44,7 @@ return array(
         'user_preferences',
         'user_private_key',
         'user_info_data',
+        'my_pages',
     ),
 
     // List of compound indexes.
