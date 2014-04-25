@@ -74,13 +74,13 @@ class UserSelectTable extends html_table implements renderable{
         $this->attributes['class'] = 'generaltable boxaligncenter';
 
         $columns = array(
-            'col_select_olduser' => get_string('selecttable_select_user', 'tool_mergeusers'),
-            'col_master_newuser' => get_string('selecttable_select_master_user', 'tool_mergeusers'),
-            'col_userid'         => get_string('selecttable_userid', 'tool_mergeusers'),
-            'col_username'       => get_string('selecttable_username', 'tool_mergeusers'),
-            'col_firstname'      => get_string('selecttable_firstname', 'tool_mergeusers'),
-            'col_lastname'       => get_string('selecttable_lastname', 'tool_mergeusers'),
-            'col_email'          => get_string('selecttable_email', 'tool_mergeusers'),
+            'col_select_olduser' => get_string('olduser', 'tool_mergeusers'),
+            'col_master_newuser' => get_string('newuser', 'tool_mergeusers'),
+            'col_userid'         => 'Id',
+            'col_username'       => get_string('username'),
+            'col_firstname'      => get_string('firstname'),
+            'col_lastname'       => get_string('lastname'),
+            'col_email'          => get_string('email'),
         );
         $this->head = array_values($columns);
         $this->colclasses = array_keys($columns);

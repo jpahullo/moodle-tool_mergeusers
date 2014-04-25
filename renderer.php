@@ -86,11 +86,11 @@ class tool_mergeusers_renderer extends plugin_renderer_base
                 'id'=>'mergeusers_user_select_table_form'
             )
         );
-        $tablehtml .= html_writer::tag('input', null, array('type'=>'submit','name'=>'mergeusers_submit', 'class'=>'boxaligncenter',
-            'value'=>get_string('saveselection_submit', 'tool_mergeusers')));
 
         $tablehtml .= html_writer::table($ust);
         $tablehtml .= html_writer::tag('input', null, array('type'=>'hidden','name'=>'option', 'value'=>'saveselection'));
+        $tablehtml .= html_writer::tag('input', null, array('type'=>'submit','name'=>'mergeusers_submit', 'class'=>'boxaligncenter',
+            'value'=>get_string('saveselection_submit', 'tool_mergeusers')));
         $tablehtml .= html_writer::end_tag('form');
         $tablehtml .= html_writer::end_tag('fieldset');
 
