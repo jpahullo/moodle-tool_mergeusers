@@ -13,14 +13,14 @@
 
 $string['pluginname'] = 'Merge user accounts';
 $string['header'] = 'Merge two users into a single account';
-$string['description'] =
-'<p>Given a user ID to be deleted and a user ID to keep, this will merge the user data
- associated with the former user ID into the latter user ID. Note that both user IDs must
+$string['header_help'] =
+'<p>Given a user to be deleted and a user to keep, this will merge the user data
+ associated with the former user into the latter user. Note that both users must
  already exist and no accounts will actually be deleted. That process is left to the
  administrator to do manually.</p>
  <p>This process involves some database dependant functions and may not have been fully tested
- on your particular choice of database. <strong>Only do this if you know what you are doing
- as it is not reversable!</strong></p>';
+ on your particular choice of database.</p>
+ <p><strong>Only do this if you know what you are doing as it is not reversable!</strong></p>';
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Trying to merge the same user';
 $string['mergeusers'] = 'Merge user accounts';

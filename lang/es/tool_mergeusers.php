@@ -10,14 +10,14 @@
 
 $string['pluginname'] = 'Fusión de cuentas de usuario';
 $string['header'] = 'Fusión de dos cuentas de usuario en una';
-$string['description'] =
-'<p>Dado un ID de usuario a ser eliminado y un ID a mantener, esta herramienta fusiona/mueve
- los datos relativos del usario a ser eliminado sobre el ID de usuario a manetener.
- Es importante saber que ambos IDs deben existir previamente, y que no se eliminará ninguna cuenta
+$string['header_help'] =
+'<p>Dado un usuario a ser eliminado y un usuario a mantener, esta herramienta fusiona/mueve
+ los datos relativos del usario a ser eliminado sobre el usuario a manetener.
+ Es importante saber que ambos usuarios deben existir previamente, y que no se eliminará ninguna cuenta
  de Moodle. El administrador de sistema deberá eliminarlo manualmente si es necesario.</p>
- <p>Este proceso usa funciones que dependen de la base de dadtos y puede ser que su funcionamiento
- no esté totalmente comprobado para vuestra base de datos. <strong>Recuerda que esta acción es
- irreversible!</strong></p>';
+ <p>Este proceso usa funciones que dependen de la base de datos y puede ser que su funcionamiento
+ no esté totalmente comprobado para vuestra base de datos.</p>
+ <p><strong>Recuerda que esta acción es irreversible!</strong></p>';
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Tratando de combinar el mismo usuario';
 $string['mergeusers'] = 'Fusiona cuentas de usuario';

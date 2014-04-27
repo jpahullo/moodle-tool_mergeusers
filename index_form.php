@@ -52,7 +52,7 @@ class mergeuserform extends moodleform {
         );
 
         $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));
-        $mform->addElement('html', get_string('description', 'tool_mergeusers'));
+        $mform->addHelpButton('mergeusers', 'header', 'tool_mergeusers');
 
         // Add elements
         $olduser = array();
