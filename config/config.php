@@ -89,6 +89,7 @@ return array(
         'message_contacts' => array('userid', 'contactid'), //compound index
         'message' => array('useridfrom', 'useridto'),
         'message_read' => array('useridfrom', 'useridto'),
+        'question' => array('createdby', 'modifiedby'),
         'default' => array('userid', 'user_id', 'id_user', 'user'), //may appear compound index
     ),
 );
