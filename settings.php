@@ -40,3 +40,20 @@ if ($hassiteconfig) {
             $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/view.php',
             'moodle/site:config'));
 }
+
+// Add configuration for making user suspension optional
+$settings = new admin_settingpage('mergeusers_settings',
+    get_string('pluginname', 'tool_mergeusers'));
+
+$settings->add(new admin_setting_configcheckbox('tool_mergeusers/suspenduser',
+    get_string('suspenduser_setting', 'tool_mergeusers'),
+    get_string('suspenduser_setting_desc', 'tool_mergeusers'),
+    1));
+
+$settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions',
+    get_string('transactions_setting', 'tool_mergeusers'),
+    get_string('transactions_setting_desc', 'tool_mergeusers'),
+    1));
+
+// Add settings
+$ADMIN->add('tools', $settings);

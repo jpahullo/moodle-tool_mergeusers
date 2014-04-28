@@ -24,13 +24,14 @@
  * @author     Forrest Gaston
  * @author     Juan Pablo Torres Herrera
  * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @author     John Hoopes <hoopes@wisc.edu> University of Wisconsin - Madison
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2014011012;
+$plugin->version   = 2014040201;
 $plugin->requires  = 2011120500;
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_BETA;
-$plugin->release = '1.6 (Build: 2014011012)';
+$plugin->release = '1.7 (Build: 2014040200)';
