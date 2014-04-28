@@ -60,7 +60,7 @@ class Logger {
             if (CLI_SCRIPT) {
                 cli_error($msg);
             } else {
-                print_error($msg);
+                print_error($msg, null, new moodle_url('/admin/tool/mergeusers/index.php'));
             }
         }
     }

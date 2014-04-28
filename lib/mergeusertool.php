@@ -343,7 +343,7 @@ class MergeUserTool
             if (CLI_SCRIPT) {
                 cli_error('Error: ' . __METHOD__ . ':: ' . get_string('errordatabase', 'tool_mergeusers', $CFG->dbtype));
             } else {
-                print_error('errordatabase', 'tool_mergeusers', '', $CFG->dbtype);
+                print_error('errordatabase', 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php'), $CFG->dbtype);
             }
         }
     }

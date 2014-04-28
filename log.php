@@ -45,7 +45,7 @@ $logger = new Logger();
 $log = $logger->getDetail($id);
 
 if (empty($log)) {
-    print_error('wronglogid', 'tool_mergeusers'); //aborts execution
+    print_error('wronglogid', 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php')); //aborts execution
 }
 
 $from = $DB->get_record('user', array('id' => $log->fromuserid), 'id, username');
