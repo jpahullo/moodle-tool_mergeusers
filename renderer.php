@@ -43,7 +43,6 @@ class tool_mergeusers_renderer extends plugin_renderer_base
     {
         $output = $this->header();
         $output .= $this->heading(get_string('mergeusers', 'tool_mergeusers'));
-        $output .= $this->render_page_description();
         $output .= $this->render_user_review_table();
         $output .= $this->moodleform($mform);
 
@@ -53,19 +52,6 @@ class tool_mergeusers_renderer extends plugin_renderer_base
 
         $output .= $this->footer();
         return $output;
-    }
-    /**
-     * Render the header description area to explain the tool
-     *
-     * @return string $pagedesc html string of the page description box
-     */
-    public function render_page_description(){
-
-        $pagedesc = $this->output->box_start();
-        $pagedesc .= html_writer::tag('h3', get_string('header', 'tool_mergeusers'));
-        $pagedesc .= html_writer::tag('p', get_string('description', 'tool_mergeusers'));
-        $pagedesc .= $this->output->box_end();
-        return $pagedesc;
     }
 
     /**
