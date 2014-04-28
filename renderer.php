@@ -40,7 +40,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
     public function index_page(moodleform $mform)
     {
         $output = $this->header();
-        $output .= $this->heading(get_string('mergeusers', 'tool_mergeusers'));
+        $output .= $this->heading_with_help(get_string('mergeusers', 'tool_mergeusers'), 'header', 'tool_mergeusers');
         $output .= $this->moodleform($mform);
         $output .= $this->footer();
         return $output;
