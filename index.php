@@ -27,10 +27,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// Report all PHP errors
-error_reporting(E_ALL);
-ini_set('display_errors', 'On');
-
 require('../../../config.php');
 
 global $CFG;
