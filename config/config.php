@@ -40,7 +40,6 @@ return array(
     // Database tables to be excluded from normal processing.
     // You normally will add tables. Be very cautious if you delete any of them.
     'exceptions' => array(
-        'user_lastaccess',
         'user_preferences',
         'user_private_key',
         'user_info_data',
@@ -78,6 +77,10 @@ return array(
         'role_assignments' => array(
             'userfield' => 'userid',
             'otherfields' => array('contextid', 'roleid'),
+        ),
+        'user_lastaccess' => array(
+            'userfield' => 'userid',
+            'otherfields' => array('courseid'),
         ),
     ),
 
