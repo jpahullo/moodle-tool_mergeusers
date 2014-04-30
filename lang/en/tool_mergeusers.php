@@ -6,6 +6,7 @@
  * @author Juan Pablo Torres Herrera
  * @author Shane Elliott, Pukunui Technology
  * @author Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @author John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @package tool_mergeusers
  * @link http://moodle.org/mod/forum/discuss.php?d=103425
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -40,7 +41,7 @@ $string['dbko'] = 'Merge FAILED! <br/>If your database engine supports
  made to your database records.';
 $string['tableskipped'] = 'For logging or security reasons we are skipping <strong>{$a}</strong>.
  <br />To remove these entries, delete the old user once this script has run successfully.';
-$string['errordatabase'] = 'Database type not supported: {$a}';
+$string['errordatabase'] = 'Error: Database type {$a} not supported.';
 $string['invaliduser'] = 'Invalid user';
 $string['cligathering:description'] = "Introduce pairs of user's id to merge the first one into the\n
 second one. The first user id (fromid) will 'lose' all its data to be 'migrated'\n
@@ -55,3 +56,23 @@ $string['olduseridonlog'] = 'User ID removed';
 $string['nologs'] = 'There is no merging logs yet. Good for you!';
 $string['wronglogid'] = 'The log you are asking for does not exist.';
 $string['deleted'] = 'User with ID {$a} was deleted';
+$string['errortransactionsonly'] = 'Error: transactions are required, but your database type {$a}
+    does not support them. If needed, you can allow merging users without transactions.
+    Please, review plugin settings to set up them accordingly.';
+
+// Settings page
+$string['transactions_setting'] = 'Only transactions allowed';
+$string['transactions_setting_desc'] = 'If enabled, merge users will not work
+    at all on databases that do NOT support transactions (recommended).
+    Enabling it is necessary to ensure that your database remains consistent
+    in case of merging errors. <br />If disabled, you will always run merging actions.
+    In case of errors, the merging log will show you what was the problem.
+    Reporting it to the plugin supporters will give you a solution in short.
+    <br />Above all, core Moodle tables and some third party plugins are already
+    considered by this plugin. If you do not have any third party plugins
+    in your Moodle installation, you can be quiet on running this plugin
+    enabling or disabling this option.';
+$string['transactions_supported'] = 'For your information, your database
+    <strong>supports transactions</strong>.';
+$string['transactions_not_supported'] = 'For your information, your database
+    <strong>does not supports transactions</strong>.';

@@ -23,10 +23,14 @@
  * @author     Mike Holzer
  * @author     Forrest Gaston
  * @author     Juan Pablo Torres Herrera
+ * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
+
+require_once __DIR__ . '/lib/autoload.php';
 
 if ($hassiteconfig) {
     $ADMIN->add('accounts',
@@ -40,3 +44,18 @@ if ($hassiteconfig) {
             $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/view.php',
             'moodle/site:config'));
 }
+
+// Add configuration for making user suspension optional
+$settings = new admin_settingpage('mergeusers_settings',
+    get_string('pluginname', 'tool_mergeusers'));
+
+$supporting_lang = (MergeUserTool::transactionsSupported()) ? 'transactions_supported' : 'transactions_not_supported';
+
+$settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',
+    get_string('transactions_setting', 'tool_mergeusers'),
+    get_string('transactions_setting_desc', 'tool_mergeusers') . '<br /><br />' .
+        get_string($supporting_lang, 'tool_mergeusers'),
+    1));
+
+// Add settings
+$ADMIN->add('tools', $settings);
