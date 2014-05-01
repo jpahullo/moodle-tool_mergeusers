@@ -42,7 +42,7 @@ $string['dbko'] = 'La fusion a ECHOUE !<br/>Si votre moteur de base de
 $string['tableskipped'] = 'Pour des raisons de traçabilité ou de sécurité, la table
  <strong>{$a}</strong> n\'est pas traitée.<br />Pour supprimer ces entrées, supprimez l\'ancien
  compte utilisateur une fois la fusion réussie.';
-$string['errordatabase'] = 'Type de base de données non supporté : {$a}';
+$string['errordatabase'] = 'Erreur: Type de base de données {$a} non supporté.';
 $string['invaliduser'] = 'Utilisateur non valide';
 $string['cligathering:description'] = 'Entrez les ID utilisateur à fusionner : le premier (fromid) vers le second (toid).
 Les données liées au premier utilisateur seront transférées vers le second, qui intégrera alors toutes les données.';
@@ -56,4 +56,27 @@ $string['olduseridonlog'] = 'ID d\'utilisateur supprimé';
 $string['nologs'] = 'Pas de records de fusion d\'utilisateurs. Bon pour vous!';
 $string['wronglogid'] = 'Il n\'existe aucun enregistrement correspondant à votre choix.';
 $string['deleted'] = 'L\'utilisateur ID {$a} a été éliminé';
+$string['errortransactionsonly'] = 'Erreur: Exiger des transactions, et votre
+    base de données {$a} ne les supporte pas. Si nécessaire, vous pouvez
+    configurer que les fusions sont faites sans transactions.
+    Vérifiez les paramètres en fonction de vos besoins.';
 
+// Settings page
+$string['transactions_setting'] = 'Seules les transactions sont autorisées';
+$string['transactions_setting_desc'] = 'Si cette option est activée,
+    les utilisateurs fusion effectuée si la base de données prend en charge
+    les transactions PAS (recommandé).
+    Avec cette option activée, vous vous assurez que la base de données reste
+    toujours cohérente, même si la fusion se termine avec des erreurs. <br />
+    Si cette option est désactivée, vous aurez toujours réaliser la fusion des
+    utilisateurs. En cas d\'erreur, l\'inscription de la fusion montrera quel
+    était le problème. Si vous signalé cette erreur aux développeurs de ce
+    plugin, avoir la solution bientôt. <br />
+    Notez que ce plugin bien géré tout les tables de la base de données de
+    Moodle, et aussi des plugins tiers. Par conséquent, si vous avez juste
+    une installation de Moodle standard, vous pouvez exécuter ce plugin si
+    calmement avec cette option activée com désactivé.';
+$string['transactions_supported'] = 'Pour votre information, sur la base
+    données <strong>prend en charge les transactions</strong>.';
+$string['transactions_not_supported'] = 'Pour votre information, sur la base
+    données <strong>ne prennent pas en charge les transactions</strong>.';

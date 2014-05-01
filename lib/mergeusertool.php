@@ -27,6 +27,7 @@
  * @author     Forrest Gaston
  * @author     Juan Pablo Torres Herrera
  * @author     Jordi Pujol-Ahulló <jordi.pujol@urv.cat>,  SREd, Universitat Rovira i Virgili
+ * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
@@ -110,9 +111,11 @@ class MergeUserTool
     {
         global $CFG;
 
-        $this->logger = (is_null($logger))?new Logger():$logger;
-        $config = (is_null($config))?Config::instance():$config;
+        $this->logger = (is_null($logger)) ? new Logger() : $logger;
+        $config = (is_null($config)) ? Config::instance() : $config;
         $this->supportedDatabase = true;
+
+        $this->checkTransactionSupport();
 
         if ($CFG->dbtype == 'sqlsrv') {
             // MSSQL
@@ -174,7 +177,7 @@ class MergeUserTool
         $event->oldid = $fromid;
         $event->log = $result[1];
         $event->timemodified = time();
-        events_trigger(($result[0])?'merging_success':'merging_failed', $event);
+        events_trigger(($result[0]) ? 'merging_success' : 'merging_failed', $event);
 
         $result[] = $this->logger->log($toid, $fromid, $result[0], $result[1]);
         return $result;
@@ -195,7 +198,6 @@ class MergeUserTool
         global $CFG, $DB;
 
         // initial checks.
-
         // database type is supported?
         if (!$this->supportedDatabase) {
             return array(false, array(get_string('errordatabase', 'tool_mergeusers', $CFG->dbtype)));
@@ -278,7 +280,8 @@ class MergeUserTool
             try {
                 //thrown controlled exception.
                 $transaction->rollback(new Exception(__METHOD__ . ':: Rolling back transcation.'));
-            } catch (Exception $e) { /* do nothing, just for correctness */ }
+            } catch (Exception $e) { /* do nothing, just for correctness */
+            }
         }
 
         // concludes with an array of error messages otherwise.
@@ -316,8 +319,8 @@ class MergeUserTool
             }
 
             // detect available user-related fields among database tables.
-            $userFields = (isset($this->userFieldNames[$tableName]))?
-                    $this->userFieldNames[$tableName]:
+            $userFields = (isset($this->userFieldNames[$tableName])) ?
+                    $this->userFieldNames[$tableName] :
                     $this->userFieldNames['default'];
 
             $currentFields = $this->getCurrentUserFieldNames($fullTableName, $userFields);
@@ -346,6 +349,52 @@ class MergeUserTool
                 print_error('errordatabase', 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php'), $CFG->dbtype);
             }
         }
+    }
+
+    /**
+     * Gets whether database transactions are allowed.
+     * @global moodle_database $DB
+     * @return bool true if transactions are allowed. false otherwise.
+     */
+    public static function transactionsSupported()
+    {
+        global $DB;
+
+        // Tricky way of getting real transactions support, without re-programming it.
+        // May be in the future, as phpdoc shows, this method will be publicly accessible.
+        $method = new ReflectionMethod($DB, 'transactions_supported');
+        $method->setAccessible(true); //method is protected; make it accessible.
+        return $method->invoke($DB);
+    }
+
+    /**
+     * Checks whether the current database supports transactions.
+     * If settings of this plugin are set up to allow only transactions,
+     * this method aborts the execution. Otherwise, this method will return
+     * true or false whether the current database supports transactions or not,
+     * respectively.
+     * @global moodle_database $DB
+     * @param bool $abort if true (default), if transactions are not supported
+     * and only transactions must be used, aborts execution. false to always
+     * return if transactions are allowed.
+     * @return bool true if database transactions are supported. false otherwise.
+     */
+    public function checkTransactionSupport()
+    {
+        global $CFG;
+
+        $transactionsSupported = self::transactionsSupported();
+        $forceOnlyTransactions = get_config('tool_mergeusers', 'transactions_only');
+
+        if (!$transactionsSupported && $forceOnlyTransactions) {
+            if (CLI_SCRIPT) {
+                cli_error('Error: ' . __METHOD__ . ':: ' . get_string('errortransactionsonly', 'tool_mergeusers', $CFG->dbtype));
+            } else {
+                print_error('errortransactionsonly', 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php'), $CFG->dbtype);
+            }
+        }
+
+        return $transactionsSupported;
     }
 
     /**
@@ -563,8 +612,8 @@ class MergeUserTool
     {
         // we can alternate column names when both fields are user-related.
         if (isset($this->tablesWithCompoundIndex[$tableName]['both']) &&
-            $this->tablesWithCompoundIndex[$tableName]['both'] &&
-            $userField != $this->tablesWithCompoundIndex[$tableName]['userfield']) {
+                $this->tablesWithCompoundIndex[$tableName]['both'] &&
+                $userField != $this->tablesWithCompoundIndex[$tableName]['userfield']) {
 
             // get the list of other fields.
             $others = array_flip($this->tablesWithCompoundIndex[$tableName]['otherfields']);
@@ -632,4 +681,5 @@ class MergeUserTool
         }
         return $fieldNames;
     }
+
 }
