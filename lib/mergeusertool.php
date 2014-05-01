@@ -373,10 +373,6 @@ class MergeUserTool
      * this method aborts the execution. Otherwise, this method will return
      * true or false whether the current database supports transactions or not,
      * respectively.
-     * @global moodle_database $DB
-     * @param bool $abort if true (default), if transactions are not supported
-     * and only transactions must be used, aborts execution. false to always
-     * return if transactions are allowed.
      * @return bool true if database transactions are supported. false otherwise.
      */
     public function checkTransactionSupport()
