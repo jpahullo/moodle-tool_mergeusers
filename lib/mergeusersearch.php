@@ -108,18 +108,28 @@ class MergeUserSearch{
                     'email'      => '%' . $input . '%'
                 );
 
-                $sql = 'SELECT * FROM {user} WHERE id LIKE :userid OR username LIKE :username OR firstname LIKE :firstname OR lastname LIKE :lastname OR email LIKE :email';
+                $sql =
+                   'SELECT *
+                    FROM {user}
+                    WHERE
+                        id LIKE :userid OR
+                        username LIKE :username OR
+                        firstname LIKE :firstname OR
+                        lastname LIKE :lastname OR
+                        email LIKE :email';
 
                 break;
         }
 
-        $results = $DB->get_records_sql($sql, $params);
+        $ordering = ' ORDER BY lastname, firstname';
+
+        $results = $DB->get_records_sql($sql . $ordering, $params);
         return $results;
     }
 
     /**
-     * Verifies whether or not a user exists based upon the user information to verify and the column that matches
-     * that information
+     * Verifies whether or not a user exists based upon the user information
+     * to verify and the column that matches that information
      *
      * @param mixed $uinfo The identifying information about the user
      * @param string $column The column name to verify against.  (should not be direct user input)

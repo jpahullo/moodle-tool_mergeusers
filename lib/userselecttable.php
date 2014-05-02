@@ -41,7 +41,8 @@ require_once(__DIR__ . '/autoload.php');
 require_once($CFG->dirroot . '/lib/outputcomponents.php');
 
 /**
- * Extend the html table to provide a build function inside for creating a table for user selecting
+ * Extend the html table to provide a build function inside for creating a table
+ * for user selecting.
  *
  * @author  John Hoopes <hoopes@wisc.edu>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
