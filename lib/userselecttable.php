@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -28,7 +29,6 @@
  * @author     John Hoopes <hoopes@wisc.edu>, Univeristy of Wisconsin - Madison
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php');
@@ -38,7 +38,7 @@ global $CFG;
 // require needed library files
 require_once($CFG->dirroot . '/lib/clilib.php');
 require_once(__DIR__ . '/autoload.php');
-require_once($CFG->dirroot.'/lib/outputcomponents.php');
+require_once($CFG->dirroot . '/lib/outputcomponents.php');
 
 /**
  * Extend the html table to provide a build function inside for creating a table for user selecting
@@ -46,16 +46,23 @@ require_once($CFG->dirroot.'/lib/outputcomponents.php');
  * @author  John Hoopes <hoopes@wisc.edu>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class UserSelectTable extends html_table implements renderable{
+class UserSelectTable extends html_table implements renderable
+{
+
+    /** @var tool_mergeusers_renderer Renderer to show user info. */
+    protected $renderer;
 
     /**
      * Call parent construct
      *
      * @param array $users
+     * @param tool_mergeusers_renderer $renderer
      *
      */
-    public function __construct($users){
+    public function __construct($users, $renderer)
+    {
         parent::__construct();
+        $this->renderer = $renderer;
         $this->buildtable($users);
     }
 
@@ -65,8 +72,8 @@ class UserSelectTable extends html_table implements renderable{
      * @param array $users array of user results
      *
      */
-    protected function buildtable($users){
-
+    protected function buildtable($users)
+    {
         // Reset any existing data
         $this->data = array();
 
@@ -76,29 +83,22 @@ class UserSelectTable extends html_table implements renderable{
         $columns = array(
             'col_select_olduser' => get_string('olduser', 'tool_mergeusers'),
             'col_master_newuser' => get_string('newuser', 'tool_mergeusers'),
-            'col_userid'         => 'Id',
-            'col_username'       => get_string('username'),
-            'col_firstname'      => get_string('firstname'),
-            'col_lastname'       => get_string('lastname'),
-            'col_email'          => get_string('email'),
+            'col_userid' => 'Id',
+            'col_username' => get_string('user'),
+            'col_email' => get_string('email'),
         );
+
         $this->head = array_values($columns);
         $this->colclasses = array_keys($columns);
 
-        foreach($users as $userid => $user){
-
+        foreach ($users as $userid => $user) {
             $row = array();
-
-            $row[] = html_writer::empty_tag('input', array('type'=>'radio', 'name'=>'olduser', 'value'=>$userid, 'id' => 'olduser'.$userid));
-            $row[] = html_writer::empty_tag('input', array('type'=>'radio', 'name'=>'newuser', 'value'=>$userid, 'id' => 'newuser'.$userid));
+            $row[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'olduser', 'value' => $userid, 'id' => 'olduser' . $userid));
+            $row[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'newuser', 'value' => $userid, 'id' => 'newuser' . $userid));
             $row[] = $user->id;
-            $row[] = $user->username;
-            $row[] = $user->firstname;
-            $row[] = $user->lastname;
+            $row[] = $this->renderer->show_user($user->id, $user);
             $row[] = $user->email;
             $this->data[] = $row;
         }
     }
-
-
 }

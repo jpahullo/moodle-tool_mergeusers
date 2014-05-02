@@ -96,7 +96,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         $tablehtml = '';
 
         // UserReviewTable handles grabbing old/new users from session and as well as building/not building
-        $reviewtable = new UserReviewTable();
+        $reviewtable = new UserReviewTable($this);
 
         // if there are no rows in the table, return. (won't be rows if both olduser and newuser are NULL in session stdClass)
         if(empty($reviewtable->data)){
@@ -230,6 +230,26 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         return $o;
     }
 
+    /**
+     * This method produces the HTML to show the details of a user.
+     * @param int $userid user.id
+     * @param object $user an object with firstname and lastname attributes.
+     * @return string the corresponding HTML.
+     */
+    public function show_user($userid, $user) {
+        return html_writer::link(
+            new moodle_url('/user/view.php',
+                array('id'=> $userid, 'sesskey' =>sesskey())),
+                fullname($user) . ' (' . $user->username . ')');
+    }
+
+    /**
+     * Produces the page with the list of logs.
+     * TODO: make pagination.
+     * @global type $CFG
+     * @param array $logs array of logs.
+     * @return string the corresponding HTML.
+     */
     public function logs_page($logs)
     {
         global $CFG;
@@ -256,17 +276,11 @@ class tool_mergeusers_renderer extends plugin_renderer_base
                 $row = new html_table_row();
                 $row->cells = array(
                     ($log->from)
-                        ? html_writer::link(
-                            new moodle_url('/user/view.php',
-                                array('id'=> $log->fromuserid, 'sesskey' =>sesskey())),
-                                fullname($log->from) . ' (' . $log->from->username . ')')
+                        ? $this->show_user($log->fromuserid, $log->from)
                         : get_string('deleted', 'tool_mergeusers', $log->fromuserid),
                     ($log->to)
-                        ? html_writer::link(
-                            new moodle_url('/user/view.php',
-                                array('id'=> $log->touserid, 'sesskey' =>sesskey())),
-                                fullname($log->to) . ' (' . $log->to->username . ')')
-                        : get_string('deleted', 'tool_mergeusers', $log->fromuserid),
+                        ? $this->show_user($log->touserid, $log->to)
+                        : get_string('deleted', 'tool_mergeusers', $log->touserid),
                     userdate($log->timemodified, get_string('strftimedaydatetime', 'langconfig')),
                     $flags[$log->success],
                     html_writer::link(

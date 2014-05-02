@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -28,7 +29,6 @@
  * @author     John Hoopes <hoopes@wisc.edu>, Univeristy of Wisconsin - Madison
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php');
@@ -38,7 +38,7 @@ global $CFG;
 // require needed library files
 require_once($CFG->dirroot . '/lib/clilib.php');
 require_once(__DIR__ . '/autoload.php');
-require_once($CFG->dirroot.'/lib/outputcomponents.php');
+require_once($CFG->dirroot . '/lib/outputcomponents.php');
 
 /**
  * Extend the html table to provide a build function inside for creating a table for reviewing the users to merge
@@ -46,8 +46,8 @@ require_once($CFG->dirroot.'/lib/outputcomponents.php');
  * @author  John Hoopes <hoopes@wisc.edu>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class UserReviewTable extends html_table implements renderable{
-
+class UserReviewTable extends html_table implements renderable
+{
     /** @var stdClass $olduser The olduser db object */
     protected $olduser;
 
@@ -57,20 +57,27 @@ class UserReviewTable extends html_table implements renderable{
     /** @var bool $showmergebutton Whether or not to show the merge button on rendering */
     protected $showmergebutton = false;
 
+    /** @var tool_mergeusers_renderer Render to help showing user info. */
+    protected $renderer;
+
     /**
      * Call parent construct and then build table
+     * @param tool_mergeusers_renderer $renderer
      */
-    public function __construct(){
+    public function __construct($renderer)
+    {
         global $SESSION;
+
+        $this->renderer = $renderer;
 
         // Call parent constructor
         parent::__construct();
 
-        if(!empty($SESSION->mut)){
-            if(!empty($SESSION->mut->olduser)){
+        if (!empty($SESSION->mut)) {
+            if (!empty($SESSION->mut->olduser)) {
                 $this->olduser = $SESSION->mut->olduser;
             }
-            if(!empty($SESSION->mut->newuser)){
+            if (!empty($SESSION->mut->newuser)) {
                 $this->newuser = $SESSION->mut->newuser;
             }
         }
@@ -81,41 +88,34 @@ class UserReviewTable extends html_table implements renderable{
      * Build the user select table using the extension of html_table
      *
      */
-    public function buildtable(){
+    protected function buildtable()
+    {
 
         // Reset any existing data
         $this->data = array();
 
-        if(!empty($this->olduser) || !empty($this->newuser)){ // if there is a user add table rows and columns
-
+        if (!empty($this->olduser) || !empty($this->newuser)) { // if there is a user add table rows and columns
             $this->id = 'merge_users_tool_user_review_table';
             $this->attributes['class'] = 'generaltable boxaligncenter';
 
             $columns = array(
-                'col_label'          => '',
-                'col_userid'         => 'Id',
-                'col_username'       => get_string('username'),
-                'col_firstname'      => get_string('firstname'),
-                'col_lastname'       => get_string('lastname'),
-                'col_email'          => get_string('email'),
+                'col_label' => '',
+                'col_userid' => 'Id',
+                'col_username' => get_string('user'),
+                'col_email' => get_string('email'),
             );
             $this->head = array_values($columns);
             $this->colclasses = array_keys($columns);
 
             // Always display both rows so that the end user can see what is selected/not selected
-
             // Add old user row
             $olduserrow = array();
             $olduserrow[] = get_string('olduser', 'tool_mergeusers');
-            if(!empty($this->olduser)){ // if there is an old user display it
+            if (!empty($this->olduser)) { // if there is an old user display it
                 $olduserrow[] = $this->olduser->id;
-                $olduserrow[] = $this->olduser->username;
-                $olduserrow[] = $this->olduser->firstname;
-                $olduserrow[] = $this->olduser->lastname;
+                $olduserrow[] = $this->renderer->show_user($this->olduser->id, $this->olduser);
                 $olduserrow[] = $this->olduser->email;
-            }else{ // otherwise display empty fields
-                $olduserrow[] = '';
-                $olduserrow[] = '';
+            } else { // otherwise display empty fields
                 $olduserrow[] = '';
                 $olduserrow[] = '';
                 $olduserrow[] = '';
@@ -125,15 +125,11 @@ class UserReviewTable extends html_table implements renderable{
             // Add new user row
             $newuserrow = array();
             $newuserrow[] = get_string('newuser', 'tool_mergeusers');
-            if(!empty($this->newuser)){ // if there is an new user display it
+            if (!empty($this->newuser)) { // if there is an new user display it
                 $newuserrow[] = $this->newuser->id;
-                $newuserrow[] = $this->newuser->username;
-                $newuserrow[] = $this->newuser->firstname;
-                $newuserrow[] = $this->newuser->lastname;
+                $newuserrow[] = $this->renderer->show_user($this->newuser->id, $this->newuser);
                 $newuserrow[] = $this->newuser->email;
-            }else{ // otherwise display empty fields
-                $newuserrow[] = '';
-                $newuserrow[] = '';
+            } else { // otherwise display empty fields
                 $newuserrow[] = '';
                 $newuserrow[] = '';
                 $newuserrow[] = '';
@@ -141,7 +137,7 @@ class UserReviewTable extends html_table implements renderable{
             $this->data[] = $newuserrow;
 
             // If both are not empty this means we can show merge button
-            if(!empty($this->olduser) && !empty($this->newuser)){
+            if (!empty($this->olduser) && !empty($this->newuser)) {
                 $this->showmergebutton = true;
             }
         }
@@ -152,7 +148,9 @@ class UserReviewTable extends html_table implements renderable{
      *
      * @return bool whether or not to show the button
      */
-    public function show_button(){
+    public function show_button()
+    {
         return $this->showmergebutton;
     }
+
 }

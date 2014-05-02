@@ -142,7 +142,7 @@ if(!empty($option)){ // if there was a custom option submitted (by custom form) 
     if(!empty($data->searchgroup['searcharg'])){
 
         $search_users = $mus->search_users($data->searchgroup['searcharg'], $data->searchgroup['searchfield']);
-        $user_select_table = new UserSelectTable($search_users);
+        $user_select_table = new UserSelectTable($search_users, $renderer);
 
         echo $renderer->index_page($mergeuserform, $user_select_table);
     }else if(!empty($data->oldusergroup['olduserid']) && !empty($data->newusergroup['newuserid']) ){ // only run this step if there are both a new and old userids
