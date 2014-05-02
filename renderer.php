@@ -47,6 +47,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         $output .= $this->moodleform($mform);
 
         if(!empty($ust)){ // Render user select table if available
+            $this->page->requires->js_init_call('M.tool_mergeusers.init_select_table', array());
             $output .= $this->render_user_select_table($ust);
         }
 
@@ -75,6 +76,8 @@ class tool_mergeusers_renderer extends plugin_renderer_base
 
         $tablehtml .= html_writer::table($ust);
         $tablehtml .= html_writer::tag('input', null, array('type'=>'hidden','name'=>'option', 'value'=>'saveselection'));
+        $tablehtml .= html_writer::tag('input', null, array('type'=>'hidden','name'=>'selectedolduser', 'value'=>''));
+        $tablehtml .= html_writer::tag('input', null, array('type'=>'hidden','name'=>'selectednewuser', 'value'=>''));
         $tablehtml .= html_writer::tag('input', null, array('type'=>'submit','name'=>'mergeusers_submit', 'class'=>'boxaligncenter',
             'value'=>get_string('saveselection_submit', 'tool_mergeusers')));
         $tablehtml .= html_writer::end_tag('form');

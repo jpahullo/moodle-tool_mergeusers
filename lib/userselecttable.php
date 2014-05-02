@@ -65,7 +65,7 @@ class UserSelectTable extends html_table implements renderable{
      * @param array $users array of user results
      *
      */
-    public function buildtable($users){
+    protected function buildtable($users){
 
         // Reset any existing data
         $this->data = array();
@@ -89,8 +89,8 @@ class UserSelectTable extends html_table implements renderable{
 
             $row = array();
 
-            $row[] = html_writer::empty_tag('input', array('type'=>'radio', 'name'=>'olduser', 'value'=>$userid));
-            $row[] = html_writer::empty_tag('input', array('type'=>'radio', 'name'=>'newuser', 'value'=>$userid));
+            $row[] = html_writer::empty_tag('input', array('type'=>'radio', 'name'=>'olduser', 'value'=>$userid, 'id' => 'olduser'.$userid));
+            $row[] = html_writer::empty_tag('input', array('type'=>'radio', 'name'=>'newuser', 'value'=>$userid, 'id' => 'newuser'.$userid));
             $row[] = $user->id;
             $row[] = $user->username;
             $row[] = $user->firstname;
