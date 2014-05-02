@@ -15,8 +15,6 @@ $string['header_help'] =
  les dades relatives de l\'usuari a ser eliminat sobre l\'usuari a mantenir.
  És important saber que tots dos usuaris existeixin prèviament, i que cap compte s\'eliminarà
  de Moodle. És tasca de l\'administrador de sistema d\'eliminar-lo manualment si s\'escau.</p>
- <p>Aquest procés usa funcions depenents de la base de dades i pot ser que el seu funcionament
- no estigui del tot comprovat per la vostra base de dades.</p>
  <p><strong>Recorda que aquesta acció és irreversible!</strong></p>';
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Tractant de combinar el mateix usuari';
@@ -32,8 +30,14 @@ $string['logok'] = 'Aquestes són les operacions realitzades a la base de dades:
 $string['logko'] = 'S\'han produït els següents errors:';
 $string['logid'] = 'Per futures referències, aquestes dades apareixen en el registre amb id {$a}.';
 $string['dbok'] = 'Fusió satisfactòria';
-$string['dbko'] = 'Fusió fallida! <br/>Si la teva base de dades suporta transaccions,
- la teva base de dades no s\'ha modificat.';
+$string['dbko_transactions'] = '<strong>Fusió fallida!</strong> <br/>La seva base de dades suporta
+    transaccions. Per tant, <strong>no s\'ha realitzat cap canvi a la seva base de dades</strong>.';
+$string['dbko_no_transactions'] = '<strong>Fusió fallida!</strong> <br/>La seva base de dades no suporta
+    transaccions. Per tant, la seva base de dades <strong>ha estat modificada</strong> i ha pogut quedar
+    en un estat inconsistent. <br/>Revisa el registre de la fusió i informa dels errors als
+    desenvolupadors del plugin i en breu rebrà la solució. <br/>
+    Una vegada actualitzi el plugin a la darrera versió que inclourà la solució corresponent,
+    repeteixi la fusió dels usuaris i així la completarà satisfactòriament.';
 $string['tableskipped'] = 'Per guardar registres i seguretat, no processem la taula <strong>{$a}</strong>.
  <br />Per eliminar aquestes entrades, elimina el compte d\'usuari antic una vegada aquesta acció
  hagi finalitzat correctament.';

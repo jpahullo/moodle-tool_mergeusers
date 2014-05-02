@@ -59,11 +59,18 @@ class tool_mergeusers_renderer extends plugin_renderer_base
     {
         if ($success) {
             $resulttype = 'ok';
+            $dbmessage = 'dbok';
             $notifytype = 'notifysuccess';
         } else {
+            $transactions = (MergeUserTool::transactionsSupported()) ?
+                '_transactions' :
+                '_no_transactions';
+
             $resulttype = 'ko';
+            $dbmessage = 'dbko' . $transactions;
             $notifytype = 'notifyproblem';
         }
+
 
         $output = $this->header();
         $output .= $this->heading(get_string('mergeusers', 'tool_mergeusers'));
@@ -89,7 +96,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         $output .= html_writer::end_tag('div');
         $output .= html_writer::end_tag('div');
         $output .= html_writer::tag('div', html_writer::empty_tag('br'));
-        $output .= $this->notification(html_writer::tag('center', get_string('db' . $resulttype, 'tool_mergeusers')), $notifytype);
+        $output .= $this->notification(html_writer::tag('center', get_string($dbmessage, 'tool_mergeusers')), $notifytype);
         $output .= html_writer::tag('center', $this->single_button(new moodle_url('/admin/tool/mergeusers/index.php'), get_string('continue'), 'get'));
         $output .= $this->footer();
 

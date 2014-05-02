@@ -15,8 +15,6 @@ $string['header_help'] =
  los datos relativos del usario a ser eliminado sobre el usuario a manetener.
  Es importante saber que ambos usuarios deben existir previamente, y que no se eliminará ninguna cuenta
  de Moodle. El administrador de sistema deberá eliminarlo manualmente si es necesario.</p>
- <p>Este proceso usa funciones que dependen de la base de datos y puede ser que su funcionamiento
- no esté totalmente comprobado para vuestra base de datos.</p>
  <p><strong>Recuerda que esta acción es irreversible!</strong></p>';
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Tratando de combinar el mismo usuario';
@@ -32,8 +30,15 @@ $string['logok'] = 'Estas son las operaciones realizadas en la base de datos:';
 $string['logko'] = 'Se han producido los siguientes errores:';
 $string['logid'] = 'Para futuras referencias, estos datos aparecen en el registro con id {$a}.';
 $string['dbok'] = 'Fusión realizada correctamente';
-$string['dbko'] = 'Error en la fusión! <br/>Si vuestra base de datos soporta transacciones,
- no se han realizado cambios en ella.';
+$string['dbko_transactions'] = '<strong>Error en la fusión!</strong> <br/>Su base de datos
+    soporta transacciones. Por tanto, <strong>no se ha realizado ningún cambio
+    en su base de datos</strong>.';
+$string['dbko_no_transactions'] = '<strong>Error en la fusión!</strong> <br/>Su base de datos
+    no soporta transacciones. Por tanto, su base de datos <strong>ha sido modificada</strong>
+    y ha podido quedar en un estado inconsistente. <br/>Revisa el registro de la fusión e
+    informa de los errores a los desarrolladores del plugin y en breve se solucionará. <br/>
+    Una vez actualice el plugin a la última versión que introducirá la solución
+    correspondiente, repita la fusión de dichos usuarios y así se completará satisfactoriamente.';
 $string['tableskipped'] = 'Para guardar registros y por seguredad, no procesamos la tabla <strong>{$a}</strong>.
  <br />Para eliminar dichos registros, elimina la cuenta de usuario antigua una vez esta acción
  haya finalizado correctamente.';

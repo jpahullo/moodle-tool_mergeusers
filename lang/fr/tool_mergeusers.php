@@ -18,8 +18,6 @@ $string['header_help'] =
  toutes les données utilisateur vers le compte de l\'utilisateur à conserver. Les deux utilisateurs
  doivent exister dans la base d\'utilisateurs de Moodle, et aucun compte n\'est supprimé par cet utilitaire
  (ceci est laissé au loisir de l\'administrateur).</p>
- <p>Ce procédé utilise certaines fonctions variant d\'un système de bases de données à l\'autre,
- et peut ne pas avoir été testé correctement pour votre type de base de données. </p>
  <p><strong>N\'utilisez ceci que si vous en comprenez les implications, car les opérations réalisées ici ne sont pas
  réversibles !</strong></p>';
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (ID utilisateur = {$a->id})';
@@ -36,9 +34,17 @@ $string['logok'] = 'Voici les requêtes qui ont été faites sur la base de donn
 $string['logko'] = 'Les erreurs suivantes se sont produites :';
 $string['logid'] = 'Pour référence ultérieure, ces données apparaissent dans le dossier avec l\'id {$a}.';
 $string['dbok'] = 'La fusion a réussi';
-$string['dbko'] = 'La fusion a ECHOUE !<br/>Si votre moteur de base de
- données supporte les transactions, toute l\'opération a été annulée et aucune modification n\'a été
- faite à votre base de données.';
+$string['dbko_transactions'] = '<strong>La fusion a echoue!</strong> <br/>Votre
+    moteur de base de données supporte les transactions. Par conséquent, sa
+    base de données <strong>n\'a pas été modifié</strong>.';
+$string['dbko_no_transactions'] = '<strong>La fusion a echoue!</strong> <br/> Votre
+    moteur de base de données pas supporte les transactions. Par conséquent,
+    votre base de données <strong>a été modifié </strong> et a été laissé dans
+    un état incohérent. <br/>Vérifiez l\'enregistrement de la fusion et signale les
+    erreurs aux développeurs de plugin et seront fixés prochainement. <br/>
+    Une fois que vous mettez à jour le plug-in à la dernière version, qui
+    présentera la solution correspondant, fusionner les réitérants et ainsi être
+    menés à bien.';
 $string['tableskipped'] = 'Pour des raisons de traçabilité ou de sécurité, la table
  <strong>{$a}</strong> n\'est pas traitée.<br />Pour supprimer ces entrées, supprimez l\'ancien
  compte utilisateur une fois la fusion réussie.';

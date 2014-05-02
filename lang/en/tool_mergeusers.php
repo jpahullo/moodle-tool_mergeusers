@@ -19,8 +19,6 @@ $string['header_help'] =
  associated with the former user into the latter user. Note that both users must
  already exist and no accounts will actually be deleted. That process is left to the
  administrator to do manually.</p>
- <p>This process involves some database dependant functions and may not have been fully tested
- on your particular choice of database.</p>
  <p><strong>Only do this if you know what you are doing as it is not reversable!</strong></p>';
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Trying to merge the same user';
@@ -36,9 +34,15 @@ $string['logok'] = 'Here are the queries that have been sent to the DB:';
 $string['logko'] = 'Some error occurred:';
 $string['logid'] = 'For further reference, these results are recorded in the log id {$a}.';
 $string['dbok'] = 'Merge successful';
-$string['dbko'] = 'Merge FAILED! <br/>If your database engine supports
- transactions, the whole current transaction has been rolled back and no modification has been
- made to your database records.';
+$string['dbko_transactions'] = '<strong>Merge failed!</strong> <br/>Your database engine
+    supports transactions. Therefore, the whole current transaction has been rolled back
+    and <strong>no modification has been made to your database</strong>.';
+$string['dbko_no_transactions'] = '<strong>Merge failed!</strong> <br/>Your database engine
+    does not support transactions. Therefore, your database <strong>has been updated</strong>.
+    Your database status may be inconsistent. <br/>But, take a look at the merging log
+    and, please, inform about the error to plugin developers. You will get a solution
+    in short time. After updating the plugin to its last version, which will include the solution
+    to that problem, repeat the merging action to complete it with success.';
 $string['tableskipped'] = 'For logging or security reasons we are skipping <strong>{$a}</strong>.
  <br />To remove these entries, delete the old user once this script has run successfully.';
 $string['errordatabase'] = 'Error: Database type {$a} not supported.';
