@@ -42,7 +42,7 @@ M.tool_mergeusers = {
                     radiobutton.setAttribute('disabled', 'disabled');
 
                     // after that, reenable old sibling radio button
-                    if ( lastvalue != "" ) {
+                    if ( lastvalue != "" && lastvalue != id) {
                         last = Y.one("#"+target+lastvalue);
                         last.removeAttribute('disabled');
                     }
