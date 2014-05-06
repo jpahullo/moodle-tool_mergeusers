@@ -109,7 +109,7 @@ class MergeUserTool
      */
     public function __construct(Config $config = null, Logger $logger = null)
     {
-        global $CFG, $DB;
+        global $CFG;
 
         $this->logger = (is_null($logger)) ? new Logger() : $logger;
         $config = (is_null($config)) ? Config::instance() : $config;
@@ -123,17 +123,7 @@ class MergeUserTool
                     $CFG->prefix . "%' AND type = 'U' ORDER BY name";
         } else if ($CFG->dbtype == 'mysqli') {
             // MySQL
-
-            // Only will accept transactions if using compatible storage engine (more engines can be added easily BDB, Falcon...)
-            $engine = $DB->get_dbengine(); // get the mysql table engine
-
-            if (in_array($engine, array('InnoDB', 'INNOBASE', 'BDB', 'XtraDB', 'Aria', 'Falcon'))) {
-                $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
-            }else{
-                $this->supportedDatabase = false;
-                $this->sqlListTables = "";
-            }
-
+            $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
         } else if ($CFG->dbtype == 'pgsql') {
             // PGSQL
             $this->sqlListTables = "SELECT table_name FROM information_schema.tables WHERE table_name LIKE '" .
@@ -590,25 +580,15 @@ class MergeUserTool
         }
         unset($toMod); //free memory
 
-        if(isset($this->tablesWithCompoundIndex[$table]['customprocessing'])){// require custom processing file if config is set
-            // first make sure file exists
-            if(is_file($CFG->dirroot . '/admin/tool/mergeusers/lib/customproc/' . $table . '.php')){
-                require_once($CFG->dirroot  . '/admin/tool/mergeusers/lib/customproc/' . $table . '.php');
-            }else{
-                $errorMessages[] = 'Invalid custom processing file.  No file found... ' .
-                    $CFG->dirroot . '/admin/tool/mergeusers/lib/customproc/' . $table . '.php';
-            }
-        }else{ // do standard processing
-            $idsGoByebye = implode(', ', $idsToRemove);
-            $sql = 'DELETE FROM ' . $CFG->prefix . $table . ' WHERE id IN (' . $idsGoByebye . ')';
-            if ($idsGoByebye) {
-                if ($DB->execute($sql)) {
-                    $actionLog[] = $sql;
-                } else {
-                    // an error occured during DB query
-                    $errorMessages[] = get_string('tableko', 'tool_mergeusers', $table) . ': ' .
+        $idsGoByebye = implode(', ', $idsToRemove);
+        $sql = 'DELETE FROM ' . $CFG->prefix . $table . ' WHERE id IN (' . $idsGoByebye . ')';
+        if ($idsGoByebye) {
+            if ($DB->execute($sql)) {
+                $actionLog[] = $sql;
+            } else {
+                // an error occured during DB query
+                $errorMessages[] = get_string('tableko', 'tool_mergeusers', $table) . ': ' .
                         $DB->get_last_error();
-                }
             }
         }
         unset($idsGoByebye); //free memory

@@ -44,8 +44,6 @@ return array(
         'user_private_key',
         'user_info_data',
         'my_pages',
-        'quiz_grades',         // this is handled by custom processing of quiz attempts
-        'quiz_grades_history', // this is handled by custom processing of quiz attempts
     ),
 
     // List of compound indexes.
@@ -83,11 +81,6 @@ return array(
         'user_lastaccess' => array(
             'userfield' => 'userid',
             'otherfields' => array('courseid'),
-        ),
-        'quiz_attempts' => array(
-            'userfield' => 'userid',
-            'otherfields' => array('quiz'),
-            'customprocessing' => true,
         ),
     ),
 
