@@ -87,11 +87,9 @@ class UserReviewTable extends html_table implements renderable
 
     /**
      * Build the user select table using the extension of html_table
-     *
      */
     protected function buildtable()
     {
-
         // Reset any existing data
         $this->data = array();
 
@@ -136,22 +134,6 @@ class UserReviewTable extends html_table implements renderable
                 $newuserrow[] = '';
             }
             $this->data[] = $newuserrow;
-
-            // If both are not empty this means we can show merge button
-            if (!empty($this->olduser) && !empty($this->newuser)) {
-                $this->showmergebutton = true;
-            }
         }
     }
-
-    /**
-     * Simple get function so that the showmergebutton var is protected from outside
-     *
-     * @return bool whether or not to show the button
-     */
-    public function show_button()
-    {
-        return $this->showmergebutton;
-    }
-
 }

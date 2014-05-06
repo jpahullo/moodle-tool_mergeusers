@@ -62,6 +62,11 @@ $string['errortransactionsonly'] = 'Error: se requiren transacciones, y su base 
 
 //New strings
 
+// Progress bar
+$string['choose_users'] = 'Escoge los usuarios a fusionar';
+$string['review_users'] = 'Confirma los usuarios a fusionar';
+$string['results'] = 'Resultados de la fusión';
+
 // Form Strings
 $string['form_header'] = 'Busca los usuarios a fusionar';
 $string['form_description'] = '<p>A continuación puedes buscar los usuarios a fusionar.
@@ -92,8 +97,7 @@ $string['userreviewtable_legend'] = '<b>Usuarios a fusionar</b>';
 
 // Error string
 $string['error_return'] = 'Vuelve al formulario de búsqueda';
-$string['no_saveselection'] = 'No has seleccionado ni usuario a eliminar ni a mantener.
-    Selecciona al menos uno.';
+$string['no_saveselection'] = 'No has seleccionado ningún usuario.';
 $string['invalid_option'] = 'Opción inválida';
 
 // Settings page

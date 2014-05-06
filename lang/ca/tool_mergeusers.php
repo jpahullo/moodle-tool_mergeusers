@@ -61,6 +61,11 @@ $string['errortransactionsonly'] = 'Error: es requereixen transaccions, i la sev
 
 //New strings
 
+// Progress bar
+$string['choose_users'] = 'Escull els usuaris a fusionar';
+$string['review_users'] = 'Confirma els usuaris a fusionar';
+$string['results'] = 'Resultats de la fusió';
+
 // Form Strings
 $string['form_header'] = 'Cerca els usuaris a fusionar';
 $string['form_description'] = '<p>A continuació pots cercar els usuaris a fusionar.
@@ -90,9 +95,9 @@ $string['userselecttable_legend'] = '<b>Selecciona usuaris a fusionar</b>';
 $string['userreviewtable_legend'] = '<b>Usuaris a fusionar</b>';
 
 // Error string
-$string['error_return'] = 'Return to search form';
-$string['no_saveselection'] = 'You did not select either an old or new user.';
-$string['invalid_option'] = 'Invalid form option';
+$string['error_return'] = 'Retorna al formulari de cerca';
+$string['no_saveselection'] = 'No has seleccionat cap usuari.';
+$string['invalid_option'] = 'Opció incorrecta';
 
 // Settings page
 $string['suspenduser_setting'] = 'Suspendre usuari a eliminar';

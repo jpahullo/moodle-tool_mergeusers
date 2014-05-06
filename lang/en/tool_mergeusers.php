@@ -83,6 +83,11 @@ $string['transactions_not_supported'] = 'For your information, your database
 
 //New strings
 
+// Progress bar
+$string['choose_users'] = 'Choose users to merge';
+$string['review_users'] = 'Confirm users to merge';
+$string['results'] = 'Merging results and log';
+
 // Form Strings
 $string['form_header'] = 'Find users to merge';
 $string['form_description'] = '<p>You may search for users here if you don\'t
