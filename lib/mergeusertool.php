@@ -136,6 +136,13 @@ class MergeUserTool
         // these are tables we don't want to modify due to logging or security reasons.
         // we flip key<-->value to accelerate lookups.
         $this->tablesToSkip = array_flip($config->exceptions);
+        $excluded = explode(',', get_config('tool_mergeusers', 'excluded_exceptions'));
+        $excluded = array_flip($excluded);
+        if (!isset($excluded['none'])) {
+            foreach ($excluded as $exclude => $nonused) {
+                unset($this->tablesToSkip[$exclude]);
+            }
+        }
 
         // these are special cases, corresponding to tables with compound indexes that
         // need a special treatment.
