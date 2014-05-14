@@ -79,3 +79,11 @@ $string['transactions_supported'] = 'Para su información, su base
     de datos <strong>soporta transacciones</strong>.';
 $string['transactions_not_supported'] = 'Para su información, su base
     de datos <strong>no soporta transacciones</strong>.';
+$string['excluded_exceptions'] = 'Excluir excepciones';
+$string['excluded_exceptions_desc'] = 'Experiencia en este ámbito nos sugiere
+    que estas tablas de base de datos se tienen que excluir del proceso de
+    fusión. Ver el README para más detalles.<br>
+    Por tanto, si quieres aplicar el comportamiento por defecto, debes escoger
+    la opción \'{$a}\' para excluirlas del proceso de fusión (recomendado).<br>
+    Si lo prefieres, puedes seleccionar las tablas de desees para incluirlas
+    en el proceso de fusión (no recomendado).';

@@ -80,3 +80,11 @@ $string['transactions_supported'] = 'For your information, your database
     <strong>supports transactions</strong>.';
 $string['transactions_not_supported'] = 'For your information, your database
     <strong>does not supports transactions</strong>.';
+$string['excluded_exceptions'] = 'Exclude exceptions';
+$string['excluded_exceptions_desc'] = 'Experience on this subject suggests
+    that all these database tables should be excluded from merging. See
+    README for more details. <br>
+    Therefore, for applying default plugin behaviour, you need to choose \'{$a}\'
+    to exclude all those tables from the merging process (recommended).<br>
+    If you prefer, you can exclude any of those tables and include them in the
+    merging process (not recommended).';
