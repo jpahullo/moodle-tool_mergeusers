@@ -99,4 +99,11 @@ return array(
         'question' => array('createdby', 'modifiedby'),
         'default' => array('userid', 'user_id', 'id_user', 'user'), //may appear compound index
     ),
+
+    // TableMergers to process each database table.
+    // 'default' is applied when no specific TableMerger is specified.
+    'tablemergers' => array(
+        'default' => 'GenericTableMerger',
+        'user_enrolments' => 'UserEnrolmentsMerger',
+    ),
 );

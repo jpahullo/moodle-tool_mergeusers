@@ -39,8 +39,6 @@ global $CFG;
 require_once $CFG->dirroot . '/lib/clilib.php';
 require_once __DIR__ . '/autoload.php';
 
-define('PRIMARY_KEY', 'id');
-
 /**
  *
  *
@@ -102,6 +100,17 @@ class MergeUserTool
     protected $logger;
 
     /**
+     * @var array associative array (tablename => classname) with the
+     * TableMerger tools to process all database tables.
+     */
+    protected $tableMergers;
+
+    /**
+     * @var array list of table names processed by TableMerger's.
+     */
+    protected $tablesProcessedByTableMergers;
+
+    /**
      * Initializes
      * @global object $CFG
      * @param Config $config local configuration.
@@ -154,6 +163,29 @@ class MergeUserTool
             $userFieldNames[$tablename] = "'" . implode("','", $fields) . "'";
         }
         $this->userFieldNames = $userFieldNames;
+
+        // Load available TableMerger tools.
+        $tableMergers = array();
+        $tablesProcessedByTableMergers = array();
+        foreach ($config->tablemergers as $tableName => $class) {
+            $tm = new $class();
+            // ensure any provided class is a class of TableMerger
+            if (!$tm instanceof TableMerger) {
+                // aborts execution by showing an error.
+                if (CLI_SCRIPT) {
+                    cli_error('Error: ' . __METHOD__ . ':: ' . get_string('notablemergerclass', 'tool_mergeusers',
+                                    $class));
+                } else {
+                    print_error('notablemergerclass', 'tool_mergeusers',
+                            new moodle_url('/admin/tool/mergeusers/index.php'), $class);
+                }
+            }
+            // append any additional table to skip.
+            $tablesProcessedByTableMergers = array_merge($tablesProcessedByTableMergers, $tm->getTablesToSkip());
+            $tableMergers[$tableName] = $tm;
+        }
+        $this->tableMergers = $tableMergers;
+        $this->tablesProcessedByTableMergers = array_flip($tablesProcessedByTableMergers);
 
         // this will abort execution if local database is not supported.
         $this->checkDatabaseSupport();
@@ -224,46 +256,25 @@ class MergeUserTool
 
         try {
             // processing each table name
+            $data = array(
+                'toid' => $toid,
+                'fromid' => $fromid,
+            );
             foreach ($this->userFieldsPerTable as $tableName => $userFields) {
-
-                foreach ($userFields as $fieldName) {
-                    $recordsToUpdate = $DB->get_records_sql("SELECT " . PRIMARY_KEY . " FROM " .
-                            $CFG->prefix . $tableName . " WHERE " . $fieldName . " = '" . $fromid . "'");
-                    if (count($recordsToUpdate) == 0) {
-                        //this userid is not present in these table and field names
-                        continue;
-                    }
-
-                    $recordsToModify = array_keys($recordsToUpdate); // get the 'id' field from the resultset
-                    // Special case of user_enrolments
-                    if ($tableName == 'user_enrolments') {
-                        // User enrolments must be specially adjusted
-                        $this->disableOldUserEnrolments($toid, $fromid, $actionLog, $errorMessages);
-                        continue;
-                        // go onto next field or table
-                    }
-                    // Other special cases with user field as part of a compound index.
-                    if (isset($this->tablesWithCompoundIndex[$tableName])) {
-                        $this->mergeCompoundIndex($toid, $fromid, $tableName, $fieldName,
-                                $this->getOtherFieldsOnCompoundIndex($tableName, $fieldName),
-                                $recordsToModify, $actionLog, $errorMessages);
-                        //ensure we have records to update
-                        if (count($recordsToModify) == 0) {
-                            //no records to update... go into the next field or table.
-                            continue;
-                        }
-                    }
-
-                    $idString = implode(', ', $recordsToModify);
-                    $updateRecords = "UPDATE " . $CFG->prefix . $tableName .
-                            " SET " . $fieldName . " = '" . $toid .
-                            "' WHERE " . PRIMARY_KEY . " IN (" . $idString . ")";
-                    if (!$DB->execute($updateRecords)) {
-                        $errorMessages[] = get_string('tableko', 'tool_mergeusers', $tableName) .
-                                ': ' . $DB->get_last_error();
-                    }
-                    $actionLog[] = $updateRecords;
+                $data['tableName'] = $tableName;
+                $data['userFields'] = $userFields;
+                if (isset($this->tablesWithCompoundIndex[$tableName])) {
+                    $data['compoundIndex'] = $this->tablesWithCompoundIndex[$tableName];
+                } else {
+                    unset($data['compoundIndex']);
                 }
+
+                $tableMerger = (isset($this->tableMergers[$tableName])) ?
+                        $this->tableMergers[$tableName] :
+                        $this->tableMergers['default'];
+
+                // proces the given $tableName.
+                $tableMerger->merge($data, $actionLog, $errorMessages);
             }
         } catch (Exception $e) {
             $errorMessages[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
@@ -319,8 +330,13 @@ class MergeUserTool
                 continue;
             } else {
                 $tableName = substr($fullTableName, $prefixLength);
+                // table specified to be excluded.
                 if (isset($this->tablesToSkip[$tableName])) {
                     $this->tablesSkipped[$tableName] = $fullTableName;
+                    continue;
+                }
+                // table specified to be processed additionally by a TableMerger.
+                if (isset($this->tablesProcessedByTableMergers[$tableName])) {
                     continue;
                 }
             }
@@ -353,7 +369,8 @@ class MergeUserTool
             if (CLI_SCRIPT) {
                 cli_error('Error: ' . __METHOD__ . ':: ' . get_string('errordatabase', 'tool_mergeusers', $CFG->dbtype));
             } else {
-                print_error('errordatabase', 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php'), $CFG->dbtype);
+                print_error('errordatabase', 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php'),
+                        $CFG->dbtype);
             }
         }
     }
@@ -391,245 +408,15 @@ class MergeUserTool
 
         if (!$transactionsSupported && $forceOnlyTransactions) {
             if (CLI_SCRIPT) {
-                cli_error('Error: ' . __METHOD__ . ':: ' . get_string('errortransactionsonly', 'tool_mergeusers', $CFG->dbtype));
+                cli_error('Error: ' . __METHOD__ . ':: ' . get_string('errortransactionsonly', 'tool_mergeusers',
+                                $CFG->dbtype));
             } else {
-                print_error('errortransactionsonly', 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php'), $CFG->dbtype);
+                print_error('errortransactionsonly', 'tool_mergeusers',
+                        new moodle_url('/admin/tool/mergeusers/index.php'), $CFG->dbtype);
             }
         }
 
         return $transactionsSupported;
-    }
-
-    /**
-     * Disables course enrolments for the old user.
-     *
-     * The user_enrolments table is similar to grade_grades in that it also
-     * has a compound unique key. The approach here is not to replace the
-     * user in the case of a duplicate, but to disable the old user for that
-     * particular course.
-     *
-     * @param int $toid The user inheriting the data
-     * @param int $fromid The user being replaced
-     * @param array $actionLog Array where to append the list of actions done.
-     * @param array $errorMessages Array where to append any error occurred.
-     */
-    private function disableOldUserEnrolments($toid, $fromid, &$actionLog, &$errorMessages)
-    {
-        global $CFG, $DB;
-
-        $sql = 'SELECT id, enrolid, userid, status from ' . $CFG->prefix . 'user_enrolments WHERE userid in (' .
-                $fromid . ', ' . $toid . ')';
-        $result = $DB->get_records_sql($sql);
-
-        if (empty($result)) {
-            return;
-        }
-
-        $enrolArr = array();
-        $idsToDisable = array();
-        $enrolmentsToUpdate = array();
-        $enrolmentsToReactivate = array();
-
-        foreach ($result as $id => $resObj) {
-            $enrolArr[$resObj->enrolid][$resObj->userid] = $id;
-        }
-
-        foreach ($enrolArr as $enrolId => $enrolInfo) {
-            if (sizeof($enrolInfo) != 2) {
-                //if we don't have 2 results, then these users did not both complete this activity.
-                if (key($enrolInfo) == $fromid) {
-                    //if we have the old user, we have to assign this course to the new user.
-                    $enrolmentsToUpdate[] = $enrolInfo[$fromid]; //disable the old user
-                    continue;
-                } else {
-                    //we don't have anything here for this course. We actually shouldn't get to this point ever.
-                    continue;
-                }
-            }
-            // check if it is actually enabled
-            if ($result[$enrolInfo[$fromid]]->status != 2) {
-                $idsToDisable[] = $enrolInfo[$fromid];
-            }
-            //check if it was already disabled
-            if ($result[$enrolInfo[$toid]]->status == 2) {
-                $enrolmentsToReactivate[] = $enrolInfo[$toid]; // reactivate new user.
-            }
-        }
-        unset($enrolArr); //free memory
-        unset($result); //free memory
-
-        if (!empty($enrolmentsToUpdate)) { // it's possible we won't have any
-            // First, let's move the courses belonging to the old user over to the new one.
-            $updateIds = implode(', ', $enrolmentsToUpdate);
-            $sql = 'UPDATE ' . $CFG->prefix . 'user_enrolments SET userid = ' . $toid .
-                    ' WHERE id IN (' . $updateIds . ')';
-            if ($DB->execute($sql)) {
-                //all was ok: action done.
-                $actionLog[] = $sql;
-            } else {
-                // a database error occurred.
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#1)") .
-                        ': ' . $DB->get_last_error();
-            }
-        }
-        unset($enrolmentsToUpdate); //free memory
-        unset($sql);
-
-        // ok, now let's lock this user out from using the common courses.
-        if (!empty($idsToDisable)) {
-            $idsGoByebye = implode(', ', $idsToDisable);
-            $sql = 'UPDATE ' . $CFG->prefix . 'user_enrolments SET status = 2 WHERE id IN (' .
-                    $idsGoByebye . ')  AND status = 0';
-            if ($DB->execute($sql)) {
-                //all was ok: action done.
-                $actionLog[] = $sql;
-            } else {
-                // a database error occurred.
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#2)") .
-                        ': ' . $DB->get_last_error();
-            }
-        }
-        unset($idsToDisable); //free memory
-        unset($sql);
-
-        // the enrolment was deactivated before by us.
-        // reactivate it again.
-        if (!empty($enrolmentsToReactivate)) {
-            $idsReactivate = implode(', ', $enrolmentsToReactivate);
-            $sql = 'UPDATE ' . $CFG->prefix . 'user_enrolments SET status = 0 WHERE id IN (' .
-                    $idsReactivate . ')  AND status = 2';
-            if ($DB->execute($sql)) {
-                //all was ok: action done.
-                $actionLog[] = $sql;
-            } else {
-                // a database error occurred.
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#3)") .
-                        ': ' . $DB->get_last_error();
-            }
-        }
-        unset($enrolmentsToReactivate); //free memory
-        unset($sql);
-    }
-
-    /**
-     * Both users may appear in the same table under the same database index or so,
-     * making some kind of conflict on Moodle and the database model. For simplicity, we always
-     * use "compound index" to refer to it below.
-     *
-     * The merging operation for these cases are treated as follows:
-     *
-     * Possible scenarios:
-     *
-     * <ul>
-     *   <li>$currentId only appears in a given compound index: we have to update it.</li>
-     *   <li>$newId only appears in a given compound index: do nothing, skip.</li>
-     *   <li>$currentId and $newId appears in the given compount index: delete the record for the $currentId.</li>
-     * </ul>
-     *
-     * This function extracts the records' ids that have to be updated to the $newId, appearing only the
-     * $currentId, and deletes the records for the $currentId when both appear.
-     *
-     * @global object $CFG
-     * @global moodle_database $DB
-     * @param int $toid
-     * @param int $fromid
-     * @param string $table table to check
-     * @param string $userfield table's field name that refers to the user id.
-     * @param array $otherfields table's field names that refers to the other members of the coumpund index.
-     * @param array $recordsToModify array with current $table's id to update.
-     * @param array $actionLog Array where to append the list of actions done.
-     * @param array $errorMessages Array where to append any error occurred.
-     */
-    private function mergeCompoundIndex($toid, $fromid, $table, $userfield, $otherfields,
-            &$recordsToModify, &$actionLog, &$errorMessages)
-    {
-        global $CFG, $DB;
-
-        $otherfieldsstr = implode(', ', $otherfields);
-        $sql = 'SELECT id, ' . $userfield . ', ' . $otherfieldsstr . ' from ' . $CFG->prefix . $table .
-                ' WHERE ' . $userfield . ' in (' . $fromid . ', ' . $toid . ')';
-        $result = $DB->get_records_sql($sql);
-
-        $itemArr = array();
-        $idsToRemove = array();
-        foreach ($result as $id => $resObj) {
-            $keyfromother = array();
-            foreach ($otherfields as $of) {
-                $keyfromother[] = $resObj->$of;
-            }
-            $keyfromotherstr = implode('-', $keyfromother);
-            $itemArr[$keyfromotherstr][$resObj->$userfield] = $id;
-        }
-        unset($result); //free memory
-
-        foreach ($itemArr as $otherfieldsid => $otherInfo) {
-            //iff we have only one result and it is from the current user => update record
-            if (sizeof($otherInfo) == 1) {
-                if (isset($otherInfo[$fromid])) {
-                    $recordsToModify[$otherInfo[$fromid]] = $otherInfo[$fromid];
-                }
-            } else { // both users appears in the group
-                //confirm both records exist, preventing problems from inconsistent data in database
-                if (isset($otherInfo[$toid]) && isset($otherInfo[$fromid])) {
-                    $idsToRemove[$otherInfo[$fromid]] = $otherInfo[$fromid];
-                }
-            }
-        }
-        unset($itemArr); //free memory
-        // to ease serch for existing ids on array
-        $toMod = array_flip($recordsToModify);
-
-        // we know that idsToRemove have always to be removed and NOT to be updated.
-        foreach ($idsToRemove as $id) {
-            if (isset($toMod[$id])) {
-                unset($recordsToModify[$toMod[$id]]);
-            }
-        }
-        unset($toMod); //free memory
-
-        $idsGoByebye = implode(', ', $idsToRemove);
-        $sql = 'DELETE FROM ' . $CFG->prefix . $table . ' WHERE id IN (' . $idsGoByebye . ')';
-        if ($idsGoByebye) {
-            if ($DB->execute($sql)) {
-                $actionLog[] = $sql;
-            } else {
-                // an error occured during DB query
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', $table) . ': ' .
-                        $DB->get_last_error();
-            }
-        }
-        unset($idsGoByebye); //free memory
-        unset($idsToRemove);
-        unset($sql);
-    }
-
-    /**
-     * Gets the fields name on a compound index case. If the compound index only has a
-     * user-related field, always returns the 'otherfields' of the $this->tablesWithCompoundIndex.
-     * If both fields are user-related, gets the opposite field name.
-     * @param string $tableName current table name without $DB->prefix.
-     * @param string $userField current user-related field being analyized.
-     * @return array an array with the other field names of the compound index.
-     */
-    private function getOtherFieldsOnCompoundIndex($tableName, $userField)
-    {
-        // we can alternate column names when both fields are user-related.
-        if (isset($this->tablesWithCompoundIndex[$tableName]['both']) &&
-                $this->tablesWithCompoundIndex[$tableName]['both'] &&
-                $userField != $this->tablesWithCompoundIndex[$tableName]['userfield']) {
-
-            // get the list of other fields.
-            $others = array_flip($this->tablesWithCompoundIndex[$tableName]['otherfields']);
-            // remove the given $userField
-            unset($others[$userField]);
-            $others = array_flip($others);
-            // append the 'userfield'
-            $others[] = $this->tablesWithCompoundIndex[$tableName]['userfield'];
-            // return all except $userField
-            return $others;
-        }
-        // default behavior
-        return $this->tablesWithCompoundIndex[$tableName]['otherfields'];
     }
 
     /**
