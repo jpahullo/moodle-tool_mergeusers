@@ -82,6 +82,10 @@ return array(
             'userfield' => 'userid',
             'otherfields' => array('courseid'),
         ),
+        'cohort_members' => array(
+            'userfield' => 'userid',
+            'otherfields' => array('cohortid'),
+        ),
     ),
 
     // List of column names per table, where their content is a user.id.
