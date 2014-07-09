@@ -18,6 +18,7 @@
  * @package tool
  * @subpackage mergeusers
  * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @author John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -34,6 +35,12 @@ require_once $CFG->libdir . '/gdlib.php';
  */
 function tool_mergeusers_old_user_suspend($event) {
     global $DB;
+
+    // Check configuration to see if the old user gets suspended
+    $enabled = (int)get_config('tool_mergeusers', 'suspenduser');
+    if($enabled !== 1){
+        return true;
+    }
 
     // 1. update auth type
     $olduser = new stdClass();
@@ -55,5 +62,7 @@ function tool_mergeusers_old_user_suspend($event) {
         $DB->set_field('user', 'picture', $newrev, array('id'=>$event->oldid));
     }
 
+
     return true;
 }
+

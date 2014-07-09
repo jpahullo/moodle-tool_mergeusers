@@ -67,6 +67,13 @@ $string['errortransactionsonly'] = 'Erreur: Exiger des transactions, et votre
     configurer que les fusions sont faites sans transactions.
     Vérifiez les paramètres en fonction de vos besoins.';
 
+//New strings
+
+// Progress bar
+$string['choose_users'] = 'Sélectionnez les utilisateurs de fusionner';
+$string['review_users'] = 'Confirmez utilisateurs de fusionner';
+$string['results'] = 'Résultats de la fusion';
+
 // Settings page
 $string['transactions_setting'] = 'Seules les transactions sont autorisées';
 $string['transactions_setting_desc'] = 'Si cette option est activée,
