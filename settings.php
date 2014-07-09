@@ -49,6 +49,11 @@ if ($hassiteconfig) {
 $settings = new admin_settingpage('mergeusers_settings',
     get_string('pluginname', 'tool_mergeusers'));
 
+$settings->add(new admin_setting_configcheckbox('tool_mergeusers/suspenduser',
+    get_string('suspenduser_setting', 'tool_mergeusers'),
+    get_string('suspenduser_setting_desc', 'tool_mergeusers'),
+    1));
+
 $supporting_lang = (MergeUserTool::transactionsSupported()) ? 'transactions_supported' : 'transactions_not_supported';
 
 $settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',

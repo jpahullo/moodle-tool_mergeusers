@@ -60,7 +60,54 @@ $string['errortransactionsonly'] = 'Error: se requiren transacciones, y su base 
     Si lo necesita, puede configurar que las fusiones se hagan sin transacciones.
     Revise la configuración para que se ajuste a sus necesidades.';
 
+//New strings
+
+// Progress bar
+$string['choose_users'] = 'Escoge los usuarios a fusionar';
+$string['review_users'] = 'Confirma los usuarios a fusionar';
+$string['results'] = 'Resultados de la fusión';
+
+// Form Strings
+$string['form_header'] = 'Busca los usuarios a fusionar';
+$string['form_description'] = '<p>A continuación puedes buscar los usuarios a fusionar.
+    También, si conoces el nombre de usuario, su id o su idnumber, puedes introducirlos
+    en las opciones avanzadas.';
+$string['searchuser'] = 'Buscar usuario por';
+$string['searchuser_help'] = 'Introduce un nombre de usuario, nombre, apellido(s),
+    email o id para listar usuarios potenciales. Para una búsqueda más ajustada,
+    también puedes seleccionar el campo por el que deseas buscar.';
+$string['mergeusersadvanced'] = '<strong>Entrada d\'ids</strong>';
+$string['mergeusersadvanced_help'] = 'Si el campo de búsqueda está vacío,
+    des de esta sección podrás seleccionar el usuario a mantener y eliminar
+    en un solo paso, introduciendo los valores adecuados y el tipo de identificador.<br /><br />
+    Después haz clic sobre el botón de búsqueda para verificar/confirmar los usuarios a fusionar.';
+$string['mergeusers_confirm'] = 'La fusión se iniciará después de confirmar
+    la fusión de los usuaris. <br /><strong>Esta acción es irreversible!</strong><br />
+    Estás seguro de fusionar los usuaris?';
+$string['clear_selection'] = 'Deselecciona los usuarios a fusionar';
+
+// Merge users select table
+$string['olduser'] = 'Usuario a eliminar';
+$string['newuser'] = 'Usuario a mantener';
+$string['saveselection_submit'] = 'Guarda selección';
+$string['userselecttable_legend'] = '<b>Selecciona usarios a fusionar</b>';
+
+// Merge users review table
+$string['userreviewtable_legend'] = '<b>Usuarios a fusionar</b>';
+
+// Error string
+$string['error_return'] = 'Vuelve al formulario de búsqueda';
+$string['no_saveselection'] = 'No has seleccionado ningún usuario.';
+$string['invalid_option'] = 'Opción inválida';
+
 // Settings page
+$string['suspenduser_setting'] = 'Suspender usuario a eliminar';
+$string['suspenduser_setting_desc'] = 'Si se activa, el usuario a eliminar
+    se suspenderá automáticamente si la fusión termina satisfactoriamente,
+    lo que evitará que se autentique en Moodle (recomendado).
+    Si se desactiva, el usuario a eliminar permanecerá activo.
+    En ambos casos, el usuario a eliminar no dispondrá de sus datos ni de su
+    actividad de Moodle.';
 $string['transactions_setting'] = 'Sólo transacciones';
 $string['transactions_setting_desc'] = 'Si se activa, la fusión de usuarios no
     se realizará si la base de datos NO soporta transacciones (recomendado).
