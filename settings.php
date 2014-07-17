@@ -43,37 +43,39 @@ if ($hassiteconfig) {
             new admin_externalpage('tool_mergeusers_viewlog', get_string('viewlog', 'tool_mergeusers'),
             $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/view.php',
             'moodle/site:config'));
+
+    // Add configuration for making user suspension optional
+    $settings = new admin_settingpage('mergeusers_settings',
+        get_string('pluginname', 'tool_mergeusers'));
+
+    $settings->add(new admin_setting_configcheckbox('tool_mergeusers/suspenduser',
+        get_string('suspenduser_setting', 'tool_mergeusers'),
+        get_string('suspenduser_setting_desc', 'tool_mergeusers'),
+        1));
+
+    $supporting_lang = (MergeUserTool::transactionsSupported()) ? 'transactions_supported' : 'transactions_not_supported';
+
+    $settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',
+        get_string('transactions_setting', 'tool_mergeusers'),
+        get_string('transactions_setting_desc', 'tool_mergeusers') . '<br /><br />' .
+            get_string($supporting_lang, 'tool_mergeusers'),
+        1));
+
+    $config = Config::instance();
+    $none = get_string('none');
+    $options = array('none' => $none);
+    foreach ($config->exceptions as $exception) {
+        $options[$exception] = $exception;
+    }
+    unset($options['my_pages']); //duplicated records make MyMoodle does not work.
+    $settings->add(new admin_setting_configmultiselect('tool_mergeusers/excluded_exceptions',
+        get_string('excluded_exceptions', 'tool_mergeusers'),
+        get_string('excluded_exceptions_desc', 'tool_mergeusers', $none),
+        array('none'), //default value: empty => apply all exceptions.
+        $options));
+
+    // Add settings
+    $ADMIN->add('tools', $settings);
+
 }
 
-// Add configuration for making user suspension optional
-$settings = new admin_settingpage('mergeusers_settings',
-    get_string('pluginname', 'tool_mergeusers'));
-
-$settings->add(new admin_setting_configcheckbox('tool_mergeusers/suspenduser',
-    get_string('suspenduser_setting', 'tool_mergeusers'),
-    get_string('suspenduser_setting_desc', 'tool_mergeusers'),
-    1));
-
-$supporting_lang = (MergeUserTool::transactionsSupported()) ? 'transactions_supported' : 'transactions_not_supported';
-
-$settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',
-    get_string('transactions_setting', 'tool_mergeusers'),
-    get_string('transactions_setting_desc', 'tool_mergeusers') . '<br /><br />' .
-        get_string($supporting_lang, 'tool_mergeusers'),
-    1));
-
-$config = Config::instance();
-$none = get_string('none');
-$options = array('none' => $none);
-foreach ($config->exceptions as $exception) {
-    $options[$exception] = $exception;
-}
-unset($options['my_pages']); //duplicated records make MyMoodle does not work.
-$settings->add(new admin_setting_configmultiselect('tool_mergeusers/excluded_exceptions',
-    get_string('excluded_exceptions', 'tool_mergeusers'),
-    get_string('excluded_exceptions_desc', 'tool_mergeusers', $none),
-    array('none'), //default value: empty => apply all exceptions.
-    $options));
-
-// Add settings
-$ADMIN->add('tools', $settings);
