@@ -148,4 +148,32 @@ $string['transactions_setting_desc'] = 'If enabled, merge users will not work
     in your Moodle installation, you can be quiet on running this plugin
     enabling or disabling this option.';
 
+// quiz attempts strings
+$string['quizattemptsaction'] = 'How to resolve quiz attempts';
+$string['quizattemptsaction_desc'] = 'When merging quiz attempts there may exist three cases:
+    <ol>
+    <li>Only the old user has quiz attempts. All attemps will appear as if they were made by the new user.</li>
+    <li>Only the new user has quiz attempts. All is correct and nothing is done.</li>
+    <li>Both users have attempts for the same quiz. <strong>You have to choose what to do in this case of conflict.
+    </strong>. You are required to choose one of the following actions:
+        <ul>
+        <li><strong>{$a->renumber}</strong>. Attempts from the old user are merged with the ones of the new user
+        and renumbered by the time they were started.</li>
+        <li><strong>{$a->delete_fromid}</strong>. Attempts from the old user are removed. Attempts from the new user
+        are kept, since this option considers them as the most important.</li>
+        <li><strong>{$a->delete_toid}</strong>. Attempts from the new user are removed. Attempts from
+        the old user are kept, since this option considers them as the most important.</li>
+        <li><strong>{$a->remain}</strong> (by default). Attempts are not merged nor deleted, remaining related to
+        the user who made them. This is the most secure action, but merging users from user A to user B or B to A may
+        produce different quiz grades.</li>
+        </ul>
+    </li>
+    </ol>';
+$string['qa_action_renumber'] = 'Merge attempts from both users and renumber';
+$string['qa_action_delete_fromid'] = 'Keep attempts from the new user';
+$string['qa_action_delete_toid'] = 'Keep attempts from the old user';
+$string['qa_action_remain'] = 'Do nothing: do not merge nor delete';
+$string['qa_action_remain_log'] = 'User data from table <strong>{$a}</strong> are not updated.';
+$string['qa_chosen_action'] = 'Active option for quiz attempts: {$a}.';
 
+$string['qa_grades'] = 'Grades recalculated for quizzes: {$a}.';

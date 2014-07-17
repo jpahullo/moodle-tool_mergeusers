@@ -24,8 +24,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
- * Description of TableMerger
+ * Generic implementation of a TableMerger
  *
  * @author jordi
  */
@@ -66,10 +68,11 @@ class GenericTableMerger implements TableMerger
                 continue;
             }
 
-            $recordsToModify = array_keys($recordsToUpdate); // get the 'id' field from the resultset
+            $keys = array_keys($recordsToUpdate); // get the 'id' field from the resultset
+            $recordsToModify = array_combine($keys, $keys);
 
             if (isset($data['compoundIndex'])) {
-                $this->mergeCompoundIndex($data['toid'], $data['fromid'], $data['tableName'], $fieldName,
+                $this->mergeCompoundIndex($data, $fieldName,
                         $this->getOtherFieldsOnCompoundIndex($fieldName, $data['compoundIndex']), $recordsToModify,
                         $actionLog, $errorMessages);
             }
@@ -100,23 +103,22 @@ class GenericTableMerger implements TableMerger
      *
      * @global object $CFG
      * @global moodle_database $DB
-     * @param int $toid
-     * @param int $fromid
-     * @param string $table table to check
+     * @param array $data array with the details of merging
      * @param string $userfield table's field name that refers to the user id.
      * @param array $otherfields table's field names that refers to the other members of the coumpund index.
      * @param array $recordsToModify array with current $table's id to update.
      * @param array $actionLog Array where to append the list of actions done.
      * @param array $errorMessages Array where to append any error occurred.
      */
-    protected function mergeCompoundIndex($toid, $fromid, $table, $userfield, $otherfields, &$recordsToModify,
-            &$actionLog, &$errorMessages)
+    protected function mergeCompoundIndex($data, $userfield, $otherfields, &$recordsToModify, &$actionLog,
+            &$errorMessages)
     {
         global $CFG, $DB;
 
         $otherfieldsstr = implode(', ', $otherfields);
-        $sql = 'SELECT id, ' . $userfield . ', ' . $otherfieldsstr . ' from ' . $CFG->prefix . $table .
-                ' WHERE ' . $userfield . ' in (' . $fromid . ', ' . $toid . ')';
+        $sql = 'SELECT id, ' . $userfield . ', ' . $otherfieldsstr .
+                ' FROM ' . $CFG->prefix . $data['tableName'] .
+                ' WHERE ' . $userfield . ' in (' . $data['fromid'] . ', ' . $data['toid'] . ')';
         $result = $DB->get_records_sql($sql);
 
         $itemArr = array();
@@ -131,45 +133,66 @@ class GenericTableMerger implements TableMerger
         }
         unset($result); //free memory
 
-        foreach ($itemArr as $otherfieldsid => $otherInfo) {
+        foreach ($itemArr as $otherInfo) {
             //iff we have only one result and it is from the current user => update record
             if (sizeof($otherInfo) == 1) {
-                if (isset($otherInfo[$fromid])) {
-                    $recordsToModify[$otherInfo[$fromid]] = $otherInfo[$fromid];
+                if (isset($otherInfo[$data['fromid']])) {
+                    $recordsToModify[$otherInfo[$data['fromid']]] = $otherInfo[$data['fromid']];
                 }
             } else { // both users appears in the group
                 //confirm both records exist, preventing problems from inconsistent data in database
-                if (isset($otherInfo[$toid]) && isset($otherInfo[$fromid])) {
-                    $idsToRemove[$otherInfo[$fromid]] = $otherInfo[$fromid];
+                if (isset($otherInfo[$data['toid']]) && isset($otherInfo[$data['fromid']])) {
+                    $idsToRemove[$otherInfo[$data['fromid']]] = $otherInfo[$data['fromid']];
                 }
             }
         }
         unset($itemArr); //free memory
-        // to ease serch for existing ids on array
-        $toMod = array_flip($recordsToModify);
 
         // we know that idsToRemove have always to be removed and NOT to be updated.
         foreach ($idsToRemove as $id) {
-            if (isset($toMod[$id])) {
-                unset($recordsToModify[$toMod[$id]]);
+            if (isset($recordsToModify[$id])) {
+                unset($recordsToModify[$id]);
             }
         }
-        unset($toMod); //free memory
+
+        $this->cleanRecordsOnCompoundIndex($data, $idsToRemove, $actionLog, $errorMessages);
+
+        unset($idsToRemove); //free memory
+        unset($sql);
+    }
+
+    /**
+     * Processes accordingly the cleaning up of records after a compound index is already processed.
+     *
+     * This implementation execute an SQL DELETE of all $idsToRemove. Subclasses may redefine this
+     * behavior accordingly.
+     *
+     * @global object $CFG
+     * @global moodle_database $DB
+     *
+     * @param array $data array with details of merging.
+     * @param array $idsToRemove array with ids of records to delete.
+     * @param array $actionLog array of actions being performed for merging.
+     * @param array $errorMessages array with found errors while merging users' data.
+     */
+    protected function cleanRecordsOnCompoundIndex($data, $idsToRemove, &$actionLog, &$errorMessages)
+    {
+        global $CFG, $DB;
 
         $idsGoByebye = implode(', ', $idsToRemove);
-        $sql = 'DELETE FROM ' . $CFG->prefix . $table . ' WHERE id IN (' . $idsGoByebye . ')';
+
         if ($idsGoByebye) {
+            $sql = 'DELETE FROM ' . $CFG->prefix . $data['tableName'] . ' WHERE id IN (' . $idsGoByebye . ')';
+
             if ($DB->execute($sql)) {
                 $actionLog[] = $sql;
             } else {
                 // an error occured during DB query
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', $table) . ': ' .
+                $errorMessages[] = get_string('tableko', 'tool_mergeusers', $data['tableName']) . ': ' .
                         $DB->get_last_error();
             }
         }
         unset($idsGoByebye); //free memory
-        unset($idsToRemove);
-        unset($sql);
     }
 
     /**

@@ -132,3 +132,36 @@ $string['excluded_exceptions_desc'] = 'Experiència en aquest àmbit ens suggere
     \'{$a}\' per excloure-les del procés de fusió (recomanat).<br>
     Si ho prefereixes, pots seleccionar les taules que desitgis per incloure-les
     en el procés de fusió (no recomanat).';
+
+// quiz attempts strings
+$string['quizattemptsaction'] = 'Com resoldre els intents de qüestionari';
+$string['quizattemptsaction_desc'] = 'En la fusió d\'intents de qüestionari hi poden haver tres
+    situacions:
+    <ol>
+    <li>L\'usuari vell fou l\'únic que va intentar el qüestionari. Es mouen com si els
+    hagués fet l\'usuari nou.</li>
+    <li>L\'usuari nou és l\'únic que va intentar el qüestionari. No es fa res, doncs ja
+    està tot correcte.</li>
+    <li>Tots dos usuaris tenen intents en el mateix qüestionari. <strong>En aquest cas és quan
+    s\'aplica l\'acció que estàs triant aquí</strong>. Poden ser les següents:
+        <ul>
+        <li><strong>{$a->renumber}</strong>. Afegeix els intents de l\'usuari vell a l\'usuari nou i es
+        reenumeren segons la data d\'inici de cada intent.</li>
+        <li><strong>{$a->delete_fromid}</strong>. Deixa només els intents fets per l\'usuari nou i elimina
+        els de l\'usuari vell. Aquí es fan prevaldre els darrers intents.</li>
+        <li><strong>{$a->delete_toid}</strong>. Deixa només els intents de l\'usuari vell i elimina
+        els de l\'usuari nou. Aquí es fan prevaldre els primers intents.</li>
+        <li><strong>{$a->remain}</strong> (per defecte). Els intents es mantenen relacionats als ususaris que els
+        van generar, sense fusionar-los ni eliminar-los. És l\'opció més segura si no es coneixen els efectes, però pot
+        provocar diferents notes al qüestionari, segons es fusioni de l\'usuari A en B, o de B en A.</li>
+        </ul>
+    </li>
+    </ol>';
+$string['qa_action_renumber'] = 'Ajunta tots els intents i reenumera\'ls';
+$string['qa_action_delete_fromid'] = 'Manté els intents de l\'usuari nou';
+$string['qa_action_delete_toid'] = 'Manté els intents de l\'usuari vell';
+$string['qa_action_remain'] = 'Mantenir intents intactes, sense fusionar-los ni eliminar-los';
+$string['qa_action_remain_log'] = 'Es mantenen intactes les dades dels usuaris a la taula <strong>{$a}</strong>.';
+$string['qa_chosen_action'] = 'Opció activa per intents de qüestionari: {$a}.';
+
+$string['qa_grades'] = 'Qualificacions recalculades pels qüestionaris: {$a}.';

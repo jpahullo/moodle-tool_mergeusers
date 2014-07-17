@@ -74,8 +74,27 @@ if ($hassiteconfig) {
         array('none'), //default value: empty => apply all exceptions.
         $options));
 
+    // quiz attempts
+    $quizStrings = new stdClass();
+    $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER} = new lang_string('qa_action_' . QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
+    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE} = new lang_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
+    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET} = new lang_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET, 'tool_mergeusers');
+    $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN} = new lang_string('qa_action_' . QuizAttemptsMerger::ACTION_REMAIN, 'tool_mergeusers');
+
+    $quizOptions = array(
+    QuizAttemptsMerger::ACTION_RENUMBER => $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER},
+        QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE => $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE},
+        QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET => $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET},
+        QuizAttemptsMerger::ACTION_REMAIN => $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN},
+    );
+
+    $settings->add(new admin_setting_configselect('tool_mergeusers/quizattemptsaction',
+        new lang_string('quizattemptsaction', 'tool_mergeusers'),
+        new lang_string('quizattemptsaction_desc', 'tool_mergeusers', $quizStrings),
+        QuizAttemptsMerger::ACTION_REMAIN,
+        $quizOptions)
+    );
+
     // Add settings
     $ADMIN->add('tools', $settings);
-
 }
-

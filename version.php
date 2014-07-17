@@ -30,8 +30,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2014070900;
+$plugin->version   = 2014071621;
 $plugin->requires  = 2011120500;
 $plugin->component = 'tool_mergeusers';
-$plugin->maturity = MATURITY_BETA;
-$plugin->release = '1.9.1 (Build: 2014070900)';
+$plugin->maturity = MATURITY_STABLE;
+$plugin->release = '1.10 (Build: 2014071621)';

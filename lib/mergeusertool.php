@@ -273,7 +273,7 @@ class MergeUserTool
                         $this->tableMergers[$tableName] :
                         $this->tableMergers['default'];
 
-                // proces the given $tableName.
+                // process the given $tableName.
                 $tableMerger->merge($data, $actionLog, $errorMessages);
             }
         } catch (Exception $e) {

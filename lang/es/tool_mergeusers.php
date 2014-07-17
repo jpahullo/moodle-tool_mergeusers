@@ -134,3 +134,35 @@ $string['excluded_exceptions_desc'] = 'Experiencia en este ámbito nos sugiere
     la opción \'{$a}\' para excluirlas del proceso de fusión (recomendado).<br>
     Si lo prefieres, puedes seleccionar las tablas de desees para incluirlas
     en el proceso de fusión (no recomendado).';
+
+// quiz attempts strings
+$string['quizattemptsaction'] = 'Cómo resolver los intentos de un cuestionario';
+$string['quizattemptsaction_desc'] = 'En la fusión de intentos de un cuestionario pueden suceder una de estas tres
+    situaciones:
+    <ol>
+    <li>El usuario antiguo fue el único que intentó el cuestionario. Se mueven todos al usuario nuevo como si éste
+    los hubiera realizado.</li>
+    <li>El usuario nuevo es el único que intentó el cuestionario. No se hace nada, ya que está todo correcto.</li>
+    <li>Ambos usuarios realizaron intentos para el mismo cuestionario. <strong>En este caso es cuando se aplica la
+    acción que estás escogiendo en esta configuración</strong>. Las acciones pueden ser las siguientes:
+        <ul>
+        <li><strong>{$a->renumber}</strong>. Se añaden los intentos del usuario antiguo al usuario nuevo y se
+        reenumeran todos según el tiempo de inicio de cada intento.</li>
+        <li><strong>{$a->delete_fromid}</strong>. Se dejan sólo los intentos realizados por el usuario nuevo y se
+        eliminan los del usuario antiguo. Por tanto, se hacen prevaler los últimos intentos.</li>
+        <li><strong>{$a->delete_toid}</strong>. Se dejan sólo los intentos del usuario antiguo y se
+        eliminan los del usuario nuevo. Aquí se hacen prevaler los primeros.</li>
+        <li><strong>{$a->remain}</strong> (por defecto). Los intentos se mantienen relacionados a los usuarios
+        que los generó, sin fusionarlos ni eliminarlos. Es la opción más segura si no se conocen los efectos, pero
+        puede generar diferentes notas para el cuestionario según se fusione el usuario A en B o de B en A.</li>
+        </ul>
+    </li>
+    </ol>';
+$string['qa_action_renumber'] = 'Une todos los intentos y reenuméralos';
+$string['qa_action_delete_fromid'] = 'Mantiene los intentos del usuario nuevo';
+$string['qa_action_delete_toid'] = 'Mantiene los intentos del usuario viejo';
+$string['qa_action_remain'] = 'No hacer nada: ni se fusionan ni eliminan';
+$string['qa_action_remain_log'] = 'Se mantienen intactos los datos de los usuarios en la tabla <strong>{$a}</strong.';
+$string['qa_chosen_action'] = 'Opción activa para intentos de cuestionario: {$a}.';
+
+$string['qa_grades'] = 'Calificaciones recalculadas para los cuestionarios: {$a}.';
