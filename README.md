@@ -1,4 +1,4 @@
-Merge users script for Moodle 2.x
+Merge users script for Moodle 2
 =================================
 
 
@@ -35,6 +35,8 @@ cases:
     that MyMoodle page of the old user have a relation of blocks appearing on it.
     If we proceed with a normal merging action, resulting with two records
     with the same userid, the user will not see correctly his/her MyMoodle page.
+    Due to a community request, all these tables except my_pages can be omitted
+    from this exclusion and so, if set in settings, they can be merged as usual.
 * Special Case #4: mod/journal plugin has a record per user and journal on
     journal_entries table. In case there is a record for both users, we delete
     the record related to the old user. For the rest of cases, this operates as usual.
@@ -56,6 +58,27 @@ cases:
     including context, role and userid. As before, it always updates records to
     be the new one. If only old id exists, it is updated; if only new id exists,
     it does nothing; if both ids exist, the record with the old id is removed.
+* Special case #9: user_lastaccess table has a two-field unique index, including
+    userid and courseid. In case both users has a record for the same
+    courseid, this plugin removes the record for the old user and keep that one
+    for the new user. For the rest of cases, this plugin operates as usual.
+* Special case #10: quiz_attempts table has a three-field unique index, including
+    userid, quiz and attempt. This table and related quiz_grades and quiz_grades_history
+    are processed as specified in the plugin settings. This plugin provies you
+    several options when merging quiz attempts from two users:
+ 1. Merge attempts from both users and renumber. Attempts from the old user are
+    merged with the ones of the new user and renumbered by the time they were
+    started.
+ 2. Keep attempts from the new user. Attempts from the old user are removed.
+    Attempts from the new user are kept, since this option considers them as the
+    most important.
+ 3. Keep attempts from the old user. Attempts from the new user are removed.
+    Attempts from the old user are kept, since this option considers them as the
+    most important.
+ 4. Do nothing: do not merge nor delete (by default). Attempts are not merged nor
+    deleted, remaining related to the user who made them. This is the most secure
+    action, but merging users from user A to user B or B to A may produce different
+    quiz grades.
 
 
 Command-line script
@@ -71,6 +94,7 @@ You can go further and develop your own CLI script by extending the Gathering in
 Be sure the class name and the filename are the same, but filename all in lowercase ending with ".php".
 See lib/cligathering for an example.
 2. Create or edit the file config/config.local.php with at least the following content:
+
 ```php
 <?php
 
@@ -107,14 +131,17 @@ This plugin also manages the 'merging_success' event is trigered, what includes:
 Correct way of testing this plugin
 ---
 
-These are the main steps to do so:
+First of all, check `admin/settings.php?section=mergeusers_settings` for the
+description of the setting `tool_mergeusers | transactions_only`
+**if your database type and version supports transcations**. If so,
+**no action will actually be committed if something goes wrong**.
 
-1. You should have a replica of your Moodle instance, with a full replica of your Moodle database.
+Mainly, these are the main steps to test this plugin:
+
+1. You should have a replica of your Moodle instance, with a full replica of your Moodle database where you run this plugin.
 2. Run a sufficient amount of user merging to check if anything goes wrong.
 3. What if...?
-    1. ... all was ok? You are almost secure all will be ok also in your production instance of Moodle.
-    Above all, check **if your database type and version supports transcations**. If so,
-    **no action will actually be committed if something went wrong**.
+    1. ... all was ok? You are almost confident that all will be ok also in your production instance of Moodle.
     2. ... something went wrong? There are several reasons for that:
         1. Non-core plugins installed on your Moodle and not assumed in this plugin.
         2. Local database changes on Moodle that may affect to the normal execution of this plugin.
@@ -131,10 +158,18 @@ Common sense
 Before running this plugin, it is highly recommended to back up your database.
 That will help you to restore the state before any merging action was done.
 
-This plugin stores a log for any user merging, with the list of actions done or errors produced.
-But, there is no provision for automatic rollbacks, so if something
-were to fail midway through you will end up with a half-updated database.
-This. Is. Bad. Practice safe script. Always backup first.
+This plugin stores a log for any user merging, with the list of actions done or
+errors produced. If your database supports transactions (see above section),
+automatic rollbacks are done at database level, so that your database state
+remains consistent.
+
+However, running this plugin in databases without
+transaction support can put you in trouble. That is, there is no provision for
+automatic rollbacks, so if something were to fail midway through,
+you will end up with a half-updated database. Nevertheless, if you found a
+problem when merging users A and B, do not panic. Merging will be successfully
+completed when a solution for your problem is included into this plugin, and
+you rerun merging users A and B.
 
 
 Minimum requirements
@@ -162,5 +197,11 @@ Contributors
     * more Moodle-like web and code, including web renderer,
     * config.php with current configuration settings, used for merging,
     * config.local.php to include local settings on your Moodle instance,
-    * log of any merging action in database for further reference
+    * log of any merging action in database for further reference,
+    * revisited web interface for the new wizard when merging users manually,
+    * TableMerger entities to process Moodle tables accordingly,
+    * quiz attempts are processed as suggested in
+      https://moodle.org/mod/forum/discuss.php?d=258979, adding 4 different options
+      for their processing.
+* Web wizard for merging users by John Hoopes, University of Wisconsin - Madison
 * Plugin maintained by Nicolas Dunand [nicolas.dunand AT unil DOT ch]
