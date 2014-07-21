@@ -76,11 +76,15 @@ return array(
         ),
         'role_assignments' => array(
             'userfield' => 'userid',
-            'otherfields' => array('contextid', 'roleid'),
+            'otherfields' => array('contextid', 'roleid'), // mdl_roleassi_useconrol_ix (not unique)
         ),
         'user_lastaccess' => array(
             'userfield' => 'userid',
-            'otherfields' => array('courseid'),
+            'otherfields' => array('courseid'), // mdl_userlast_usecou_ui (unique)
+        ),
+        'quiz_attempts' => array(
+            'userfield' => 'userid',
+            'otherfields' => array('quiz', 'attempt'), // mdl_quizatte_quiuseatt_uix (unique)
         ),
         'cohort_members' => array(
             'userfield' => 'userid',
@@ -98,5 +102,13 @@ return array(
         'message_read' => array('useridfrom', 'useridto'),
         'question' => array('createdby', 'modifiedby'),
         'default' => array('userid', 'user_id', 'id_user', 'user'), //may appear compound index
+    ),
+
+    // TableMergers to process each database table.
+    // 'default' is applied when no specific TableMerger is specified.
+    'tablemergers' => array(
+        'default' => 'GenericTableMerger',
+        'user_enrolments' => 'UserEnrolmentsMerger',
+        'quiz_attempts' => 'QuizAttemptsMerger',
     ),
 );

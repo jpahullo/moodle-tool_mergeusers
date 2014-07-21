@@ -114,8 +114,10 @@ class tool_mergeusers_renderer extends plugin_renderer_base
             case self::INDEX_PAGE_SEARCH_AND_SELECT_STEP:
                 $output .= $this->moodleform($mform);
                 // Render user select table if available
-                $this->page->requires->js_init_call('M.tool_mergeusers.init_select_table', array());
-                $output .= $this->render_user_select_table($ust);
+                if ($ust !== NULL) {
+                    $this->page->requires->js_init_call('M.tool_mergeusers.init_select_table', array());
+                    $output .= $this->render_user_select_table($ust);
+                }
                 break;
             case self::INDEX_PAGE_CONFIRMATION_STEP:
                 break;

@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -21,16 +22,22 @@
  * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 spl_autoload_register(function ($class) {
 
     $fileName = strtolower($class) . '.php';
     $fileDirname = dirname(__FILE__);
+    $dirs = array(
+        $fileDirname,
+        $fileDirname . '/table',
+        $fileDirname . '/local',
+    );
 
-    if(is_file($fileDirname.'/'.$fileName)) {
-        require_once $fileDirname.'/'.$fileName;
-        if(class_exists($class)) {
-            return true;
+    foreach ($dirs as $dir) {
+        if (is_file($dir . '/' . $fileName)) {
+            require_once $dir . '/' . $fileName;
+            if (class_exists($class)) {
+                return true;
+            }
         }
     }
     return false;

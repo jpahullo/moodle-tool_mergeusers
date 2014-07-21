@@ -56,8 +56,59 @@ $string['results'] = 'Résultat de la fusion';
 
 // Settings page
 $string['transactions_setting'] = 'Seules les transactions sont autorisées';
-$string['transactions_setting_desc'] = 'Si cette option est activée, les comptes utilisateur ne peuvent être fusionnés que si votre base de données prend en charge les transactions (recommandé). Avec cette option activée, vous vous assurez que la base de données reste toujours dans un état cohérent, même si une fusion se termine avec des erreurs.<br /> Si cette option est désactivée, vous pourrez fusionner des comptes utilisateur sans utiliser de transactions. En cas d\'erreur, l\'inscription de la fusion montrera quel était le problème. Si vous signalé cette erreur aux développeurs de ce plugin, une solution devrait être trouvée rapidement.<br />Notez que ce plugin gère tous les composants standard de Moodle. Par conséquent, si vous avez une installation de Moodle standard, vous pouvez exécuter ce plugin sans problème avec cette option activée ou désactivée.';
-$string['transactions_supported'] = 'Pour votre information, votre base de données <strong>prend en charge les transactions</strong>.';
-$string['transactions_not_supported'] = 'Pour votre information, votre base de données <strong>ne prend pas en charge les transactions</strong>.';
+$string['transactions_setting_desc'] = 'Si cette option est activée, les comptes
+    utilisateur ne peuvent être fusionnés que si votre base de données prend en
+    charge les transactions (recommandé). Avec cette option activée, vous vous
+    assurez que la base de données reste toujours dans un état cohérent, même si
+    une fusion se termine avec des erreurs.<br /> Si cette option est désactivée,
+    vous pourrez fusionner des comptes utilisateur sans utiliser de transactions.
+    En cas d\'erreur, l\'inscription de la fusion montrera quel était le problème.
+    Si vous signalé cette erreur aux développeurs de ce plugin, une solution devrait
+    être trouvée rapidement.<br />Notez que ce plugin gère tous les composants
+    standard de Moodle. Par conséquent, si vous avez une installation de Moodle
+    standard, vous pouvez exécuter ce plugin sans problème avec cette option activée
+    ou désactivée.';
+$string['transactions_supported'] = 'Pour votre information, votre base de données
+    <strong>prend en charge les transactions</strong>.';
+$string['transactions_not_supported'] = 'Pour votre information, votre base de
+    données <strong>ne prend pas en charge les transactions</strong>.';
 $string['excluded_exceptions'] = 'Exceptions à exclure';
-$string['excluded_exceptions_desc'] = 'L\'expérience dans ce domaine suggère que ces tables de base de données doivent être exclues du processus fusion. Voir le fichier README pour plus de détails.<br>Donc, si vous voulez appliquer le comportement par défaut, vous devez choisir \'{$a}\' afin d\'exclure ces tables du processus de fusion (recommandé).<br>Si vous préférez, vous pouvez choisir les tables que vous souhaitez inclure dans le processus de fusion (non recommandé).';
+$string['excluded_exceptions_desc'] = 'L\'expérience dans ce domaine suggère que
+    ces tables de base de données doivent être exclues du processus fusion. Voir
+    le fichier README pour plus de détails.<br>Donc, si vous voulez appliquer le
+    comportement par défaut, vous devez choisir \'{$a}\' afin d\'exclure ces tables
+    du processus de fusion (recommandé).<br>Si vous préférez, vous pouvez choisir
+    les tables que vous souhaitez inclure dans le processus de fusion
+    (non recommandé).';
+
+// quiz attempts strings
+$string['quizattemptsaction'] = 'Résoudre les tentatives d\'un questionnaire';
+$string['quizattemptsaction_desc'] = 'Le questionnaire tentative de fusion peut se produire l\'un des trois
+    situations :
+    <ol>
+    <li>Ancien utilisateur est celui qui a essayé le questionnaire. Tout nouvel utilisateur de se déplacer comme si elle
+    il les a effectués.</li>
+    <li>Le nouvel utilisateur est le seul qui essaie questionnaire. Rien à faire, parce que c\'est tout droit.</li>
+    <li>Les utilisateurs fait des tentatives pour le même questionnaire. <strong>Dans ce cas s\'applique lorsque le
+    l\'action que vous choisissez ce paramètre</strong>. Les actions peuvent être:
+        <ul>
+        <li><strong>{$a->renumber}</strong>. Les tentatives de l\'ancien utilisateur est ajouté au nouvel
+        utilisateur et ils sont renumérotés par l\'heure de début de chaque tentative.</li>
+        <li><strong>{$a->delete_fromid}</strong>. Sont autorisés uniquement les tentatives par le nouvel utilisateur et
+        supprimer les tentatives de l\'ancien utilisateur. Par conséquent, les récentes tentatives de faire prévaloir.</li>
+        <li><strong>{$a->delete_toid}</strong>. Les tentatives sont laissés seulement l\'ancien utilisateur
+        et supprimer le nouvel utilisateur. Voici la première prévaut.</li>
+        <li><strong>{$a->remain}</strong> (par défaut). Les tentatives restent liés utilisateur qui a généré sans
+        les fusionner ou de les supprimer. C\'est l\'option la plus sûre si les effets ne sont pas connus, mais
+        peut générer des notes différentes selon le questionnaire fusion utilisateur de A à B ou de B à A.</li>
+        </ul>
+    </li>
+    </ol>';
+$string['qa_action_renumber'] = 'Fusionner toutes les intentions et réénumérer';
+$string['qa_action_delete_fromid'] = 'Supprimer les anciennes tentatives de l\'utilisateur';
+$string['qa_action_delete_toid'] = 'Supprime les nouvelles tentatives de l\'utilisateur';
+$string['qa_action_remain'] = 'Gardez tentatives intacts sans fusionner ou supprimer';
+$string['qa_action_remain_log'] = 'Les données utilisateur restent intacts dans le tableau <strong>{$a}</strong>.';
+$string['qa_chosen_action'] = 'Option active pour tentatives de questionnaire: {$a}.';
+
+$string['qa_grades'] = 'Notes recalculées pour les questionnaires: {$a}.';
