@@ -286,10 +286,9 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         } else {
             $output .= html_writer::tag('div', get_string('loglist', 'tool_mergeusers'), array('class' => 'title'));
 
-            //i/cross_red_big
             $flags = array();
-            $flags[] = html_writer::empty_tag('img', array('src' => $this->pix_url('i/cross_red_big'))); //failure icon
-            $flags[] = html_writer::empty_tag('img', array('src' => $this->pix_url('i/tick_green_big'))); //ok icon
+            $flags[] = html_writer::empty_tag('img', array('src' => $this->pix_url('i/invalid'))); //failure icon
+            $flags[] = html_writer::empty_tag('img', array('src' => $this->pix_url('i/valid'))); //ok icon
 
             $table = new html_table();
             $table->align = array('center', 'center', 'center', 'center', 'center', 'center');
