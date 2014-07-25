@@ -429,47 +429,15 @@ class MergeUserTool
     private function getCurrentUserFieldNames($tableName, $userFields)
     {
         global $CFG, $DB;
-
-        if ($CFG->dbtype == 'sqlsrv') {
-            // MSSQL
-            $fieldList = "SELECT * FROM INFORMATION_SCHEMA.Columns WHERE TABLE_NAME = '" .
-                    $tableName . "' AND COLUMN_NAME IN (" . $userFields . ")";
-        } else if ($CFG->dbtype == 'mysqli') {
-            // MySQL
-            $fieldList = "SHOW COLUMNS FROM " . $tableName . " where Field IN (" . $userFields . ")";
-        } else if ($CFG->dbtype == 'pgsql') {
-            // PGSQL
-            $fieldList = "SELECT column_name FROM information_schema.columns WHERE table_name ='" .
-                    $tableName . "' and column_name IN (" . $userFields . ");";
-        }
-
-        $dbFields = $DB->get_records_sql($fieldList);
-
-        if (!$dbFields) {
-            return false;
-        }
-
-        $fieldNames = array();
-
-        // Now we have the appropriate fieldname and we know what to update!
-        // Make the $fieldNames associative, to make them unique.
-        if ($CFG->dbtype == 'sqlsrv') {
-            // MSSQL
-            foreach ($dbFields as $record) {
-                $fieldNames[$record->column_name] = $record->column_name; // get the fieldname
-            }
-        } else if ($CFG->dbtype == 'mysqli') {
-            // MySQL
-            foreach ($dbFields as $record) {
-                $fieldNames[$record->field] = $record->field; // get the fieldname
-            }
-        } else if ($CFG->dbtype == 'pgsql') {
-            // PGSQL
-            foreach ($dbFields as $record) {
-                $fieldNames[$record->column_name] = $record->column_name; // get the fieldname
-            }
-        }
-        return $fieldNames;
+        $DB->set_debug(true);
+        return $DB->get_fieldset_sql("
+            SELECT DISTINCT column_name
+            FROM
+                INFORMATION_SCHEMA.Columns
+            WHERE
+                TABLE_NAME = ? AND
+                TABLE_SCHEMA = ? AND
+                COLUMN_NAME IN (" . $userFields . ")",
+            array($tableName, $CFG->dbname));
     }
-
 }

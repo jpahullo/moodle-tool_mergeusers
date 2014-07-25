@@ -101,7 +101,7 @@ return array(
         'message' => array('useridfrom', 'useridto'),
         'message_read' => array('useridfrom', 'useridto'),
         'question' => array('createdby', 'modifiedby'),
-        'default' => array('userid', 'user_id', 'id_user', 'user'), //may appear compound index
+        'default' => array('authorid', 'reviewerid', 'userid', 'user_id', 'id_user', 'user'), //may appear compound index
     ),
 
     // TableMergers to process each database table.
