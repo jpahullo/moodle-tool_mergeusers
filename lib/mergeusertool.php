@@ -429,7 +429,6 @@ class MergeUserTool
     private function getCurrentUserFieldNames($tableName, $userFields)
     {
         global $CFG, $DB;
-        $DB->set_debug(true);
         return $DB->get_fieldset_sql("
             SELECT DISTINCT column_name
             FROM
