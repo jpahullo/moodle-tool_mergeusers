@@ -97,11 +97,17 @@ class UserReviewTable extends html_table implements renderable
             $this->id = 'merge_users_tool_user_review_table';
             $this->attributes['class'] = 'generaltable boxaligncenter';
 
+            if ($this->olduser->idnumber || $this->newuser->idnumber) {
+                $extrafield = 'idnumber';
+            } else {
+                $extrafield = 'description';
+            }
             $columns = array(
                 'col_label' => '',
                 'col_userid' => 'Id',
                 'col_username' => get_string('user'),
                 'col_email' => get_string('email'),
+                'col_extra' => get_string($extrafield)
             );
             $this->head = array_values($columns);
             $this->colclasses = array_keys($columns);
@@ -114,7 +120,9 @@ class UserReviewTable extends html_table implements renderable
                 $olduserrow[] = $this->olduser->id;
                 $olduserrow[] = $this->renderer->show_user($this->olduser->id, $this->olduser);
                 $olduserrow[] = $this->olduser->email;
+                $olduserrow[] = $this->olduser->$extrafield;
             } else { // otherwise display empty fields
+                $olduserrow[] = '';
                 $olduserrow[] = '';
                 $olduserrow[] = '';
                 $olduserrow[] = '';
@@ -128,6 +136,7 @@ class UserReviewTable extends html_table implements renderable
                 $newuserrow[] = $this->newuser->id;
                 $newuserrow[] = $this->renderer->show_user($this->newuser->id, $this->newuser);
                 $newuserrow[] = $this->newuser->email;
+                $newuserrow[] = $this->newuser->$extrafield;
             } else { // otherwise display empty fields
                 $newuserrow[] = '';
                 $newuserrow[] = '';
