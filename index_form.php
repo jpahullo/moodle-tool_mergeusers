@@ -68,7 +68,7 @@ class mergeuserform extends moodleform {
         $searchuser[] = $mform->createElement('text', 'searcharg');
         $searchuser[] = $mform->createElement('select', 'searchfield', '', $searchfields, '');
         $mform->addGroup($searchuser, 'searchgroup', get_string('searchuser', 'tool_mergeusers'));
-        $mform->setType('searchgroup[searcharg]', PARAM_ALPHANUMEXT);
+        $mform->setType('searchgroup[searcharg]', PARAM_TEXT);
         $mform->addHelpButton('searchgroup', 'searchuser', 'tool_mergeusers');
 
         $mform->addElement('static', 'mergeusersadvanced', get_string('mergeusersadvanced', 'tool_mergeusers'));
