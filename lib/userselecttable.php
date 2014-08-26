@@ -87,6 +87,7 @@ class UserSelectTable extends html_table implements renderable
             'col_userid' => 'Id',
             'col_username' => get_string('user'),
             'col_email' => get_string('email'),
+            'col_idnumber' => get_string('idnumber'),
         );
 
         $this->head = array_values($columns);
@@ -99,6 +100,7 @@ class UserSelectTable extends html_table implements renderable
             $row[] = $user->id;
             $row[] = $this->renderer->show_user($user->id, $user);
             $row[] = $user->email;
+            $row[] = $user->idnumber;
             $this->data[] = $row;
         }
     }

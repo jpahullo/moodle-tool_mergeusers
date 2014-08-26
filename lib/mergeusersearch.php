@@ -98,6 +98,14 @@ class MergeUserSearch{
                 $sql = 'SELECT * FROM {user} WHERE email LIKE :email';
 
                 break;
+            case 'idnumber': // search on idnumber
+
+                $params = array(
+                    'idnumber' => '%' . $input . '%',
+                );
+                $sql = 'SELECT * FROM {user} WHERE idnumber LIKE :idnumber';
+
+                break;
             default: // search on all fields by default
 
                 $params = array(
@@ -105,7 +113,8 @@ class MergeUserSearch{
                     'username'   => '%' . $input . '%',
                     'firstname'  => '%' . $input . '%',
                     'lastname'   => '%' . $input . '%',
-                    'email'      => '%' . $input . '%'
+                    'email'      => '%' . $input . '%',
+                    'idnumber'      => '%' . $input . '%'
                 );
 
                 $sql =
@@ -116,7 +125,8 @@ class MergeUserSearch{
                         username LIKE :username OR
                         firstname LIKE :firstname OR
                         lastname LIKE :lastname OR
-                        email LIKE :email';
+                        email LIKE :email OR
+                        idnumber LIKE :idnumber';
 
                 break;
         }

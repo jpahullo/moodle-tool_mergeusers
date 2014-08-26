@@ -53,6 +53,7 @@ class mergeuserform extends moodleform {
         );
 
         $searchfields = array(
+            'idnumber' => get_string('idnumber'),
             ''          => get_string('all'),
             'id'        => 'Id',
             'username'  => get_string('username'),
