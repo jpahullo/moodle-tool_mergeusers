@@ -38,6 +38,7 @@ global $CFG;
 
 require_once $CFG->dirroot . '/lib/clilib.php';
 require_once __DIR__ . '/autoload.php';
+require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
 
 /**
  *
@@ -376,22 +377,6 @@ class MergeUserTool
     }
 
     /**
-     * Gets whether database transactions are allowed.
-     * @global moodle_database $DB
-     * @return bool true if transactions are allowed. false otherwise.
-     */
-    public static function transactionsSupported()
-    {
-        global $DB;
-
-        // Tricky way of getting real transactions support, without re-programming it.
-        // May be in the future, as phpdoc shows, this method will be publicly accessible.
-        $method = new ReflectionMethod($DB, 'transactions_supported');
-        $method->setAccessible(true); //method is protected; make it accessible.
-        return $method->invoke($DB);
-    }
-
-    /**
      * Checks whether the current database supports transactions.
      * If settings of this plugin are set up to allow only transactions,
      * this method aborts the execution. Otherwise, this method will return
@@ -403,7 +388,7 @@ class MergeUserTool
     {
         global $CFG;
 
-        $transactionsSupported = self::transactionsSupported();
+        $transactionsSupported = tool_mergeusers_transactionssupported();
         $forceOnlyTransactions = get_config('tool_mergeusers', 'transactions_only');
 
         if (!$transactionsSupported && $forceOnlyTransactions) {
