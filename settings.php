@@ -61,7 +61,7 @@ if ($hassiteconfig) {
             get_string($supporting_lang, 'tool_mergeusers'),
         1));
 
-    $config = Config::instance();
+    $config = tool_mergeusers_config::instance();
     $none = get_string('none');
     $options = array('none' => $none);
     foreach ($config->exceptions as $exception) {

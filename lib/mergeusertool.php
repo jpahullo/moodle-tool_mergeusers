@@ -113,15 +113,15 @@ class MergeUserTool
     /**
      * Initializes
      * @global object $CFG
-     * @param Config $config local configuration.
+     * @param tool_mergeusers_config $config local configuration.
      * @param Logger $logger logger facility to save results of mergings.
      */
-    public function __construct(Config $config = null, Logger $logger = null)
+    public function __construct(tool_mergeusers_config $config = null, Logger $logger = null)
     {
         global $CFG;
 
         $this->logger = (is_null($logger)) ? new Logger() : $logger;
-        $config = (is_null($config)) ? Config::instance() : $config;
+        $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
         $this->supportedDatabase = true;
 
         $this->checkTransactionSupport();
