@@ -126,7 +126,7 @@ class MergeUserTool
 
         $this->checkTransactionSupport();
 
-        if ($CFG->dbtype == 'sqlsrv') {
+        if ( ($CFG->dbtype == 'sqlsrv') || ($CFG->dbtype == 'mssql') ){
             // MSSQL
             $this->sqlListTables = "SELECT name FROM sys.Tables WHERE name LIKE '" .
                     $CFG->prefix . "%' AND type = 'U' ORDER BY name";
