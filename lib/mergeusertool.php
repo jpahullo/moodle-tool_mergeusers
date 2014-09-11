@@ -435,8 +435,8 @@ class MergeUserTool
                 INFORMATION_SCHEMA.Columns
             WHERE
                 TABLE_NAME = ? AND
-                TABLE_SCHEMA = ? AND
+                (TABLE_SCHEMA = ? OR TABLE_CATALOG=?) AND
                 COLUMN_NAME IN (" . $userFields . ")",
-            array($tableName, $CFG->dbname));
+            array($tableName, $CFG->dbname, $CFG->dbname));
     }
 }
