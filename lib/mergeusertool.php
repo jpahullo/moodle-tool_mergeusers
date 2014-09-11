@@ -96,7 +96,7 @@ class MergeUserTool
     protected $userFieldNames;
 
     /**
-     * @var Logger logger for merging users.
+     * @var tool_mergeusers_logger logger for merging users.
      */
     protected $logger;
 
@@ -115,13 +115,13 @@ class MergeUserTool
      * Initializes
      * @global object $CFG
      * @param tool_mergeusers_config $config local configuration.
-     * @param Logger $logger logger facility to save results of mergings.
+     * @param tool_mergeusers_logger $logger logger facility to save results of mergings.
      */
-    public function __construct(tool_mergeusers_config $config = null, Logger $logger = null)
+    public function __construct(tool_mergeusers_config $config = null, tool_mergeusers_logger $logger = null)
     {
         global $CFG;
 
-        $this->logger = (is_null($logger)) ? new Logger() : $logger;
+        $this->logger = (is_null($logger)) ? new tool_mergeusers_logger() : $logger;
         $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
         $this->supportedDatabase = true;
 
