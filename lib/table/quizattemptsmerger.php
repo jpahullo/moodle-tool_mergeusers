@@ -278,13 +278,11 @@ class QuizAttemptsMerger extends GenericTableMerger
         $idsstr = "'" . implode("', '", $ids) . "'";
 
         $sqlQuizzes = "
-            SELECT DISTINCT q.*
-            FROM
-                {" . $data['tableName'] . "} qo JOIN
-                {quiz} q ON
-                    (q.id = qo.quiz)
-            WHERE
-                qo.id IN ($idsstr)
+            SELECT * FROM {quiz} q
+                    WHERE EXISTS (
+                            SELECT * FROM {" . $data['tableName'] . 
+                                    "} WHERE id IN ($idsstr) AND quiz=q.id
+                                 )
         ";
 
         $quizzes = $DB->get_records_sql($sqlQuizzes);
