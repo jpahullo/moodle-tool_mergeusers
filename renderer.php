@@ -24,6 +24,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once __DIR__ . '/select_form.php';
 require_once __DIR__ . '/review_form.php';
+require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
 
 /**
  * Renderer for the merge user plugin.
@@ -194,7 +195,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
             $dbmessage = 'dbok';
             $notifytype = 'notifysuccess';
         } else {
-            $transactions = (MergeUserTool::transactionsSupported()) ?
+            $transactions = (tool_mergeusers_transactionssupported()) ?
                     '_transactions' :
                     '_no_transactions';
 

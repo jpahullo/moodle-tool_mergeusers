@@ -30,9 +30,10 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-require_once __DIR__ . '/lib/autoload.php';
-
 if ($hassiteconfig) {
+    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib/autoload.php');
+    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
+
     $ADMIN->add('accounts',
             new admin_category('tool_mergeusers', get_string('pluginname', 'tool_mergeusers')));
     $ADMIN->add('tool_mergeusers',
@@ -53,7 +54,7 @@ if ($hassiteconfig) {
         get_string('suspenduser_setting_desc', 'tool_mergeusers'),
         1));
 
-    $supporting_lang = (MergeUserTool::transactionsSupported()) ? 'transactions_supported' : 'transactions_not_supported';
+    $supporting_lang = (tool_mergeusers_transactionssupported()) ? 'transactions_supported' : 'transactions_not_supported';
 
     $settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',
         get_string('transactions_setting', 'tool_mergeusers'),
@@ -61,7 +62,7 @@ if ($hassiteconfig) {
             get_string($supporting_lang, 'tool_mergeusers'),
         1));
 
-    $config = Config::instance();
+    $config = tool_mergeusers_config::instance();
     $none = get_string('none');
     $options = array('none' => $none);
     foreach ($config->exceptions as $exception) {

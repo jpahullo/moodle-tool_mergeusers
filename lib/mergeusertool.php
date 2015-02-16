@@ -38,6 +38,7 @@ global $CFG;
 
 require_once $CFG->dirroot . '/lib/clilib.php';
 require_once __DIR__ . '/autoload.php';
+require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
 
 /**
  *
@@ -95,7 +96,7 @@ class MergeUserTool
     protected $userFieldNames;
 
     /**
-     * @var Logger logger for merging users.
+     * @var tool_mergeusers_logger logger for merging users.
      */
     protected $logger;
 
@@ -113,15 +114,15 @@ class MergeUserTool
     /**
      * Initializes
      * @global object $CFG
-     * @param Config $config local configuration.
-     * @param Logger $logger logger facility to save results of mergings.
+     * @param tool_mergeusers_config $config local configuration.
+     * @param tool_mergeusers_logger $logger logger facility to save results of mergings.
      */
-    public function __construct(Config $config = null, Logger $logger = null)
+    public function __construct(tool_mergeusers_config $config = null, tool_mergeusers_logger $logger = null)
     {
         global $CFG;
 
-        $this->logger = (is_null($logger)) ? new Logger() : $logger;
-        $config = (is_null($config)) ? Config::instance() : $config;
+        $this->logger = (is_null($logger)) ? new tool_mergeusers_logger() : $logger;
+        $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
         $this->supportedDatabase = true;
 
         $this->checkTransactionSupport();
@@ -379,22 +380,6 @@ class MergeUserTool
     }
 
     /**
-     * Gets whether database transactions are allowed.
-     * @global moodle_database $DB
-     * @return bool true if transactions are allowed. false otherwise.
-     */
-    public static function transactionsSupported()
-    {
-        global $DB;
-
-        // Tricky way of getting real transactions support, without re-programming it.
-        // May be in the future, as phpdoc shows, this method will be publicly accessible.
-        $method = new ReflectionMethod($DB, 'transactions_supported');
-        $method->setAccessible(true); //method is protected; make it accessible.
-        return $method->invoke($DB);
-    }
-
-    /**
      * Checks whether the current database supports transactions.
      * If settings of this plugin are set up to allow only transactions,
      * this method aborts the execution. Otherwise, this method will return
@@ -406,7 +391,7 @@ class MergeUserTool
     {
         global $CFG;
 
-        $transactionsSupported = self::transactionsSupported();
+        $transactionsSupported = tool_mergeusers_transactionssupported();
         $forceOnlyTransactions = get_config('tool_mergeusers', 'transactions_only');
 
         if (!$transactionsSupported && $forceOnlyTransactions) {
