@@ -126,20 +126,23 @@ class MergeUserTool
 
         $this->checkTransactionSupport();
 
-        if ( ($CFG->dbtype == 'sqlsrv') || ($CFG->dbtype == 'mssql') ){
-            // MSSQL
-            $this->sqlListTables = "SELECT name FROM sys.Tables WHERE name LIKE '" .
+        switch ($CFG->dbtype) {
+            case 'sqlsrv':
+            case 'mssql':
+                $this->sqlListTables = "SELECT name FROM sys.Tables WHERE name LIKE '" .
                     $CFG->prefix . "%' AND type = 'U' ORDER BY name";
-        } else if ($CFG->dbtype == 'mysqli') {
-            // MySQL
-            $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
-        } else if ($CFG->dbtype == 'pgsql') {
-            // PGSQL
-            $this->sqlListTables = "SELECT table_name FROM information_schema.tables WHERE table_name LIKE '" .
+                break;
+            case 'mysqli':
+            case 'mariadb':
+                $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
+                break;
+            case 'pgsql':
+                $this->sqlListTables = "SELECT table_name FROM information_schema.tables WHERE table_name LIKE '" .
                     $CFG->prefix . "%' AND table_schema = 'public'";
-        } else {
-            $this->supportedDatabase = false;
-            $this->sqlListTables = "";
+                break;
+            default:
+                $this->supportedDatabase = false;
+                $this->sqlListTables = "";
         }
 
         // these are tables we don't want to modify due to logging or security reasons.
