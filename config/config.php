@@ -90,6 +90,18 @@ return array(
             'userfield' => 'userid',
             'otherfields' => array('cohortid'),
         ),
+        'certif_completion' => array(  // mdl_certcomp_ceruse_uix (unique)
+            'userfield' => 'userid',
+            'otherfields' => array('certifid'),
+        ),
+        'course_modules_completion' => array( // mdl_courmoducomp_usecou_uix (unique)
+            'userfield' => 'userid',
+            'otherfields' => array('coursemoduleid'),
+        ),
+        'scorm_scoes_track' => array( //mdl_scorscoetrac_usescosco_uix (unique)
+            'userfield' => 'userid',
+            'otherfields' => array('scormid', 'scoid', 'attempt', 'element'),
+        ),
     ),
 
     // List of column names per table, where their content is a user.id.
