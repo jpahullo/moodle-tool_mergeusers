@@ -231,9 +231,11 @@ class GenericTableMerger implements TableMerger
     }
 
     /**
-     * Gets the fields name on a compound index case. If the compound index only has a
-     * user-related field, always returns the 'otherfields' of the $compoundIndex.
-     * If both fields are user-related, gets the opposite field name.
+     * Gets the fields name on a compound index case, excluding the given $userField.
+     * Therefore, if there are multiple user-related fields in a compound index,
+     * return the rest of the column names except the given $userField. Otherwise,
+     * it returns simply the 'otherfields' array from the $compoundIndex definition.
+     *
      * @param string $userField current user-related field being analyized.
      * @param array $compoundIndex related config data for the compound index.
      * @return array an array with the other field names of the compound index.
@@ -241,19 +243,11 @@ class GenericTableMerger implements TableMerger
     protected function getOtherFieldsOnCompoundIndex($userField, $compoundIndex)
     {
         // we can alternate column names when both fields are user-related.
-        if (isset($compoundIndex['both']) &&
-                $compoundIndex['both'] &&
-                $userField != $compoundIndex['userfield']) {
-
-            // get the list of other fields.
-            $others = array_flip($compoundIndex['otherfields']);
-            // remove the given $userField
-            unset($others[$userField]);
-            $others = array_flip($others);
-            // append the 'userfield'
-            $others[] = $compoundIndex['userfield'];
-            // return all except $userField
-            return $others;
+        if (sizeof($compoundIndex['userfield'])>1) {
+            $all = array_merge($compoundIndex['userfield'], $compoundIndex['otherfields']);
+            $all = array_flip($all);
+            unset($all[$userField]);
+            return array_flip($all);
         }
         // default behavior
         return $compoundIndex['otherfields'];
