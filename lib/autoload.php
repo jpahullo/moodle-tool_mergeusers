@@ -30,6 +30,7 @@ spl_autoload_register(function ($class) {
         $fileDirname,
         $fileDirname . '/table',
         $fileDirname . '/local',
+        $fileDirname.'/../classes',
     );
 
     foreach ($dirs as $dir) {
