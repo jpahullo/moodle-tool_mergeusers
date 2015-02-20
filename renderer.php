@@ -265,7 +265,10 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         return html_writer::link(
             new moodle_url('/user/view.php',
                 array('id' => $userid, 'sesskey' => sesskey())),
-                fullname($user) . ' (' . $user->username . ')');
+                fullname($user) .
+                ' (' . $user->username . ') ' .
+                ' &lt;' . $user->email . '&gt;' .
+                ' ' . $user->idnumber);
     }
 
     /**
