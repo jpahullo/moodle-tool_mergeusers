@@ -102,6 +102,10 @@ return array(
             'userfield' => 'userid',
             'otherfields' => array('scormid', 'scoid', 'attempt', 'element'),
         ),
+        'assign_grades' => array( //UNIQUE KEY mdl_assigrad_assuseatt_uix
+            'userfield' => array('userid'),
+            'otherfields' => array('assignment', 'attemptnumber'),
+        ),
     ),
 
     // List of column names per table, where their content is a user.id.
