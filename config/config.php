@@ -91,15 +91,15 @@ return array(
             'otherfields' => array('cohortid'),
         ),
         'certif_completion' => array(  // mdl_certcomp_ceruse_uix (unique)
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('certifid'),
         ),
         'course_modules_completion' => array( // mdl_courmoducomp_usecou_uix (unique)
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('coursemoduleid'),
         ),
         'scorm_scoes_track' => array( //mdl_scorscoetrac_usescosco_uix (unique)
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('scormid', 'scoid', 'attempt', 'element'),
         ),
         'assign_grades' => array( //UNIQUE KEY mdl_assigrad_assuseatt_uix
