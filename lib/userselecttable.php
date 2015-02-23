@@ -95,12 +95,13 @@ class UserSelectTable extends html_table implements renderable
 
         foreach ($users as $userid => $user) {
             $row = array();
+            $spanclass = ($user->suspended) ? ('usersuspended') : ('');
             $row[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'olduser', 'value' => $userid, 'id' => 'olduser' . $userid));
             $row[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'newuser', 'value' => $userid, 'id' => 'newuser' . $userid));
-            $row[] = $user->id;
-            $row[] = $this->renderer->show_user($user->id, $user);
-            $row[] = $user->email;
-            $row[] = $user->idnumber;
+            $row[] = html_writer::span($user->id, $spanclass);
+            $row[] = html_writer::span($this->renderer->show_user($user->id, $user), $spanclass);
+            $row[] = html_writer::span($user->email, $spanclass);
+            $row[] = html_writer::span($user->idnumber, $spanclass);
             $this->data[] = $row;
         }
     }
