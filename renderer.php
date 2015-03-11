@@ -328,4 +328,116 @@ class tool_mergeusers_renderer extends plugin_renderer_base
 
         return $output;
     }
+
+    /**
+     * Produces the table with the list of non-unique compound indexes detected.
+     * @global object $CFG
+     * @param array $config list of non-unique compound indexes detected.
+     * @return string the corresponding HTML.
+     */
+    public function build_nonunique_indexes_table($indexes)
+    {
+        global $CFG;
+
+        $output = get_string('nonuniqueindexlist', 'tool_mergeusers') . '<br><br>';
+
+        if (empty($indexes)) {
+            return $output . $this->get_string('noindexes', 'tool_mergeusers');
+        }
+
+        $table = new html_table();
+        $table->align = array('center', 'left', 'left', 'left');
+        $table->head = array(get_string('tick', 'tool_mergeusers'), get_string('table', 'tool_mergeusers'), get_string('index', 'tool_mergeusers'), get_string('columns', 'tool_mergeusers'));
+
+        $rows = array();
+        foreach ($indexes as $tablename => $tableindexes) {
+            foreach ($tableindexes as $indexname => $columns) {
+                $row = new html_table_row();
+                $row->cells = array($tablename, $indexname, $this->format_columns($columns['ordered'], $columns['userfields']));
+                $rows[] = $row;
+            }
+        }
+
+        $table->data = $rows;
+        $output .= html_writer::table($table);
+
+        return $output;
+    }
+
+
+    /**
+     * Produces the table with the list of compound indexes detected.
+     * @global object $CFG
+     * @param array $config list of compound indexes detected.
+     * @return string the corresponding HTML.
+     */
+    public function build_indexes_table(array $indexes, $uniqueness = false)
+    {
+        global $CFG;
+
+        if (empty($indexes)) {
+            return $this->get_string('noindexes', 'tool_mergeusers');
+        }
+
+        $table = new html_table();
+        $table->align = array('left', 'left', 'center', 'left');
+        $table->head = array(get_string('table', 'tool_mergeusers'), get_string('index', 'tool_mergeusers'), get_string('uniqueness', 'tool_mergeusers'), get_string('columns', 'tool_mergeusers'));
+
+        if ($uniqueness !== false) {
+            unset($table->align[2]);
+            unset($table->head[2]);
+        }
+
+        $rows = array();
+        foreach ($indexes as $tablename => $tableindexes) {
+            foreach ($tableindexes as $indexname => $uniquevalues) {
+
+                foreach ($uniquevalues as $unique => $columns) {
+                    if ($uniqueness !== false && $unique != $uniqueness) {
+                        continue;
+                    }
+                    $row = new html_table_row();
+                    if ($uniqueness !== false) {
+                        $row->cells = array(
+                            $tablename,
+                            $indexname,
+                            $this->format_columns($columns['ordered'], $columns['userfields']),
+                        );
+                    } else {
+                        $row->cells = array(
+                            $tablename,
+                            $indexname,
+                            get_string('uniqueness'.$unique, 'tool_mergeusers'),
+                            $this->format_columns($columns['ordered'], $columns['userfields']),
+                        );
+                    }
+                    $rows[] = $row;
+                }
+            }
+        }
+
+        $table->data = $rows;
+
+        return html_writer::table($table);
+    }
+
+    /**
+     * Format index columns, showing them in order of definition, and remarked
+     * those columns related to moodle user.id. We use a class to easily
+     * override default bold face if necessary.
+     * @param array $columns columns for the given index.
+     * @param array $userfields columns related to user.id.
+     * @return string form
+     */
+    public function format_columns(array $columns, array $userfields)
+    {
+        $output = array();
+        $userfields = array_flip($userfields);
+
+        foreach ($columns as $column) {
+            $output[] = (isset($userfields[$column])) ? '<span class="userfield">' . $column . '</span>' : $column;
+        }
+        return implode(', ', $output);
+    }
+
 }

@@ -243,14 +243,24 @@ class GenericTableMerger implements TableMerger
     protected function getOtherFieldsOnCompoundIndex($userField, $compoundIndex)
     {
         // we can alternate column names when both fields are user-related.
-        if (sizeof($compoundIndex['userfield'])>1) {
-            $all = array_merge($compoundIndex['userfield'], $compoundIndex['otherfields']);
+        if (sizeof($compoundIndex['userfields'])>1) {
+            $all = array_merge($compoundIndex['userfields'], $compoundIndex['otherfields']);
             $all = array_flip($all);
             unset($all[$userField]);
             return array_flip($all);
         }
         // default behavior
         return $compoundIndex['otherfields'];
+    }
+
+    /**
+     * The generic table merger does not provide any configuration settings.
+     *
+     * @return bool|array always false.
+     */
+    public function getSettings()
+    {
+        return false;
     }
 
 }

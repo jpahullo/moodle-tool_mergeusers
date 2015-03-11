@@ -100,41 +100,6 @@ $string['error_return'] = 'Vuelve al formulario de búsqueda';
 $string['no_saveselection'] = 'No has seleccionado ningún usuario.';
 $string['invalid_option'] = 'Opción inválida';
 
-// Settings page
-$string['suspenduser_setting'] = 'Suspender usuario a eliminar';
-$string['suspenduser_setting_desc'] = 'Si se activa, el usuario a eliminar
-    se suspenderá automáticamente si la fusión termina satisfactoriamente,
-    lo que evitará que se autentique en Moodle (recomendado).
-    Si se desactiva, el usuario a eliminar permanecerá activo.
-    En ambos casos, el usuario a eliminar no dispondrá de sus datos ni de su
-    actividad de Moodle.';
-$string['transactions_setting'] = 'Sólo transacciones';
-$string['transactions_setting_desc'] = 'Si se activa, la fusión de usuarios no
-    se realizará si la base de datos NO soporta transacciones (recomendado).
-    Con esta opción activa, te aseguras que la base de datos permanecerá
-    siempre consistente, incluso si la fusión termina con errores.<br />
-    Si se desactiva, siempre realizarás la fusión de usuarios.
-    En caso de errores, el registro de la fusión te mostrará cuál fue el problema.
-    Si informas de este error a los desarrolladores de este plugin,
-    tendrás la solución en breve.<br />
-    Ten en cuenta que este plugin gestiona correctamente todas las
-    tablas de la base de datos de Moodle, y también de algun plugin de
-    terceras partes. Por tanto, si sólo tienes una instalación Moodle estándard,
-    puedes ejecutar este plugin tranquilamente tanto con esta opción activada
-    com desactivada.';
-$string['transactions_supported'] = 'Para su información, su base
-    de datos <strong>soporta transacciones</strong>.';
-$string['transactions_not_supported'] = 'Para su información, su base
-    de datos <strong>no soporta transacciones</strong>.';
-$string['excluded_exceptions'] = 'Excluir excepciones';
-$string['excluded_exceptions_desc'] = 'Experiencia en este ámbito nos sugiere
-    que estas tablas de base de datos se tienen que excluir del proceso de
-    fusión. Ver el README para más detalles.<br>
-    Por tanto, si quieres aplicar el comportamiento por defecto, debes escoger
-    la opción \'{$a}\' para excluirlas del proceso de fusión (recomendado).<br>
-    Si lo prefieres, puedes seleccionar las tablas de desees para incluirlas
-    en el proceso de fusión (no recomendado).';
-
 // quiz attempts strings
 $string['quizattemptsaction'] = 'Cómo resolver los intentos de un cuestionario';
 $string['quizattemptsaction_desc'] = 'En la fusión de intentos de un cuestionario pueden suceder una de estas tres
@@ -166,3 +131,198 @@ $string['qa_action_remain_log'] = 'Se mantienen intactos los datos de los usuari
 $string['qa_chosen_action'] = 'Opción activa para intentos de cuestionario: {$a}.';
 
 $string['qa_grades'] = 'Calificaciones recalculadas para los cuestionarios: {$a}.';
+
+// Settings page
+$string['suspenduser'] = 'Suspender usuario a eliminar';
+$string['suspenduser_desc'] = 'Si se activa, el usuario a eliminar
+    se suspenderá automáticamente si la fusión termina satisfactoriamente,
+    lo que evitará que se autentique en Moodle (recomendado).
+    Si se desactiva, el usuario a eliminar permanecerá activo.
+    En ambos casos, el usuario a eliminar no dispondrá de sus datos ni de su
+    actividad de Moodle.';
+$string['transactions'] = 'Sólo transacciones';
+$string['transactions_desc'] = 'Si se activa, la fusión de usuarios no
+    se realizará si la base de datos NO soporta transacciones (recomendado).
+    Con esta opción activa, te aseguras que la base de datos permanecerá
+    siempre consistente, incluso si la fusión termina con errores.<br />
+    Si se desactiva, siempre realizarás la fusión de usuarios.
+    En caso de errores, el registro de la fusión te mostrará cuál fue el problema.
+    Si informas de este error a los desarrolladores de este plugin,
+    tendrás la solución en breve.<br />
+    Ten en cuenta que este plugin gestiona correctamente todas las
+    tablas de la base de datos de Moodle, y también de algun plugin de
+    terceras partes. Por tanto, si sólo tienes una instalación Moodle estándard,
+    puedes ejecutar este plugin tranquilamente tanto con esta opción activada
+    com desactivada.';
+$string['transactions_supported'] = 'Para su información, tu base
+    de datos <strong>soporta transacciones</strong>.';
+$string['transactions_not_supported'] = 'Para su información, tu base
+    de datos <strong>no soporta transacciones</strong>.';
+$string['tablemerger_settings'] = 'Configuración para la fusión de tablas';
+$string['tablemerger_settings_desc'] = 'Este plugin implementa varios elementos
+    para fusionar los registros de las tablas de base de datos, y así
+    realizar la fusión de usuarios. Su configuración específica aparece a continuación.';
+$string['cronsettings'] = 'Configuración para el cron';
+$string['cronsettings_help'] = 'Puedes definir una herramienta para obtener
+    el listado de usuarios a fusionar. Por defecto, este plugin
+    provee la herramienta interactiva CLIGathering.<br>
+    En cambio, puedes definir tu herramienta no interactiva, colocar
+    el script CLI en el cron del servidor y así procesar la fusión de
+    usuarios automáticamente.<br>
+    Para ello, debes desarrollar tu classe que implemente la interfaz
+    Gathering. Esta clase será básicament un iterador que, en cada
+    iteración, devuelve un objeto con los atributos \'fromid\'
+    y \'toid\', que identifican a los usuarios a fusionar mediante sus \'user.id\'.';
+$string['cronsettings_desc'] = 'Si pones el script CLI en el cron del servidor
+    y provees una herramienta Gathering no iteractiva, puedes realizar la
+    fusión de usuarios automáticamente. Por defecto, CLIGathering es una
+    herramienta interactiva y no sirve a tal efecto. Visita la ayuda para saber más.';
+$string['gathering'] = 'Herramienta de listado';
+$string['gathering_desc'] = 'La herramienta de listado Gathering es básicamente un iterador.
+    A cada iteración este provee un objeto con los atributos \'fromid\' y \'toid\'
+    que identifican los usuarios a fusionar.';
+$string['exclude_tables_settings'] = 'Excluye tablas a fusionar';
+$string['exclude_tables_settings_help'] = 'Cuando se excluye una tabla de base
+    de datos del proceso de fusión de usuarios se prohibe a este plugin su
+    procesamiento, con lo cual, las tablas seleccionadas se dejan intactas.
+    Aunque parezca extraño, esto es necesario en ciertos casos.<br>
+    Nuestra experiencia nos dice que
+    las siguientes tablas de base de datos se habrían de excluir durante la fusión
+    de usuarios y así, además, proveer el comportamiento por defecto a este
+    plugin: my_pages, user_info_data, user_preferences, user_private_key. Ver
+    README para más detalles técnicos. <br>
+    De hecho, my_pages siempre se debería de excluir, ya que cuando un usuario
+    dispone de más de un registro en esta tabla, hace que Mi Moodle deje de funcionar.';
+$string['exclude_tables_settings_desc'] = 'Selecciona las tablas de base de datos
+    que se tienen que excluir durante la fusión de usuarios.';
+$string['excluded_tables'] = 'Tablas excluidas';
+$string['excluded_tables_desc'] = 'Tablas excluidas de la fusión de usuarios.';
+$string['tablesettings'] = 'Tablas y columnas relacionadas con user.id';
+$string['tablesettings_help'] = 'Esta sección es muy importate, y tú como
+    administrador debes tener mucho cuidado con ella.<br>
+    A continuación tienes la posibilidad de definir los nombres de columna
+    que están relacionados con la columna user.id. Y lo puedes hacer de dos modos.
+    La primera manera es definiendo un listado común y <strong>genérico de nombres
+    de columna</strong> que, si aparecen <strong>siempre y nada más estarán vinculados
+    con la columna user.id</strong>, independientemente de la tabla donde se encuentre.
+    La segunda manera es definiendo <strong>un listado de tablas con nombres de
+    columna específicos y únicos ligados a user.id</strong>.<br><br>
+    Teniendo todo esto configurado, este plugin te comprobará toda la base de
+    datos de Moodle y fusionará dos usuarios considerando sólo:<ul>
+    <li>Estas tablas con los nombres de columna específicos.</li>
+    <li>La resta de tablas considerando los nombres de columna genéricos.</li>
+    </ul>Por esto es importate que esta configuración refleje e incluya
+    todo nombre de columna que esté relacionado con user.id.';
+$string['specifiedtablesettingsoperation'] = 'Para definir los nombres de
+    columna particulares para las tablas seleccionadas, <strong>tienes que
+    visitar esta página de configuración dos veces</strong> y proceder como
+    sigue:<ol>
+    <li>Seleccionar las tablas con nombres de columna relacionades con user.id
+    personalitzado y guardar la configuración.</li>
+    <li>Revisitar esta página y rellenar el listado de columnas relacionadas
+    con user.id para cada tabla seleccionada anteriormente. Finalmente, guarda
+    de nuevo la configuración.</li>
+    </ol>Esta configuración es más prioritaria que el listado genérico de
+    nombres de columna.';
+$string['user_related_columns_for_default_setting'] = 'Columnas genéricament relacionadas con user.id';
+$string['user_related_columns_for_default_setting_desc'] = 'Todos los nombres
+    de columna de tu base de datos Moodle aparecen en este listado. Selecciona
+    aquellos que, <strong>en caso de aparecer en cualquier tabla siempre estarán
+    relacionados con user.id</strong>.';
+$string['tables_with_custom_user_related_columns'] = 'Tablas con nombres de
+    columna específicos relacionados con user.id';
+$string['tables_with_custom_user_related_columns_desc'] = 'Todas las tablas
+    de tu base de datos Moodle aparecen en este listado.
+    Selecciona aquellas tablas que dispongan de nombres de columna exclusivos
+    relacionados con user.id. Deberían diferir de aquellos que aparecen
+    en el listado genérico.';
+$string['user_related_columns_for_table_setting_desc'] = 'Escoge todos los
+    nombres de columna de esta table que esten relacionados con user.id.';
+$string['unique_indexes_settings'] = 'Índices compuestos únicos';
+$string['unique_indexes_settings_desc'] = 'Este es el listado de<strong>índices
+    compuestos únicos</strong> de la base de datos de Moodle con alguna columna
+    relacionada con user.id. Todos estos índices son procesados por este
+    plugin cuando se fusionan dos usuarios. Como los índices compuestos únicos
+    no permiten múltiples registros con los mismos valores en el índice,
+    este plugin gestiona esta multiplicidad antes de actualizar la
+    base de datos.<br><br>
+    El listado contine los nombres de tabla, índices y las columnas que los
+    definen. Las columnas resaltadas están relacionadas con user.id.';
+$string['table'] = 'Tabla de base de datos';
+$string['index'] = 'Índice';
+$string['columns'] = 'Lista ordenada de columnas que forman el índice';
+$string['nonunique_index_settings'] = 'Índices compuestos no únicos';
+$string['nonunique_index_settings_help'] = 'Todos los índices que aparecen
+    en esta sección son no únicos. Esto significa que por defecto, tu
+    base de datos permite múltiples registros con los mismos valores por cada
+    índice.<br><br>
+    No obstante, hay casos en los que no tiene sentido mantener diferentes registros cuando,
+    en nuestro caso, hacen referencia a la misma persona cuando se le
+    fusionan dos usuarios de Moodle. Así pues, en esta sección podrás
+    escoger los índices compuestos que serán procesados como si fuesen únicos.
+    Por lo tanto, no se permitirá más de un registro con los mismos valores
+    por índice, <strong>siempre sin modificar la estructura de tu
+    base de datos</strong>.';
+$string['nonunique_index_operation'] = 'A continuación puedes decidir qué índices
+    compuestos no únicos deberían ser procesados como si fuesen únicos
+    <strong>sin modificar la estructura de tu base de datos</strong>.
+    Para ello debes seguir estos senzillos pasos:<ol>
+    <li>Selecciona del listado aquellos índices no únicos a procesar por este
+    plugin como si fuesen únicos.</li>
+    <li>Guarda la configuración.</li>
+    </ol>Los valores por defecto con <strong>sí</strong> definen el
+    comportamiento por defecto de este plugin.<br><br>
+    Los índices aparecen descritos indicándoles
+    <strong>{nombre de la tabla} - {nombre del índice} : {columna1}, {columna2}[, ...]</strong>.
+    Las columnas remarcadas referencian a valores de la columna user.id.';
+$string['tables_with_adhoc_indexes_settings'] = 'Define índices compuestos a medida';
+$string['tables_with_adhoc_indexes_settings_help'] = 'La estructura de base de
+    datos actual puede no contener los índices compuestos necesarios para poder
+    realizar una fusión de usuarios adecuada y con sentido.<br><br>
+    Para dar solución a este problema, <strong>y sin modificar la estructura de
+    tu base de datos</strong>, te permitimos que definas aquí índices compuestos
+    a medida. Este plugin usa los índices para identificar datos duplicados.<br><br>
+    Para definir índices compuestos a medida sólo debes seguir estos pasos:
+    seleccionas las tablas del listado sobre las que necesitas definir índices,
+    guardas la configuración, luego defines las columnas que formarán el índice
+    dentro de cada tabla, y guardas de nuevo la configuración.
+    Una columna de las seleccionadas debe estar relacionada con user.id.';
+$string['tables_with_adhoc_indexes_settings_desc'] = 'Puedes definir índices
+    compuestos a medida <strong>sin modificar la estructura de tu base de
+    datos</strong> siguiendo los siguientes pasos:<ol>
+    <li>Del listado de tablas, escoge aquellas sobre las que definir los
+    índices a medida.</li>
+    <li>Guarda la configuración.</li>
+    <li>Para cada tabla seleccionada, define las columnas que formarán el índice.</li>
+    <li>Guarda la configuración de nuevo.</li>
+    </ol>';
+$string['tables_with_adhoc_indexes'] = 'Tablas con índices a medida';
+$string['tables_with_adhoc_indexes_desc'] = 'Define las tablas que deben tener
+    índices compuestos a medida.';
+$string['columns_for_adhoc_index_for_table_setting_desc'] = 'Define las columnas
+    que formarán el nuevo índice compuesto a medida para esta tabla.';
+$string['check_indexes_settings'] = 'Comprobación de índices';
+$string['check_indexes_settings_desc'] = 'A continuación aparece el listado
+    de índices completo, tanto los propios de tu base de datos, como los que
+    has definido a medida anteriormente si así lo has necesitado. Todos ellos
+    tienen como mínimo una columna relacionada con la user.id.
+    El listado muestra: los nombres de las tablas, de los índices, el tipo de
+    índice y las columnas del índice en orden de definición. Las columnas
+    remarcadas están relacionadas con la user.id.
+    <strong>Este plugin usa estos índices para realizar adecuadamente la fusión
+    de los usuarios</strong>.<br><br>
+    Si crees que falta algún índice, o bien una fusión de usuarios te ha mostrado
+    un error, deberías revisar la configuración de arriba sobre <strong>las
+    columnas relacionadas con la user.id</strong> en cualesquiera de sus formas.
+    Después, deberías revisar de nuevo el listado de índices únicos y no únicos,
+    por si allí aparece lo que necesitas, o bien definir tu propio índice a
+    medida. Al final, deberías ver en este listado de abajo aquel índice que te
+    hacía falta y que ahora te permite fusionar los usuarios con normalidad.<br><br>
+    Ve con sumo cuidado cuando actualices la configuración.';
+$string['noindexes'] = 'No hemos encontrado índices compuestos con campos
+    relacionados a usuarios moodle. Es muy extraño. Deberías verificar
+    seriosamentE la estructura de tu base de datos.';
+$string['uniqueness'] = 'Unicidad';
+$string['uniqueness0'] = 'No único';
+$string['uniqueness1'] = 'Único';
+$string['uniqueness2'] = 'A medida';

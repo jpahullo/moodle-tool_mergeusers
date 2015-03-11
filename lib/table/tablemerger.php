@@ -75,4 +75,13 @@ interface TableMerger
      * @param array $actionLog list of action performed.
      */
     public function merge($data, &$errorMessages, &$actionLog);
+
+    /**
+     * Provides a list of settings to be added to the settings.php page, in case
+     * the table merger provides specific configuration settings.
+     *
+     * @return bool|array false if no settings is provided. An array with an
+     * ordered list of settings to be appended in the settings.php page.
+     */
+    public function getSettings();
 }

@@ -65,31 +65,6 @@ $string['errortransactionsonly'] = 'Error: transactions are required, but your d
     does not support them. If needed, you can allow merging users without transactions.
     Please, review plugin settings to set up them accordingly.';
 
-// Settings page
-$string['transactions_setting'] = 'Only transactions allowed';
-$string['transactions_setting_desc'] = 'If enabled, merge users will not work
-    at all on databases that do NOT support transactions (recommended).
-    Enabling it is necessary to ensure that your database remains consistent
-    in case of merging errors. <br />If disabled, you will always run merging actions.
-    In case of errors, the merging log will show you what was the problem.
-    Reporting it to the plugin supporters will give you a solution in short.
-    <br />Above all, core Moodle tables and some third party plugins are already
-    considered by this plugin. If you do not have any third party plugins
-    in your Moodle installation, you can be quiet on running this plugin
-    enabling or disabling this option.';
-$string['transactions_supported'] = 'For your information, your database
-    <strong>supports transactions</strong>.';
-$string['transactions_not_supported'] = 'For your information, your database
-    <strong>does not supports transactions</strong>.';
-$string['excluded_exceptions'] = 'Exclude exceptions';
-$string['excluded_exceptions_desc'] = 'Experience on this subject suggests
-    that all these database tables should be excluded from merging. See
-    README for more details. <br>
-    Therefore, for applying default plugin behaviour, you need to choose \'{$a}\'
-    to exclude all those tables from the merging process (recommended).<br>
-    If you prefer, you can exclude any of those tables and include them in the
-    merging process (not recommended).';
-
 //New strings
 
 // Progress bar
@@ -131,24 +106,6 @@ $string['error_return'] = 'Return to search form';
 $string['no_saveselection'] = 'You did not select either an old or new user.';
 $string['invalid_option'] = 'Invalid form option';
 
-// Settings page
-$string['suspenduser_setting'] = 'Suspend old user';
-$string['suspenduser_setting_desc'] = 'If enabled, it suspends the old user
-    automatically upon a succesful merging process, preventing the user
-    from logging in Moodle (recommended). If disabled, the old user remains active.
-    In both cases, old user will not have his/her related data.';
-$string['transactions_setting'] = 'Only transactions allowed';
-$string['transactions_setting_desc'] = 'If enabled, merge users will not work
-    at all on databases that do NOT support transactions (recommended).
-    Enabling it is necessary to ensure that your database remains consistent
-    in case of merging errors. <br />If disabled, you will always run merging actions.
-    In case of errors, the merging log will show you what was the problem.
-    Reporting it to the plugin supporters will give you a solution in short.
-    <br />Above all, core Moodle tables and some third party plugins are already
-    considered by this plugin. If you do not have any third party plugins
-    in your Moodle installation, you can be quiet on running this plugin
-    enabling or disabling this option.';
-
 // quiz attempts strings
 $string['quizattemptsaction'] = 'How to resolve quiz attempts';
 $string['quizattemptsaction_desc'] = 'When merging quiz attempts there may exist three cases:
@@ -178,3 +135,179 @@ $string['qa_action_remain_log'] = 'User data from table <strong>{$a}</strong> ar
 $string['qa_chosen_action'] = 'Active option for quiz attempts: {$a}.';
 
 $string['qa_grades'] = 'Grades recalculated for quizzes: {$a}.';
+
+// Settings page
+$string['suspenduser'] = 'Suspend old user';
+$string['suspenduser_desc'] = 'If enabled, it suspends the old user
+    automatically upon a succesful merging process, preventing the user
+    from logging in Moodle (recommended). If disabled, the old user remains active.
+    In both cases, old user will not have his/her related data.';
+$string['transactions'] = 'Only transactions allowed';
+$string['transactions_desc'] = 'If enabled, merge users will not work
+    at all on databases that do NOT support transactions (recommended).
+    Enabling it is necessary to ensure that your database remains consistent
+    in case of merging errors. <br />If disabled, you will always run merging actions.
+    In case of errors, the merging log will show you what was the problem.
+    With that information, you will be able to set up settings below to make
+    it proceed successfully. In case of doubt, report it to the plugin supporters
+    and they will give you a solution in short.
+    <br>Above all, core Moodle tables and some third party plugins are already
+    considered by this plugin. If you do not have any third party plugins
+    in your Moodle installation, you can be quiet on running this plugin
+    enabling or disabling this option.';
+$string['transactions_supported'] = 'For your information, your database
+    <strong>supports transactions</strong>.';
+$string['transactions_not_supported'] = 'For your information, your database
+    <strong>does not supports transactions</strong>.';
+$string['tablemerger_settings'] = 'Specific settings from table mergers';
+$string['tablemerger_settings_desc'] = 'Table mergers are the tools that this plugin implements
+    to merge users in a per database table basis. These table mergers may have specific
+    settings to work properly. They appear below.';
+$string['cronsettings'] = 'Cron settings';
+$string['cronsettings_help'] = 'This setting specifies which process to use for gathering users
+    to merge. By default it is an interative CLIGathering, provided by this plugin.<br>
+    However, you can implement your own class implementing the Gathering interface.
+    At every invocation of this interface it must return an object with \'fromid\'
+    and \'toid\' attributes, which identify the users to merge by means of their \'user.id\' values.
+    Then, place the CLI script in server cron to process all user mergings automatically.';
+$string['cronsettings_desc'] = 'If you set up the CLI script at your cron and provide a non
+    interactive gathering tool, you can make this process automatic. By default,
+    CLIGathering is an interactive gathering tool which is not suitable for that.
+    See the help for more information.';
+$string['gathering'] = 'Gathering tool';
+$string['gathering_desc'] = 'Gathering tool which basically is an iterator. At every iteration,
+    this provides an object with \'fromid\' and \'toid\' attributes for users to merge.';
+$string['exclude_tables_settings'] = 'Exclude tables from merging';
+$string['exclude_tables_settings_help'] = 'When you exclude a table from
+    the merging process you are preventing this plugin from processing the given
+    table. Therefore, selected tables remain unaltered after the merging process.
+    This is necessary, even though it may seem strange.<br>
+    Our experience on this subject suggests
+    that all the following database tables should be excluded from merging and
+    to make the plugin have the default behavior:
+    my_pages, user_info_data, user_preferences, user_private_key. See
+    README for more technical details. <br>
+    Actually, my_pages should always be excluded, since having multiple records
+    on this table for the same user makes My Moodle not work.';
+$string['exclude_tables_settings_desc'] = 'Select the database tables that must be excluded from
+    merging users.';
+$string['excluded_tables'] = 'Excluded tables';
+$string['excluded_tables_desc'] = 'Excluded tables from merging.';
+$string['tablesettings'] = 'Tables and columns related to user.id';
+$string['tablesettings_help'] = 'This section is very important and you, admin,
+    have to be cautious with it.<br>
+    Below you have the possibility to set up all column names related to the
+    user.id column throughout your database scheme.
+    You have two ways of setting up column names related to user.id.
+    The first one is to just set up a list of common, <strong>generic column
+    names</strong> that, if appear, they <strong>will be related to user.id
+    always</strong>, regardless the database table the column name is found in.
+    In the second way, you have the ability to set up <strong>specific column
+    names for selected tables</strong>.
+    <br><br>Having this configured out, this plugin will check througout the
+    whole Moodle database scheme and merge two users considering only:
+    <ul>
+    <li>These selected tables with only their specified column names.</li>
+    <li>The rest of the tables with the generic column names.</li>
+    </ul>Therefore, it is very important that these settings reflect and include
+    all existing column name related to the user.id column.
+    Finally, even though you can set up all the column names in the default
+    list, this plugin works this way for efficiency and clarity.';
+$string['specifiedtablesettingsoperation'] = 'In order to set up column names
+    for specific table names, <strong>you have to visit this settings page
+    twice</strong> to do as follows:
+    <ol>
+    <li>Select all tables to customize the list of column names related to user.id,
+        and then save settings.</li>
+    <li>Revisit this settings page and fill in the list of column names related
+        to user.id for each table you selected before. Finally save settings again.</li>
+    </ol>These settings have more priority than the generic column names, so that
+    these specified column names will be the only column names that will be checked for.';
+$string['user_related_columns_for_default_setting'] = 'Generic user.id related columns';
+$string['user_related_columns_for_default_setting_desc'] = 'All column names
+    from your database appear in this list. Choose those column names that, <strong>if appear
+    in any table</strong>, they will be <strong>always related to a user.id value</strong>.';
+$string['tables_with_custom_user_related_columns'] = 'Tables with specific user.id related column names';
+$string['tables_with_custom_user_related_columns_desc'] = 'All tables appear in this list.
+    Select the tables that must be processed searching for particular column names
+    related to user.id, which should be different from those ones listed in the
+    generic list of user.id related columns.';
+$string['user_related_columns_for_table_setting_desc'] = 'Choose all column
+    names from this table that are related to a user.id value.';
+$string['unique_indexes_settings'] = 'Unique compound indexes';
+$string['unique_indexes_settings_desc'] = 'This is the list of <strong>unique
+    compound indexes</strong> from your current database schema.
+    All the listed unique indexes from below are processed by this tool when
+    merging users. This is important since tables with unique compound indexes
+    do not allow multiple records with the same values for the given index.
+    Therefore, this tool have to address this multiplicity of records before
+    updating your database.<br><br>
+    This is the list of table names, index names and columns for the given
+    index. Columns in bold are related to the column user.id.';
+$string['table'] = 'Database table';
+$string['index'] = 'Table index';
+$string['columns'] = 'Ordered list of index columns';
+$string['nonunique_index_settings'] = 'Non unique compound indexes';
+$string['nonunique_index_settings_help'] = 'All the compound indexes listed
+    here are non unique. This means that by default, your database schema
+    allows multiple records with the same values for the given compound index.<br><br>
+    However, there are cases that these multiple records have no sense, when
+    they are referred to the same person and merging two Moodle users.
+    We provide this section to choose those compound indexes to be processed as
+    if they were unique indexes, <strong>without modifying your database schema</strong>.';
+$string['nonunique_index_operation'] = 'You can decide this tool to process non
+    unique compound indexes as if they were unique <strong>without modifying
+    your database schema</strong>. To do so, you have to follow the following steps:<ol>
+    <li>Choose the non unique compound index names from the first list.</li>
+    <li>Save settings.</li>
+    </ol>Default values to <strong>yes</strong> means default behavior for this plugin.<br><br>
+    Note that each line provides the whole index information, by stating
+    <strong>{table name} - {index name} : {column1}, {column2}[, ...]</strong>.
+    Columns in bold are related to user.id values.';
+$string['tables_with_adhoc_indexes_settings'] = 'Define ad-hoc compound indexes';
+$string['tables_with_adhoc_indexes_settings_help'] = 'The database schema may
+    not contain all compound indexes necessary to help make a sound and proper
+    users\' merge.<br><br>
+    To address this issue, <strong>without modifying your database schema</strong>,
+    you may define here easily ad-hoc table indexes.
+    Indexes are used by this tool to identify duplicated user data records.<br><br>
+    Define ad-hoc indexes is easy: you only need to select tables from the given
+    list, save settings, then define the column names for the selected tables
+    to be part of the index, and save again the current settings.
+    From the selected columns, at least one column must be a user related field.';
+$string['tables_with_adhoc_indexes_settings_desc'] = 'You can define ad-hoc
+    compound indexes <strong>without modifying your database schema</strong>
+    following these steps:
+    <ol>
+    <li>Choose the names from the table list to have ad-hoc indexes.</li>
+    <li>Save settings.</li>
+    <li>For each selected table, choose the column names from the given list.
+    This will define your table index.</li>
+    <li>Save settings again.</li>
+    </ol>';
+$string['tables_with_adhoc_indexes'] = 'Choose tables to have ad-hoc indexes';
+$string['tables_with_adhoc_indexes_desc'] = 'Select the tables to have one
+    ad-hoc index per selected table.';
+$string['columns_for_adhoc_index_for_table_setting_desc'] = 'Choose the columns
+    to define the ad-hoc index for this table.';
+$string['check_indexes_settings'] = 'Checkpoint for the list of indexes';
+$string['check_indexes_settings_desc'] = 'This is the list indexes from your
+    database schema and manually defined with some column related to user.id.
+    This is the list of table names, index names, index type and columns for
+    every index. Columns in bold are related to the column user.id.
+    <strong>These indexes are automatically checked when merging two
+    users</strong>.<br><br>
+    If you think there is some missing index in this list or you get an error
+    when merging two users, please check the above settings for <strong>user
+    related columns</strong> in either of the two depicted ways. Afterwards, you
+    have to check the unique, non unique compound indexes or define ad-hoc
+    compound indexes.  In the end, you have to see the missing index in the
+    list or you have to be able to merge those users. <br><br>
+    Be very careful when updating all these settings.';
+$string['noindexes'] = 'No compound indexes with user related columns were
+    detected. It is very strange. <strong>You should verify your database
+    scheme, seriously</strong>.';
+$string['uniqueness'] = 'Uniqueness';
+$string['uniqueness0'] = 'Non unique';
+$string['uniqueness1'] = 'Unique';
+$string['uniqueness2'] = 'Ad hoc';
