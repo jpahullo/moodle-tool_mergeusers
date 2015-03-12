@@ -106,6 +106,10 @@ return array(
             'userfield' => array('userid'),
             'otherfields' => array('assignment', 'attemptnumber'),
         ),
+        'badge_issued' => array( // unique key mdl_badgissu_baduse_uix
+            'userfield' => array('userid'),
+            'otherfields' => array('badgeid'),
+        ),
     ),
 
     // List of column names per table, where their content is a user.id.
