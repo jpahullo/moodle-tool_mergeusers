@@ -358,6 +358,35 @@ class MergeUserTool
         }
 
         $this->userFieldsPerTable = $userFieldsPerTable;
+
+        $existingCompoundIndexes = $this->tablesWithCompoundIndex;
+        foreach ($this->tablesWithCompoundIndex as $tableName => $columns) {
+            $chosenColumns = array_merge($columns['userfield'], $columns['otherfields']);
+
+            $columnNames = array();
+            foreach ($chosenColumns as $columnName) {
+                $columnNames[$columnName] = 0;
+            }
+
+            $tableColumns = $DB->get_columns($tableName, false);
+
+            foreach ($tableColumns as $column) {
+                if (isset($columnNames[$column->name])) {
+                    $columnNames[$column->name] = 1;
+                }
+            }
+
+            // If we find some compound index with missing columns,
+            // it is that loaded configuration does not corresponds to current database scheme
+            // and this index does not apply.
+            $found = array_sum($columnNames);
+            if (sizeof($columnNames) !== $found) {
+                unset($existingCompoundIndexes[$tableName]);
+            }
+        }
+
+        // update the attribute with the current existing compound indexes per table.
+        $this->tablesWithCompoundIndex = $existingCompoundIndexes;
     }
 
     /**
