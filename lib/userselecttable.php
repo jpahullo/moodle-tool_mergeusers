@@ -98,10 +98,10 @@ class UserSelectTable extends html_table implements renderable
             $spanclass = ($user->suspended) ? ('usersuspended') : ('');
             $row[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'olduser', 'value' => $userid, 'id' => 'olduser' . $userid));
             $row[] = html_writer::empty_tag('input', array('type' => 'radio', 'name' => 'newuser', 'value' => $userid, 'id' => 'newuser' . $userid));
-            $row[] = html_writer::span($user->id, $spanclass);
-            $row[] = html_writer::span($this->renderer->show_user($user->id, $user), $spanclass);
-            $row[] = html_writer::span($user->email, $spanclass);
-            $row[] = html_writer::span($user->idnumber, $spanclass);
+            $row[] = html_writer::tag('span', $user->id, array('class' => $spanclass));
+            $row[] = html_writer::tag('span', $this->renderer->show_user($user->id, $user), array('class' => $spanclass));
+            $row[] = html_writer::tag('span', $user->email, array('class' => $spanclass));
+            $row[] = html_writer::tag('span', $user->idnumber, array('class' => $spanclass));
             $this->data[] = $row;
         }
     }
