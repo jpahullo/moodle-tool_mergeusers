@@ -30,9 +30,10 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-require_once __DIR__ . '/lib/autoload.php';
-
 if ($hassiteconfig) {
+    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib/autoload.php');
+    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
+
     $ADMIN->add('accounts',
             new admin_category('tool_mergeusers', get_string('pluginname', 'tool_mergeusers')));
     $ADMIN->add('tool_mergeusers',
@@ -53,7 +54,7 @@ if ($hassiteconfig) {
         get_string('suspenduser_setting_desc', 'tool_mergeusers'),
         1));
 
-    $supporting_lang = (MergeUserTool::transactionsSupported()) ? 'transactions_supported' : 'transactions_not_supported';
+    $supporting_lang = (tool_mergeusers_transactionssupported()) ? 'transactions_supported' : 'transactions_not_supported';
 
     $settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',
         get_string('transactions_setting', 'tool_mergeusers'),
@@ -61,7 +62,7 @@ if ($hassiteconfig) {
             get_string($supporting_lang, 'tool_mergeusers'),
         1));
 
-    $config = Config::instance();
+    $config = tool_mergeusers_config::instance();
     $none = get_string('none');
     $options = array('none' => $none);
     foreach ($config->exceptions as $exception) {
@@ -76,10 +77,10 @@ if ($hassiteconfig) {
 
     // quiz attempts
     $quizStrings = new stdClass();
-    $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER} = new lang_string('qa_action_' . QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE} = new lang_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET} = new lang_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN} = new lang_string('qa_action_' . QuizAttemptsMerger::ACTION_REMAIN, 'tool_mergeusers');
+    $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
+    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
+    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET, 'tool_mergeusers');
+    $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_REMAIN, 'tool_mergeusers');
 
     $quizOptions = array(
     QuizAttemptsMerger::ACTION_RENUMBER => $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER},
@@ -89,8 +90,8 @@ if ($hassiteconfig) {
     );
 
     $settings->add(new admin_setting_configselect('tool_mergeusers/quizattemptsaction',
-        new lang_string('quizattemptsaction', 'tool_mergeusers'),
-        new lang_string('quizattemptsaction_desc', 'tool_mergeusers', $quizStrings),
+        get_string('quizattemptsaction', 'tool_mergeusers'),
+        get_string('quizattemptsaction_desc', 'tool_mergeusers', $quizStrings),
         QuizAttemptsMerger::ACTION_REMAIN,
         $quizOptions)
     );

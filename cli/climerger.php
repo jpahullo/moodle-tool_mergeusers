@@ -35,7 +35,7 @@ require_once $CFG->dirroot . '/lib/clilib.php';
 require_once __DIR__ . '/../lib/autoload.php';
 
 // loads current configuration
-$config = Config::instance();
+$config = tool_mergeusers_config::instance();
 // initializes merger tool
 $mut = new MergeUserTool($config); //may abort execution if database is not supported
 $merger = new Merger($mut);

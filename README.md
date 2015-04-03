@@ -25,7 +25,7 @@ cases:
     the migration has been successful.
 * Special Case #3: There are 4 logging/preference tables
     (user_lastaccess, user_preferences, user_private_key, my_pages) which exist in
-    Moodle 2.0. This script is simply skipping these tables since there's no
+    Moodle 2.x. This script is simply skipping these tables since there's no
     legitimate purpose to updating the userid value here. This would lead to
     duplicate rows for the new user which is silly. Again, if you want to
     remove these records I would recommend deleting the old user after this
@@ -176,7 +176,7 @@ Minimum requirements
 ---
 
 - MySQL v5.x or MSSQL or Postgres
-- Moodle v2.x
+- Moodle v2.2
 
 
 License

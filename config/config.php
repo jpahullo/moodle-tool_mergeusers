@@ -49,46 +49,66 @@ return array(
     // List of compound indexes.
     // This list may vary from Moodle instance to another, given that the Moodle version,
     // local changes and non-core plugins may add new special cases to be processed.
-    // When 'both' field is set, this means that user.id values may appear in the list of 'otherfields' too.
+    // Put in 'userfield' all column names related to a user (i.e., user.id), and all the rest column names
+    // into 'otherfields'.
     // See README.txt for details on special cases.
     // Table names must be without $CFG->prefix.
     'compoundindexes' => array(
         'grade_grades' => array(
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('itemid'),
         ),
         'groups_members' => array(
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('groupid'),
         ),
         'journal_entries' => array(
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('journal'),
         ),
         'course_completions' => array(
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('course'),
         ),
         'message_contacts' => array(//both fields are user.id values
-            'userfield' => 'userid',
-            'otherfields' => array('contactid'),
-            'both' => true,
+            'userfield' => array('userid', 'contactid'),
+            'otherfields' => array(),
         ),
         'role_assignments' => array(
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('contextid', 'roleid'), // mdl_roleassi_useconrol_ix (not unique)
         ),
         'user_lastaccess' => array(
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('courseid'), // mdl_userlast_usecou_ui (unique)
         ),
         'quiz_attempts' => array(
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('quiz', 'attempt'), // mdl_quizatte_quiuseatt_uix (unique)
         ),
         'cohort_members' => array(
-            'userfield' => 'userid',
+            'userfield' => array('userid'),
             'otherfields' => array('cohortid'),
+        ),
+        'certif_completion' => array(  // mdl_certcomp_ceruse_uix (unique)
+            'userfield' => array('userid'),
+            'otherfields' => array('certifid'),
+        ),
+        'course_modules_completion' => array( // mdl_courmoducomp_usecou_uix (unique)
+            'userfield' => array('userid'),
+            'otherfields' => array('coursemoduleid'),
+        ),
+        'scorm_scoes_track' => array( //mdl_scorscoetrac_usescosco_uix (unique)
+            'userfield' => array('userid'),
+            'otherfields' => array('scormid', 'scoid', 'attempt', 'element'),
+        ),
+        'assign_grades' => array( //UNIQUE KEY mdl_assigrad_assuseatt_uix
+            'userfield' => array('userid'),
+            'otherfields' => array('assignment', 'attemptnumber'),
+        ),
+        'badge_issued' => array( // unique key mdl_badgissu_baduse_uix
+            'userfield' => array('userid'),
+            'otherfields' => array('badgeid'),
         ),
     ),
 

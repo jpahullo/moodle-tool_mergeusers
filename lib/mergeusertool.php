@@ -38,6 +38,7 @@ global $CFG;
 
 require_once $CFG->dirroot . '/lib/clilib.php';
 require_once __DIR__ . '/autoload.php';
+require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
 
 /**
  *
@@ -95,7 +96,7 @@ class MergeUserTool
     protected $userFieldNames;
 
     /**
-     * @var Logger logger for merging users.
+     * @var tool_mergeusers_logger logger for merging users.
      */
     protected $logger;
 
@@ -113,33 +114,36 @@ class MergeUserTool
     /**
      * Initializes
      * @global object $CFG
-     * @param Config $config local configuration.
-     * @param Logger $logger logger facility to save results of mergings.
+     * @param tool_mergeusers_config $config local configuration.
+     * @param tool_mergeusers_logger $logger logger facility to save results of mergings.
      */
-    public function __construct(Config $config = null, Logger $logger = null)
+    public function __construct(tool_mergeusers_config $config = null, tool_mergeusers_logger $logger = null)
     {
         global $CFG;
 
-        $this->logger = (is_null($logger)) ? new Logger() : $logger;
-        $config = (is_null($config)) ? Config::instance() : $config;
+        $this->logger = (is_null($logger)) ? new tool_mergeusers_logger() : $logger;
+        $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
         $this->supportedDatabase = true;
 
         $this->checkTransactionSupport();
 
-        if ( ($CFG->dbtype == 'sqlsrv') || ($CFG->dbtype == 'mssql') ){
-            // MSSQL
-            $this->sqlListTables = "SELECT name FROM sys.Tables WHERE name LIKE '" .
+        switch ($CFG->dbtype) {
+            case 'sqlsrv':
+            case 'mssql':
+                $this->sqlListTables = "SELECT name FROM sys.Tables WHERE name LIKE '" .
                     $CFG->prefix . "%' AND type = 'U' ORDER BY name";
-        } else if ($CFG->dbtype == 'mysqli') {
-            // MySQL
-            $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
-        } else if ($CFG->dbtype == 'pgsql') {
-            // PGSQL
-            $this->sqlListTables = "SELECT table_name FROM information_schema.tables WHERE table_name LIKE '" .
+                break;
+            case 'mysqli':
+            case 'mariadb':
+                $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
+                break;
+            case 'pgsql':
+                $this->sqlListTables = "SELECT table_name FROM information_schema.tables WHERE table_name LIKE '" .
                     $CFG->prefix . "%' AND table_schema = 'public'";
-        } else {
-            $this->supportedDatabase = false;
-            $this->sqlListTables = "";
+                break;
+            default:
+                $this->supportedDatabase = false;
+                $this->sqlListTables = "";
         }
 
         // these are tables we don't want to modify due to logging or security reasons.
@@ -354,6 +358,35 @@ class MergeUserTool
         }
 
         $this->userFieldsPerTable = $userFieldsPerTable;
+
+        $existingCompoundIndexes = $this->tablesWithCompoundIndex;
+        foreach ($this->tablesWithCompoundIndex as $tableName => $columns) {
+            $chosenColumns = array_merge($columns['userfield'], $columns['otherfields']);
+
+            $columnNames = array();
+            foreach ($chosenColumns as $columnName) {
+                $columnNames[$columnName] = 0;
+            }
+
+            $tableColumns = $DB->get_columns($tableName, false);
+
+            foreach ($tableColumns as $column) {
+                if (isset($columnNames[$column->name])) {
+                    $columnNames[$column->name] = 1;
+                }
+            }
+
+            // If we find some compound index with missing columns,
+            // it is that loaded configuration does not corresponds to current database scheme
+            // and this index does not apply.
+            $found = array_sum($columnNames);
+            if (sizeof($columnNames) !== $found) {
+                unset($existingCompoundIndexes[$tableName]);
+            }
+        }
+
+        // update the attribute with the current existing compound indexes per table.
+        $this->tablesWithCompoundIndex = $existingCompoundIndexes;
     }
 
     /**
@@ -376,22 +409,6 @@ class MergeUserTool
     }
 
     /**
-     * Gets whether database transactions are allowed.
-     * @global moodle_database $DB
-     * @return bool true if transactions are allowed. false otherwise.
-     */
-    public static function transactionsSupported()
-    {
-        global $DB;
-
-        // Tricky way of getting real transactions support, without re-programming it.
-        // May be in the future, as phpdoc shows, this method will be publicly accessible.
-        $method = new ReflectionMethod($DB, 'transactions_supported');
-        $method->setAccessible(true); //method is protected; make it accessible.
-        return $method->invoke($DB);
-    }
-
-    /**
      * Checks whether the current database supports transactions.
      * If settings of this plugin are set up to allow only transactions,
      * this method aborts the execution. Otherwise, this method will return
@@ -403,7 +420,7 @@ class MergeUserTool
     {
         global $CFG;
 
-        $transactionsSupported = self::transactionsSupported();
+        $transactionsSupported = tool_mergeusers_transactionssupported();
         $forceOnlyTransactions = get_config('tool_mergeusers', 'transactions_only');
 
         if (!$transactionsSupported && $forceOnlyTransactions) {

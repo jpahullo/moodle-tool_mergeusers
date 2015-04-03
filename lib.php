@@ -15,23 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * mergeusers functions.
  *
- * @package    tool
- * @subpackage mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
- * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @package    tool_mergeusers
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2015022001;
-$plugin->requires  = 2011120500;
-$plugin->component = 'tool_mergeusers';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.10.2 (Build: 2015022001)';
+/**
+ * Gets whether database transactions are allowed.
+ * @global moodle_database $DB
+ * @return bool true if transactions are allowed. false otherwise.
+ */
+function tool_mergeusers_transactionssupported() {
+    global $DB;
+
+    // Tricky way of getting real transactions support, without re-programming it.
+    // May be in the future, as phpdoc shows, this method will be publicly accessible.
+    $method = new ReflectionMethod($DB, 'transactions_supported');
+    $method->setAccessible(true); //method is protected; make it accessible.
+    return $method->invoke($DB);
+}

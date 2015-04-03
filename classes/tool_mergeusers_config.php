@@ -51,9 +51,9 @@
  * If the key 'both' appears, means that both columns are user-related and must be searched for
  * both. See the README.txt for more details on special cases.
  */
-class Config {
+class tool_mergeusers_config {
     /**
-     * @var Config singleton instance.
+     * @var tool_mergeusers_config singleton instance.
      */
     private static $instance = null;
 
@@ -77,11 +77,11 @@ class Config {
 
     /**
      * Singleton method.
-     * @return Config singleton instance.
+     * @return tool_mergeusers_config singleton instance.
      */
     public static function instance() {
         if (is_null(self::$instance)) {
-            self::$instance = new Config();
+            self::$instance = new tool_mergeusers_config();
         }
         return self::$instance;
     }

@@ -39,7 +39,7 @@ require_capability('moodle/site:config', context_system::instance());
 
 admin_externalpage_setup('tool_mergeusers_viewlog');
 
-$logger = new Logger();
+$logger = new tool_mergeusers_logger();
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 
 echo $renderer->logs_page($logger->get());

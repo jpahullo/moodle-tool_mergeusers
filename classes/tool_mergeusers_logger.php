@@ -32,7 +32,7 @@ require_once $CFG->dirroot .'/lib/clilib.php';
  * Class to manage logging actions for this tool.
  * General log table cannot be used for log.info field length restrictions.
  */
-class Logger {
+class tool_mergeusers_logger {
 
     /**
      * Adds a merging action log into tool log.

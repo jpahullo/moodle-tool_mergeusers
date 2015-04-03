@@ -40,7 +40,7 @@ admin_externalpage_setup('tool_mergeusers_viewlog');
 $id = required_param('id', PARAM_INT);
 
 $renderer = $PAGE->get_renderer('tool_mergeusers');
-$logger = new Logger();
+$logger = new tool_mergeusers_logger();
 
 $log = $logger->getDetail($id);
 
