@@ -47,7 +47,7 @@ require_once('./index_form.php');
 require_once(__DIR__ . '/lib/autoload.php');
 
 require_login();
-require_capability('enrol/manual:enrol', context_system::instance());
+require_capability('tool/mergeusers:mergeusers', context_system::instance());
 
 admin_externalpage_setup('tool_mergeusers_merge');
 

@@ -35,7 +35,7 @@ require_once($CFG->dirroot . '/lib/adminlib.php');
 require_once('lib/autoload.php');
 
 require_login();
-require_capability('moodle/site:config', context_system::instance());
+require_capability('tool/mergeusers:mergeusers', context_system::instance());
 
 admin_externalpage_setup('tool_mergeusers_viewlog');
 
