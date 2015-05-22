@@ -23,6 +23,7 @@ $string['header_help'] =
 $string['usermergingheader'] = '&laquo;{$a->username}&raquo; (user ID = {$a->id})';
 $string['errorsameuser'] = 'Trying to merge the same user';
 $string['mergeusers'] = 'Merge user accounts';
+$string['mergeusers:mergeusers'] = 'Merge user accounts';
 $string['merging'] = 'Merged';
 $string['into'] = 'into';
 $string['newuserid'] = 'User ID to be kept';

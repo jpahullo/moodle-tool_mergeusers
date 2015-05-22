@@ -30,7 +30,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-if ($hassiteconfig) {
+if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
     require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib/autoload.php');
     require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
 
@@ -39,12 +39,14 @@ if ($hassiteconfig) {
     $ADMIN->add('tool_mergeusers',
             new admin_externalpage('tool_mergeusers_merge', get_string('pluginname', 'tool_mergeusers'),
             $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/index.php',
-            'moodle/site:config'));
+            'tool/mergeusers:mergeusers'));
     $ADMIN->add('tool_mergeusers',
             new admin_externalpage('tool_mergeusers_viewlog', get_string('viewlog', 'tool_mergeusers'),
             $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/view.php',
-            'moodle/site:config'));
+            'tool/mergeusers:mergeusers'));
+}
 
+if ($hassiteconfig) {
     // Add configuration for making user suspension optional
     $settings = new admin_settingpage('mergeusers_settings',
         get_string('pluginname', 'tool_mergeusers'));
