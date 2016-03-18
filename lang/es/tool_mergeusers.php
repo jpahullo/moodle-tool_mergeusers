@@ -59,6 +59,8 @@ $string['deleted'] = 'Usuario {$a} eliminado';
 $string['errortransactionsonly'] = 'Error: se requiren transacciones, y su base de datos {$a} no las soporta.
     Si lo necesita, puede configurar que las fusiones se hagan sin transacciones.
     Revise la configuración para que se ajuste a sus necesidades.';
+$string['eventusermergedsuccess'] = 'Fusion correcta';
+$string['eventusermergedfailure'] = 'Fusion fallida';
 
 //New strings
 

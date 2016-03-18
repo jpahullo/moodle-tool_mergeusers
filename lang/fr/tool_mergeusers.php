@@ -46,6 +46,8 @@ $string['nologs'] = 'Pas de journaux de fusion d\'utilisateurs. Bon pour vous !'
 $string['wronglogid'] = 'Il n\'existe aucun enregistrement correspondant à votre choix.';
 $string['deleted'] = 'L\'utilisateur ID {$a} a été éliminé';
 $string['errortransactionsonly'] = 'Erreur: Le support des transactions est requis, et votre base de données {$a} ne les supporte pas. Si nécessaire, vous pouvez configurer ce module pour que les fusions sont faites sans utiliser les transactions. Ajustez les paramètres en fonction de vos besoins.';
+$string['eventusermergedsuccess'] = 'Fusionné succès';
+$string['eventusermergedfailure'] = 'Fusionné échoué';
 
 //New strings
 

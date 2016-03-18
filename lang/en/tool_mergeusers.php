@@ -64,6 +64,8 @@ $string['deleted'] = 'User with ID {$a} was deleted';
 $string['errortransactionsonly'] = 'Error: transactions are required, but your database type {$a}
     does not support them. If needed, you can allow merging users without transactions.
     Please, review plugin settings to set up them accordingly.';
+$string['eventusermergedsuccess'] = 'Merging success';
+$string['eventusermergedfailure'] = 'Merge failed';
 
 // Settings page
 $string['transactions_setting'] = 'Only transactions allowed';

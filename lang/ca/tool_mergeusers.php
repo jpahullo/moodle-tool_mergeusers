@@ -58,6 +58,8 @@ $string['deleted'] = 'Usuari {$a} eliminat';
 $string['errortransactionsonly'] = 'Error: es requereixen transaccions, i la seva base de dades {$a} no les suporta.
     Si ho necessita, pot configurar que les fusions es realitzin sense transaccions.
     Revisi la configuració perquè s\'ajusti a les seves necessitats.';
+$string['eventusermergedsuccess'] = 'Fusió correcta';
+$string['eventusermergedfailure'] = 'Fusió incorrecta';
 
 //New strings
 
