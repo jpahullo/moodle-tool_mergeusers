@@ -213,17 +213,24 @@ class MergeUserTool
      */
     public function merge($toid, $fromid)
     {
-        $result = $this->_merge($toid, $fromid);
+        list($success, $log) = $this->_merge($toid, $fromid);
 
-        $event = new stdClass();
-        $event->newid = $toid;
-        $event->oldid = $fromid;
-        $event->log = $result[1];
-        $event->timemodified = time();
-        events_trigger(($result[0]) ? 'merging_success' : 'merging_failed', $event);
+        $eventpath = "\\tool_mergeusers\\event\\";
+        $eventpath .= ($success) ? "user_merged_success" : "user_merged_failure";
 
-        $result[] = $this->logger->log($toid, $fromid, $result[0], $result[1]);
-        return $result;
+        $event = $eventpath::create(array(
+            'context' => \context_system::instance(),
+            'other' => array(
+                'usersinvolved' => array(
+                    'toid' => $toid,
+                    'fromid' => $fromid,
+                ),
+                'log' => $log,
+            ),
+        ));
+        $event->trigger();
+        $logid = $this->logger->log($toid, $fromid, $success, $log);
+        return array($success, $log, $logid);
     }
 
     /**
