@@ -37,3 +37,33 @@ function tool_mergeusers_transactionssupported() {
     $method->setAccessible(true); //method is protected; make it accessible.
     return $method->invoke($DB);
 }
+
+function tool_mergeusers_save_settings($fullname)
+{
+
+}
+
+function tool_mergeusers_reset_settings()
+{
+    set_config('suspenduser', 1, 'tool_mergeusers');
+    set_config('transactions', 1, 'tool_mergeusers');
+    set_config('quizattemptsaction', 'remain', 'tool_mergerusers');
+    set_config('gathering', 'CLIGathering', 'tool_mergeusers');
+    set_config('excluded_tables', 'my_pages,user_info_data,user_preferences,user_private_key', 'tool_mergeusers');
+    set_config('user_related_columns_for_default', 'userid,reviewerid,authorid', 'tool_mergeusers');
+    set_config('tables_with_custom_user_related_columns', 'message_contacts,message,message_read,question', 'tool_mergeusers');
+    set_config('user_related_columns_for_message_contacts', 'userid,contactid', 'tool_mergeusers');
+    set_config('user_related_columns_for_message', 'useridfrom,useridto', 'tool_mergeusers');
+    set_config('user_related_columns_for_message_read', 'useridfrom,useridto', 'tool_mergeusers');
+    set_config('user_related_columns_for_question', 'createdby,modifiedby', 'tool_mergeusers');
+    set_config('tables_with_adhoc_indexes', 'groups_members,journal_entries', 'tool_mergeusers');
+    set_config('columns_for_adhoc_index_for_groups_members', 'group,userid', 'tool_mergeusers');
+    set_config('columns_for_adhoc_index_for_journal_entries', 'userid,journal', 'tool_mergeusers');
+    set_config('nonunique_indexes', 'role_assignments:userid,contextid,roleid', 'tool_mergeusers');
+    set_config('', '', 'tool_mergeusers');
+    set_config('', '', 'tool_mergeusers');
+    set_config('', '', 'tool_mergeusers');
+    set_config('', '', 'tool_mergeusers');
+    set_config('', '', 'tool_mergeusers');
+    set_config('', '', 'tool_mergeusers');
+}

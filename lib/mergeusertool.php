@@ -368,7 +368,7 @@ class MergeUserTool
 
         $existingCompoundIndexes = $this->tablesWithCompoundIndex;
         foreach ($this->tablesWithCompoundIndex as $tableName => $columns) {
-            $chosenColumns = array_merge($columns['userfield'], $columns['otherfields']);
+            $chosenColumns = array_merge($columns['userfields'], $columns['otherfields']);
 
             $columnNames = array();
             foreach ($chosenColumns as $columnName) {

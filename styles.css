@@ -39,3 +39,7 @@
 .align-center{
     text-align: center;
 }
+
+.userfield {
+    font-weight: bold;
+}

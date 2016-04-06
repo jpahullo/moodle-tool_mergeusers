@@ -54,55 +54,55 @@ return array(
     // See README.txt for details on special cases.
     // Table names must be without $CFG->prefix.
     'compoundindexes' => array(
-        'grade_grades' => array(
+        'grade_grades' => array( // automatic index
             'userfield' => array('userid'),
             'otherfields' => array('itemid'),
         ),
-        'groups_members' => array(
+        'groups_members' => array( // MANUAL INDEX (non existing compound index actually)
             'userfield' => array('userid'),
             'otherfields' => array('groupid'),
         ),
-        'journal_entries' => array(
+        'journal_entries' => array( // manual index (non existing compound index actually)
             'userfield' => array('userid'),
             'otherfields' => array('journal'),
         ),
-        'course_completions' => array(
+        'course_completions' => array( // automatic index
             'userfield' => array('userid'),
             'otherfields' => array('course'),
         ),
-        'message_contacts' => array(//both fields are user.id values
+        'message_contacts' => array(// automatic index //both fields are user.id values
             'userfield' => array('userid', 'contactid'),
             'otherfields' => array(),
         ),
-        'role_assignments' => array(
+        'role_assignments' => array( //automatic index, but not unique and so not matched
             'userfield' => array('userid'),
             'otherfields' => array('contextid', 'roleid'), // mdl_roleassi_useconrol_ix (not unique)
         ),
-        'user_lastaccess' => array(
+        'user_lastaccess' => array( // automatic index
             'userfield' => array('userid'),
             'otherfields' => array('courseid'), // mdl_userlast_usecou_ui (unique)
         ),
-        'quiz_attempts' => array(
+        'quiz_attempts' => array( // automatic index
             'userfield' => array('userid'),
             'otherfields' => array('quiz', 'attempt'), // mdl_quizatte_quiuseatt_uix (unique)
         ),
-        'cohort_members' => array(
+        'cohort_members' => array( // automatic index
             'userfield' => array('userid'),
             'otherfields' => array('cohortid'),
         ),
-        'certif_completion' => array(  // mdl_certcomp_ceruse_uix (unique)
+        'certif_completion' => array(  // automatic index // mdl_certcomp_ceruse_uix (unique)
             'userfield' => array('userid'),
             'otherfields' => array('certifid'),
         ),
-        'course_modules_completion' => array( // mdl_courmoducomp_usecou_uix (unique)
+        'course_modules_completion' => array( // automatic index // mdl_courmoducomp_usecou_uix (unique)
             'userfield' => array('userid'),
             'otherfields' => array('coursemoduleid'),
         ),
-        'scorm_scoes_track' => array( //mdl_scorscoetrac_usescosco_uix (unique)
+        'scorm_scoes_track' => array( // automatic index // mdl_scorscoetrac_usescosco_uix (unique)
             'userfield' => array('userid'),
             'otherfields' => array('scormid', 'scoid', 'attempt', 'element'),
         ),
-        'assign_grades' => array( //UNIQUE KEY mdl_assigrad_assuseatt_uix
+        'assign_grades' => array( // automatic index // UNIQUE KEY mdl_assigrad_assuseatt_uix
             'userfield' => array('userid'),
             'otherfields' => array('assignment', 'attemptnumber'),
         ),
