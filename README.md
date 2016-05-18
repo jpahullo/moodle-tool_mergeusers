@@ -79,6 +79,12 @@ cases:
     deleted, remaining related to the user who made them. This is the most secure
     action, but merging users from user A to user B or B to A may produce different
     quiz grades.
+* Special case #11: there are cases where third party plugins build unique indexes
+    applied onto a single column related to user.id. In such cases, we have added
+    a new setting "uniquekeynewidtomaintain" that helps handles this conflict.
+    If you mark this option (by default), data related to the new user is kept.
+    Otherwise, if you unmark this setting, this plugin will keep the data from
+    the old user.
 
 
 Command-line script

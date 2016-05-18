@@ -23,7 +23,6 @@
  * @author     Jordi Pujol-Ahulló <jordi.pujol@urv.cat>,  SREd, Universitat Rovira i Virgili
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -33,6 +32,17 @@ defined('MOODLE_INTERNAL') || die();
  */
 class GenericTableMerger implements TableMerger
 {
+    /**
+     * Sets that in case of conflict, data related to new user is kept.
+     * Otherwise (when false), data related to old user is kept.
+     * @var int
+     */
+    protected $newidtomaintain;
+
+    public function __construct()
+    {
+        $this->newidtomaintain = get_config('uniquekeynewidtomaintain', 'tool_mergeusers');
+    }
 
     /**
      * The given TableMerger can assist the merging of the users in
@@ -147,7 +157,6 @@ class GenericTableMerger implements TableMerger
             }
         }
         unset($itemArr); //free memory
-
         // we know that idsToRemove have always to be removed and NOT to be updated.
         foreach ($idsToRemove as $id) {
             if (isset($recordsToModify[$id])) {
@@ -222,12 +231,25 @@ class GenericTableMerger implements TableMerger
                 " SET " . $fieldName . " = '" . $data['toid'] .
                 "' WHERE " . self::PRIMARY_KEY . " IN (" . $idString . ")";
 
-        if (!$DB->execute($updateRecords)) {
+        try {
+            if (!$DB->execute($updateRecords)) {
+                $errorMessages[] = get_string('tableko', 'tool_mergeusers', $this->tableName) .
+                        ': ' . $DB->get_last_error();
+            }
+            $actionLog[] = $updateRecords;
+        } catch (Exception $e) {
+            // if we get here, we have found a unique index on a user-id related column.
+            // therefore, there will be only a single record from one or other user.
+            $useridtoclean = ($this->newidtomaintain) ? $data['fromid'] : $data['toid'];
+            $deleteRecord = "DELETE FROM " . $CFG->prefix . $data['tableName'] .
+                    " WHERE " . $fieldName . " = '" . $useridtoclean . "'";
 
-            $errorMessages[] = get_string('tableko', 'tool_mergeusers', $this->tableName) .
-                    ': ' . $DB->get_last_error();
+            if (!$DB->execute($deleteRecord)) {
+                $errorMessages[] = get_string('tableko', 'tool_mergeusers', $this->tableName) .
+                        ': ' . $DB->get_last_error();
+            }
+            $actionLog[] = $deleteRecord;
         }
-        $actionLog[] = $updateRecords;
     }
 
     /**
@@ -243,7 +265,7 @@ class GenericTableMerger implements TableMerger
     protected function getOtherFieldsOnCompoundIndex($userField, $compoundIndex)
     {
         // we can alternate column names when both fields are user-related.
-        if (sizeof($compoundIndex['userfield'])>1) {
+        if (sizeof($compoundIndex['userfield']) > 1) {
             $all = array_merge($compoundIndex['userfield'], $compoundIndex['otherfields']);
             $all = array_flip($all);
             unset($all[$userField]);
