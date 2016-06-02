@@ -167,3 +167,10 @@ $string['qa_action_remain_log'] = 'Es mantenen intactes les dades dels usuaris a
 $string['qa_chosen_action'] = 'Opció activa per intents de qüestionari: {$a}.';
 
 $string['qa_grades'] = 'Qualificacions recalculades pels qüestionaris: {$a}.';
+
+$string['uniquekeynewidtomaintain'] = 'Mantenir dades usuari nou';
+$string['uniquekeynewidtomaintain_desc'] = 'En casos de conflicte, com ara si la '
+    . 'columna relativa a l\'usuari sigui índex únic, es mantindran les dades '
+    . 'relacionades amb l\'usuari nou (per defecte). Això també significa que les '
+    . 'dades de l\'usuari vell s\'eliminaran. Si es desmarca, es mantindran les '
+    . 'dades relacionades amb l\'usuari vell.';
