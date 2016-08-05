@@ -27,11 +27,22 @@
  *
  * Available events: merging_sucess, merging_failed
  */
-$handlers = array (
-    'merging_success' => array (
-        'handlerfile'      => '/admin/tool/mergeusers/lib/events/olduser.php',
-        'handlerfunction'  => 'tool_mergeusers_old_user_suspend',
-        'schedule'         => 'instant',
-        'internal'         => 1,
-    ),
-);
+if ($CFG->branch < 26) {
+    $handlers = array(
+        'merging_success' => array(
+            'handlerfile'      => '/admin/tool/mergeusers/lib/events/olduser.php',
+            'handlerfunction'  => 'tool_mergeusers_old_user_suspend',
+            'schedule'         => 'instant',
+            'internal'         => 1,
+        ),
+    );
+} else {
+    $observers = array(
+        array(
+            'eventname'     => 'tool_mergeusers\event\user_merged_success',
+            'callback'      => 'tool_mergeusers_old_user_suspend',
+            'includefile'   => '/admin/tool/mergeusers/lib/events/olduser.php',
+            'internal'      => 1
+        )
+    );
+}
