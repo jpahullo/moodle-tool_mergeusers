@@ -34,7 +34,13 @@ require_once $CFG->libdir . '/gdlib.php';
  * @global moodle_database $DB
  */
 function tool_mergeusers_old_user_suspend($event) {
-    global $DB;
+    global $DB, $CFG;
+
+    if ($CFG->branch < 26) {
+        $oldid = $event->oldid;
+    } else {
+        $oldid = $event->other['usersinvolved']['fromid'];
+    }
 
     // Check configuration to see if the old user gets suspended
     $enabled = (int)get_config('tool_mergeusers', 'suspenduser');
@@ -44,7 +50,7 @@ function tool_mergeusers_old_user_suspend($event) {
 
     // 1. update auth type
     $olduser = new stdClass();
-    $olduser->id = $event->oldid;
+    $olduser->id = $oldid;
     $olduser->suspended = 1;
     $olduser->timemodified = time();
     $DB->update_record('user', $olduser);
@@ -57,9 +63,9 @@ function tool_mergeusers_old_user_suspend($event) {
     }
 
     // put the common image as the profile picture.
-    $context = context_user::instance($event->oldid);
+    $context = context_user::instance($oldid);
     if (($newrev = process_new_icon($context, 'user', 'icon', 0, $fullpath))) {
-        $DB->set_field('user', 'picture', $newrev, array('id'=>$event->oldid));
+        $DB->set_field('user', 'picture', $newrev, array('id'=>$oldid));
     }
 
 
