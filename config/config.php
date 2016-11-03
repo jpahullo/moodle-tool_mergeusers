@@ -110,6 +110,10 @@ return array(
             'userfield' => array('userid'),
             'otherfields' => array('badgeid'),
         ),
+       'assign_submission' => array( // unique key mdl_assisubm_assusegroatt_uix
+            'userfield' => array('userid'),
+            'otherfields' => array('assignment', 'groupid', 'attemptnumber'),
+        ),
     ),
 
     // List of column names per table, where their content is a user.id.
