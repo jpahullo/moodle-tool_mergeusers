@@ -30,8 +30,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2016051800;
+$plugin->version   = 2016110400;
 $plugin->requires  = 2011120500;
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.10.3 (Build: 2015022001)';
+$plugin->release = '1.11 for Moodle 2.2-3.1 (Build: 2016110400)';
