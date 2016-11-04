@@ -1,5 +1,5 @@
-Merge users script for Moodle 2
-=================================
+Merge users script for Moodle
+===============================
 
 
 This script will merge two Moodle user accounts, "user A" and "user B".
