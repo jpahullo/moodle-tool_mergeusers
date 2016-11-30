@@ -471,7 +471,8 @@ class MergeUserTool
      * @param int $toid User id
      */
     private function updateGrades($toid, $fromid) {
-        global $DB;
+        global $DB, $CFG;
+        require_once($CFG->libdir.'/gradelib.php');
 
         $sql = "SELECT iteminstance, itemmodule, courseid
                 FROM {grade_grades} gg
