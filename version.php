@@ -34,4 +34,4 @@ $plugin->version   = 2016113000;
 $plugin->requires  = 2011120500;
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.12 for Moodle 2.2-3.2 (Build: 2016113000)';
+$plugin->release = '1.13 for Moodle 2.2-3.2 (Build: 2016120100)';
