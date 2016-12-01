@@ -287,6 +287,8 @@ class MergeUserTool
                 // process the given $tableName.
                 $tableMerger->merge($data, $actionLog, $errorMessages);
             }
+
+            $this->updateGrades($toid, $fromid);
         } catch (Exception $e) {
             $errorMessages[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
                     html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
@@ -462,5 +464,35 @@ class MergeUserTool
                 (TABLE_SCHEMA = ? OR TABLE_CATALOG=?) AND
                 COLUMN_NAME IN (" . $userFields . ")",
             array($tableName, $CFG->dbname, $CFG->dbname));
+    }
+
+    /**
+     * Update all of the target user's grades.
+     * @param int $toid User id
+     */
+    private function updateGrades($toid, $fromid) {
+        global $DB, $CFG;
+        require_once($CFG->libdir.'/gradelib.php');
+
+        $sql = "SELECT iteminstance, itemmodule, courseid
+                FROM {grade_grades} gg
+                INNER JOIN {grade_items} gi on gg.itemid = gi.id
+                WHERE itemtype = 'mod' AND (gg.userid = :toid OR gg.userid = :fromid)";
+
+        $iteminstances = $DB->get_records_sql($sql, array('toid' => $toid, 'fromid' => $fromid));
+
+        foreach ($iteminstances as $iteminstance) {
+            if (!$activity = $DB->get_record($iteminstance->itemmodule, array('id' => $iteminstance->iteminstance))) {
+                throw new \Exception("Can not find $iteminstance->itemmodule activity with id $iteminstance->iteminstance");
+            }
+            if (!$cm = get_coursemodule_from_instance($iteminstance->itemmodule, $activity->id, $iteminstance->courseid)) {
+                throw new \Exception('Can not find course module');
+            }
+
+            $activity->modname    = $iteminstance->itemmodule;
+            $activity->cmidnumber = $cm->idnumber;
+
+            grade_update_mod_grades($activity, $toid);
+        }
     }
 }

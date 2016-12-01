@@ -47,6 +47,9 @@ if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
 }
 
 if ($hassiteconfig) {
+    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib/autoload.php');
+    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
+
     // Add configuration for making user suspension optional
     $settings = new admin_settingpage('mergeusers_settings',
         get_string('pluginname', 'tool_mergeusers'));
