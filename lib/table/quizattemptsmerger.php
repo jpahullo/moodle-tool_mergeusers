@@ -279,10 +279,7 @@ class QuizAttemptsMerger extends GenericTableMerger
 
         $sqlQuizzes = "
             SELECT * FROM {quiz} q
-                    WHERE EXISTS (
-                            SELECT * FROM {" . $data['tableName'] . 
-                                    "} WHERE id IN ($idsstr) AND quiz=q.id
-                                 )
+                    WHERE id IN ($idsstr)
         ";
 
         $quizzes = $DB->get_records_sql($sqlQuizzes);
