@@ -314,12 +314,12 @@ class MergeUserTool
                     $e->getTraceAsString() . html_writer::empty_tag('br'));
         }
 
-        if ($this->alwaysRollback) {
-            $transaction->rollback(new Exception('alwaysRollback option is set so rolling back transaction'));
-        }
-
         if ($this->debugdb) {
             $DB->set_debug(false);
+        }
+
+        if ($this->alwaysRollback) {
+            $transaction->rollback(new Exception('alwaysRollback option is set so rolling back transaction'));
         }
 
         // concludes with true if no error

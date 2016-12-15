@@ -50,7 +50,7 @@ if ($unrecognized) {
 
 if ($options['help']) {
     $help =
-        "Create alternative component cache file
+        "Command Line user merger. These are the available options:
 
 Options:
 --help            Print out this help
