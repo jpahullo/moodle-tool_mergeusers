@@ -60,11 +60,11 @@ class selectuserform extends moodleform {
 
         // hidden elements
         $mform->addElement('hidden', 'option', 'saveselection');
-	$mform->setType('option', PARAM_RAW);
-	$mform->addElement('hidden', 'selectedolduser', '');
-	$mform->setType('selectedolduser', PARAM_RAW);
+        $mform->setType('option', PARAM_RAW);
+        $mform->addElement('hidden', 'selectedolduser', '');
+        $mform->setType('selectedolduser', PARAM_RAW);
         $mform->addElement('hidden', 'selectednewuser', '');
-	$mform->setType('selectednewuser', PARAM_RAW);
+        $mform->setType('selectednewuser', PARAM_RAW);
 
         // buttons
         $this->add_action_buttons(false, get_string('saveselection_submit', 'tool_mergeusers'));
