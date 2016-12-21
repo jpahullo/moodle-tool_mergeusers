@@ -263,6 +263,9 @@ class MergeUserTool
         // first of all... initialization!
         $errorMessages = array();
         $actionLog = array();
+        $starttime = time();
+        $actionLog[] = get_string('starttime', 'tool_mergeusers', userdate($starttime));
+
         $transaction = $DB->start_delegated_transaction();
 
         try {
@@ -306,6 +309,10 @@ class MergeUserTool
                 $skippedTables[] = get_string('tableskipped', 'tool_mergeusers', implode(", ", $this->tablesSkipped));
             }
 
+            $finishtime = time();
+            $actionLog[] = get_string('finishtime', 'tool_mergeusers', userdate($finishtime));
+            $actionLog[] = get_string('timetaken', 'tool_mergeusers', $finishtime - $starttime);
+
             return array(true, array_merge($skippedTables, $actionLog));
         } else {
             try {
@@ -314,6 +321,9 @@ class MergeUserTool
             } catch (Exception $e) { /* do nothing, just for correctness */
             }
         }
+
+        $finishtime = time();
+        $errorMessages[] = get_string('timetaken', 'tool_mergeusers', $finishtime - $starttime);
 
         // concludes with an array of error messages otherwise.
         return array(false, $errorMessages);

@@ -187,3 +187,7 @@ $string['uniquekeynewidtomaintain_desc'] = 'In case of conflict, '
     . 'data from new user (by default). This also means that data from old user is '
     . 'deleted to keep the consistence. Otherwise, if you uncheck this option, '
     . 'data from old user will be kept.';
+
+$string['starttime'] = 'Started merging at {$a}';
+$string['finishtime'] = 'Finished merging at {$a}';
+$string['timetaken'] = 'Merge took {$a} seconds';
