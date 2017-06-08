@@ -291,8 +291,8 @@ class tool_mergeusers_renderer extends plugin_renderer_base
             $output .= html_writer::tag('div', get_string('loglist', 'tool_mergeusers'), array('class' => 'title'));
 
             $flags = array();
-            $flags[] = html_writer::empty_tag('img', array('src' => $this->pix_url('i/invalid'))); //failure icon
-            $flags[] = html_writer::empty_tag('img', array('src' => $this->pix_url('i/valid'))); //ok icon
+            $flags[] = $this->pix_icon('i/invalid', get_string('eventusermergedfailure', 'tool_mergeusers')); //failure icon
+            $flags[] = $this->pix_icon('i/valid', get_string('eventusermergedsuccess', 'tool_mergeusers')); //ok icon
 
             $table = new html_table();
             $table->align = array('center', 'center', 'center', 'center', 'center', 'center');
