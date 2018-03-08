@@ -22,7 +22,7 @@
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class clioptions_test extends advanced_testcase {
+class tool_mergeusers_clioptions_testcase extends advanced_testcase {
     /**
      * Setup the test.
      */
@@ -34,6 +34,8 @@ class clioptions_test extends advanced_testcase {
 
     /**
      * Test option to always rollback merges.
+     * @group tool_mergeusers
+     * @group tool_mergeusers_clioptions
      */
     public function test_alwaysrollback() {
         global $DB;
@@ -65,6 +67,8 @@ class clioptions_test extends advanced_testcase {
 
     /**
      * Test option to always rollback merges.
+     * @group tool_mergeusers
+     * @group tool_mergeusers_clioptions
      */
     public function test_debugdb() {
         global $DB;

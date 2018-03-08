@@ -54,8 +54,8 @@ if ($options['help']) {
 
 Options:
 --help            Print out this help
---debugdb             Output all db statements used to do the merge
---alwaysRollback      Do the full merge but rollback the transaction at the last opportunity
+--debugdb         Output all db statements used to do the merge
+--alwaysRollback  Do the full merge but rollback the transaction at the last opportunity
 ";
 
     echo $help;

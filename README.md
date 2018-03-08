@@ -177,6 +177,42 @@ problem when merging users A and B, do not panic. Merging will be successfully
 completed when a solution for your problem is included into this plugin, and
 you rerun merging users A and B.
 
+Development
+---
+
+Developing and testing phase
+---
+
+We recommend to use the https://github.com/moodlehq/moodle-docker project to
+run your own Moodle instances for developing and testing.
+
+PHPUnit testing
+---
+
+To quickly setup your own development, we suggest to run the command:
+
+```
+php admin/tool/phpunit/cli/util.php --buildcomponentconfigs
+```
+
+as documented at https://docs.moodle.org/dev/PHPUnit to have the `phpunit.xml`
+file under `admin/tool/mergeusers/phpunit.xml`.
+
+Then, you can run all plugin's tests as follows:
+
+```
+vendor/bin/phpunit -c admin/tool/mergeusers
+```
+
+or also like this, without the need of running the `buildcomponentconfigs`:
+
+```
+vendor/bin/phpunit --group tool_mergeusers
+```
+
+There are also other PHPUnit groups created to help testing only the part
+of the plugin of your choice. Take a look at the tests code for other group names.
+
 
 Minimum requirements
 ---
@@ -210,4 +246,6 @@ Contributors
       https://moodle.org/mod/forum/discuss.php?d=258979, adding 4 different options
       for their processing.
 * Web wizard for merging users by John Hoopes, University of Wisconsin - Madison
+* Updated by Andrew Hancox with:
+    * improvements and fixing a bug on cli script.
 * Plugin maintained by Nicolas Dunand [nicolas.dunand AT unil DOT ch]
