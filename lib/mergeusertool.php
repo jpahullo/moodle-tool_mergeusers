@@ -112,6 +112,16 @@ class MergeUserTool
     protected $tablesProcessedByTableMergers;
 
     /**
+     * @var bool if true then never commit the transaction, used for testing.
+     */
+    protected $alwaysRollback;
+
+    /**
+     * @var bool if true then write out all sql, used for testing.
+     */
+    protected $debugdb;
+
+    /**
      * Initializes
      * @global object $CFG
      * @param tool_mergeusers_config $config local configuration.
@@ -191,6 +201,9 @@ class MergeUserTool
         $this->tableMergers = $tableMergers;
         $this->tablesProcessedByTableMergers = array_flip($tablesProcessedByTableMergers);
 
+        $this->alwaysRollback = !empty($config->alwaysRollback);
+        $this->debugdb = !empty($config->debugdb);
+
         // this will abort execution if local database is not supported.
         $this->checkDatabaseSupport();
 
@@ -263,6 +276,11 @@ class MergeUserTool
         // first of all... initialization!
         $errorMessages = array();
         $actionLog = array();
+
+        if ($this->debugdb) {
+            $DB->set_debug(true);
+        }
+
         $transaction = $DB->start_delegated_transaction();
 
         try {
@@ -294,6 +312,14 @@ class MergeUserTool
                     html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
                     'Trace:' . html_writer::empty_tag('br') .
                     $e->getTraceAsString() . html_writer::empty_tag('br'));
+        }
+
+        if ($this->debugdb) {
+            $DB->set_debug(false);
+        }
+
+        if ($this->alwaysRollback) {
+            $transaction->rollback(new Exception('alwaysRollback option is set so rolling back transaction'));
         }
 
         // concludes with true if no error

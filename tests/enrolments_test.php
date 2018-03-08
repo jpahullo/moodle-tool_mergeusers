@@ -22,7 +22,7 @@
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class enrolments_test extends advanced_testcase {
+class tool_mergeusers_enrolments_testcase extends advanced_testcase {
     /**
      * Setup the test.
      */
@@ -35,6 +35,8 @@ class enrolments_test extends advanced_testcase {
     /**
      * Enrol two users on one unique course each and one shared course
      * then merge them.
+     * @group tool_mergeusers
+     * @group tool_mergeusers_enrolments
      */
     public function test_mergeenrolments() {
         global $DB;

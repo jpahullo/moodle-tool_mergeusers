@@ -22,7 +22,7 @@
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_test extends advanced_testcase {
+class tool_mergeusers_quiz_testcase extends advanced_testcase {
     /**
      * Configure the test.
      * Create two courses with a quiz in each.
@@ -162,6 +162,8 @@ class quiz_test extends advanced_testcase {
 
     /**
      * Have two users attempt the same quiz and then merge them.
+     * @group tool_mergeusers
+     * @group tool_mergeusers_quiz
      */
     public function test_mergeconflictingquizattempts() {
         global $DB;
@@ -187,6 +189,8 @@ class quiz_test extends advanced_testcase {
 
     /**
      * Have two users attempt different quizes and then merge them.
+     * @group tool_mergeusers
+     * @group tool_mergeusers_quiz
      */
     public function test_mergenonconflictingquizattempts() {
         global $DB;

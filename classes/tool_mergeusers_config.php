@@ -80,7 +80,7 @@ class tool_mergeusers_config {
      * @return tool_mergeusers_config singleton instance.
      */
     public static function instance() {
-        if (is_null(self::$instance)) {
+        if (is_null(self::$instance) || defined('PHPUNIT_TEST') || defined('BEHAT_SITE_RUNNING')) {
             self::$instance = new tool_mergeusers_config();
         }
         return self::$instance;
