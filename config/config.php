@@ -135,4 +135,7 @@ return array(
         'user_enrolments' => 'UserEnrolmentsMerger',
         'quiz_attempts' => 'QuizAttemptsMerger',
     ),
+
+    'alwaysRollback' => false,
+    'debugdb' => false,
 );

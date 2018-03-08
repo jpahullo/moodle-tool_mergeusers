@@ -31,7 +31,7 @@ require_once($CFG->dirroot . '/mod/assign/tests/base_test.php');
 /**
  * Class assign_test
  */
-class assign_test extends mod_assign_base_testcase {
+class tool_mergeusers_assign_testcase extends mod_assign_base_testcase {
     /**
      *
      */
@@ -44,6 +44,8 @@ class assign_test extends mod_assign_base_testcase {
     /**
      * Test merging two users where one has submitted an assignment and the other
      * has no.
+     * @group tool_mergeusers
+     * @group tool_mergeusers_assign
      */
     public function test_mergenonconflictingassigngrades() {
         global $DB;
