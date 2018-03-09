@@ -281,8 +281,8 @@ class MergeUserTool
             $DB->set_debug(true);
         }
 
-        $starttime = time();
-        $startTimeString = get_string('starttime', 'tool_mergeusers', userdate($starttime));
+        $startTime = time();
+        $startTimeString = get_string('starttime', 'tool_mergeusers', userdate($startTime));
         $actionLog[] = $startTimeString;
 
         $transaction = $DB->start_delegated_transaction();
@@ -336,9 +336,9 @@ class MergeUserTool
                 $skippedTables[] = get_string('tableskipped', 'tool_mergeusers', implode(", ", $this->tablesSkipped));
             }
 
-            $finishtime = time();
-            $actionLog[] = get_string('finishtime', 'tool_mergeusers', userdate($finishtime));
-            $actionLog[] = get_string('timetaken', 'tool_mergeusers', $finishtime - $starttime);
+            $finishTime = time();
+            $actionLog[] = get_string('finishtime', 'tool_mergeusers', userdate($finishTime));
+            $actionLog[] = get_string('timetaken', 'tool_mergeusers', $finishTime - $startTime);
 
             return array(true, array_merge($skippedTables, $actionLog));
         } else {
@@ -349,9 +349,9 @@ class MergeUserTool
             }
         }
 
-        $finishtime = time();
+        $finishTime = time();
         $errorMessages[] = $startTimeString;
-        $errorMessages[] = get_string('timetaken', 'tool_mergeusers', $finishtime - $starttime);
+        $errorMessages[] = get_string('timetaken', 'tool_mergeusers', $finishTime - $startTime);
 
         // concludes with an array of error messages otherwise.
         return array(false, $errorMessages);
