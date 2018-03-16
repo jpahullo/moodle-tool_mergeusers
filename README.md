@@ -1,3 +1,10 @@
+Moodle compatibility
+====================
+
+This plugin version is compatible **from Moodle 2.6 up to Moodle 3.3**,
+both included.
+
+
 Merge users script for Moodle
 ===============================
 
