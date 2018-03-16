@@ -1,3 +1,14 @@
+Moodle compatibility
+====================
+
+This plugin version is compatible **from Moodle 3.4 and upwards**.
+
+**TODO:** We are working on adapting contributed PHPUnit tests to the new API
+and checking that it works properly on Moodle 3.4.
+
+**IMPORTANT:** We have not checked its true compatibility with Moodle 3.4,
+use it with at your own risk.
+
 Merge users script for Moodle
 ===============================
 
