@@ -23,13 +23,18 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tool_mergeusers_clioptions_testcase extends advanced_testcase {
-    /**
-     * Setup the test.
-     */
+
     public function setUp() {
         global $CFG;
         require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         $this->resetAfterTest(true);
+    }
+
+    public function tearDown()
+    {
+        $config = tool_mergeusers_config::instance();
+        unset($config->alwaysRollback);
+        unset($config->debugdb);
     }
 
     /**
@@ -61,7 +66,8 @@ class tool_mergeusers_clioptions_testcase extends advanced_testcase {
 
         $mut = new MergeUserTool($config);
 
-        $this->setExpectedException('Exception', 'alwaysRollback option is set so rolling back transaction');
+        $this->expectException('Exception');
+        $this->expectExceptionMessage('alwaysRollback option is set so rolling back transaction');
         list($success, $log, $logid) = $mut->merge($user_keep->id, $user_remove_2->id);
     }
 
