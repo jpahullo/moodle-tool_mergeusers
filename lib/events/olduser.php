@@ -36,11 +36,7 @@ require_once $CFG->libdir . '/gdlib.php';
 function tool_mergeusers_old_user_suspend($event) {
     global $DB, $CFG;
 
-    if ($CFG->branch < 26) {
-        $oldid = $event->oldid;
-    } else {
-        $oldid = $event->other['usersinvolved']['fromid'];
-    }
+    $oldid = $event->other['usersinvolved']['fromid'];
 
     // Check configuration to see if the old user gets suspended
     $enabled = (int)get_config('tool_mergeusers', 'suspenduser');
