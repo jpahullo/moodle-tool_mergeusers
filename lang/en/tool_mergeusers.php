@@ -191,3 +191,4 @@ $string['uniquekeynewidtomaintain_desc'] = 'In case of conflict,
 $string['starttime'] = 'Started merging at {$a}';
 $string['finishtime'] = 'Finished merging at {$a}';
 $string['timetaken'] = 'Merge took {$a} seconds';
+$string['privacy:metadata'] = 'The Merge User Accounts plugin does not store any personal data.';
