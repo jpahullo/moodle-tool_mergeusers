@@ -145,7 +145,7 @@ class MergeUserTool
                 break;
             case 'mysqli':
             case 'mariadb':
-                $this->sqlListTables = 'SHOW TABLES like "' . $CFG->prefix . '%"';
+                $this->sqlListTables = "SHOW TABLES like '" . $CFG->prefix . "%'";
                 break;
             case 'pgsql':
                 $this->sqlListTables = "SELECT table_name FROM information_schema.tables WHERE table_name LIKE '" .
