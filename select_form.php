@@ -34,7 +34,7 @@ class selectuserform extends moodleform {
     /** @var UserSelectTable Table to select users. */
     protected $ust;
 
-    public function __construct(UserSelectTable $ust = NULL)
+    public function __construct(UserSelectTable $ust = null)
     {
         //just before parent's construct
         $this->ust = $ust;

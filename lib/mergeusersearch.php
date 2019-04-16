@@ -157,7 +157,7 @@ class MergeUserSearch{
             $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
         } catch (Exception $e) {
             $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
-            $user = NULL;
+            $user = null;
         }
 
         return array($user, $message);
