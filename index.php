@@ -52,7 +52,7 @@ require_capability('tool/mergeusers:mergeusers', context_system::instance());
 admin_externalpage_setup('tool_mergeusers_merge');
 
 // Get possible posted params
-$option = optional_param('option', NULL, PARAM_TEXT);
+$option = optional_param('option', null, PARAM_TEXT);
 if (!$option) {
     if (optional_param('clearselection', false, PARAM_TEXT)) {
         $option = 'clearselection';
@@ -79,10 +79,10 @@ if (!empty($option)) {
         // one or two users are selected: save them into session.
         case 'saveselection':
             //get and verify the userids from the selection form usig the verify_user function (second field is column)
-            list($olduser, $oumessage) = $mus->verify_user(optional_param('olduser', NULL, PARAM_INT), 'id');
-            list($newuser, $numessage) = $mus->verify_user(optional_param('newuser', NULL, PARAM_INT), 'id');
+            list($olduser, $oumessage) = $mus->verify_user(optional_param('olduser', null, PARAM_INT), 'id');
+            list($newuser, $numessage) = $mus->verify_user(optional_param('newuser', null, PARAM_INT), 'id');
 
-            if ($olduser === NULL && $newuser === NULL) {
+            if ($olduser === null && $newuser === null) {
                 $renderer->mu_error(get_string('no_saveselection', 'tool_mergeusers'));
                 exit(); // end execution for error
             }
@@ -112,11 +112,11 @@ if (!empty($option)) {
 
         // remove any of the selected users to merge, and search for them again.
         case 'clearselection':
-            $SESSION->mut = NULL;
+            $SESSION->mut = null;
 
             // Redirect back to index/search page for new selections or review selections
             $redirecturl = new moodle_url('/admin/tool/mergeusers/index.php');
-            redirect($redirecturl, NULL, 0);
+            redirect($redirecturl, null, 0);
             break;
 
         // proceed with the merging and show results.
@@ -124,7 +124,7 @@ if (!empty($option)) {
             // Verify users once more just to be sure.  Both users should already be verified, but just an extra layer of security
             list($fromuser, $oumessage) = $mus->verify_user($SESSION->mut->olduser->id, 'id');
             list($touser, $numessage) = $mus->verify_user($SESSION->mut->newuser->id, 'id');
-            if ($fromuser === NULL || $touser === NULL) {
+            if ($fromuser === null || $touser === null) {
                 $renderer->mu_error($oumessage . '<br />' . $numessage);
                 break; // break execution for error
             }
@@ -135,7 +135,7 @@ if (!empty($option)) {
             list($success, $log, $logid) = $mut->merge($touser->id, $fromuser->id);
 
             // reset mut session
-            $SESSION->mut = NULL;
+            $SESSION->mut = null;
 
             // render results page
             echo $renderer->results_page($touser, $fromuser, $success, $log, $logid);
@@ -173,7 +173,7 @@ if (!empty($option)) {
         list($olduser, $oumessage) = $mus->verify_user($data->oldusergroup['olduserid'], $data->oldusergroup['olduseridtype']);
         list($newuser, $numessage) = $mus->verify_user($data->newusergroup['newuserid'], $data->newusergroup['newuseridtype']);
 
-        if ($olduser === NULL || $newuser === NULL) {
+        if ($olduser === null || $newuser === null) {
             $renderer->mu_error($oumessage . '<br />' . $numessage);
             exit(); // end execution for error
         }
