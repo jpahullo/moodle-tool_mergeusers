@@ -1,37 +1,58 @@
 language: php
 
-sudo: required
+sudo: true
 
 addons:
   firefox: "47.0.1"
-  postgresql: "9.3"
   apt:
     packages:
-      - oracle-java8-installer
-      - oracle-java8-set-default
+      - openjdk-8-jre-headless
 
 cache:
   directories:
     - $HOME/.composer/cache
     - $HOME/.npm
 
-php:
- - 7.0
- - 7.1
-
-env:
- global:
-  - MOODLE_BRANCH=MOODLE_34_STABLE
- matrix:
-  - DB=pgsql
-  - DB=mysqli
+# Alternate tests - 3.4 -> master on mysql/postgres and php.
+matrix:
+  include:
+    - php: 7.0
+      env: DB=pgsql  MOODLE_BRANCH=MOODLE_34_STABLE
+      services: postgresql
+      addons:
+        - postgresql: "9.4"
+    - php: 7.0
+      env: DB=mysqli  MOODLE_BRANCH=MOODLE_35_STABLE
+      services: mysql
+      addons:
+        - mysql: "5.7"
+    - php: 7.2
+      env: DB=pgsql MOODLE_BRANCH=MOODLE_36_STABLE
+      services: postgresql
+      addons:
+        - postgresql: "9.4"
+    - php: 7.2
+      env: DB=mysqli MOODLE_BRANCH=MOODLE_37_STABLE
+      services: mysql
+      addons:
+        - mysql: "5.7"
+    - php: 7.3
+      env: DB=pgsql MOODLE_BRANCH=MOODLE_37_STABLE
+      services: postgresql
+      addons:
+        - postgresql: "9.4"
+    - php: 7.3
+      env: DB=pgsql  MOODLE_BRANCH=master
+      services: postgresql
+      addons:
+        - postgresql: "9.4"
 
 before_install:
   - phpenv config-rm xdebug.ini
   - nvm install 8.9
   - nvm use 8.9
   - cd ../..
-  - composer create-project -n --no-dev --prefer-dist moodlerooms/moodle-plugin-ci ci ^2
+  - composer create-project -n --no-dev --prefer-dist blackboard-open-source/moodle-plugin-ci ci ^2
   - export PATH="$(cd ci/bin; pwd):$(cd ci/vendor/bin; pwd):$PATH"
 
 install:
