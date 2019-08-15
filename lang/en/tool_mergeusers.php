@@ -46,7 +46,6 @@ $string['dbko_no_transactions'] = '<strong>Merge failed!</strong> <br/>Your data
     to that problem, repeat the merging action to complete it with success.';
 $string['tableskipped'] = 'For logging or security reasons we are skipping <strong>{$a}</strong>.
  <br />To remove these entries, delete the old user once this script has run successfully.';
-$string['errordatabase'] = 'Error: Database type {$a} not supported.';
 $string['invaliduser'] = 'Invalid user';
 $string['cligathering:description'] = "Introduce pairs of user's id to merge the first one into the\n
 second one. The first user id (fromid) will 'lose' all its data to be 'migrated'\n
