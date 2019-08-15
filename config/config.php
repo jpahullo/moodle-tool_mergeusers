@@ -114,6 +114,14 @@ return array(
             'userfield' => array('userid'),
             'otherfields' => array('assignment', 'groupid', 'attemptnumber'),
         ),
+        'wiki_pages' => array( //unique key mdl_wikipage_subtituse_uix
+            'userfield' => array('userid'),
+            'otherfields' => array('subwikiid', 'title'),
+        ),
+        'wiki_subwikis' => array( //unique key mdl_wikisubw_wikgrouse_uix
+            'userfield' => array('userid'),
+            'otherfields' => array('wikiid', 'groupid'),
+        ),
     ),
 
     // List of column names per table, where their content is a user.id.
