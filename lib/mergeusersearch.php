@@ -61,9 +61,9 @@ class MergeUserSearch{
             case 'id': // search on id field
 
                 $params = array(
-                    'userid' => '%' . $input . '%',
+                    'userid' => $input,
                 );
-                $sql = 'SELECT * FROM {user} WHERE id LIKE :userid';
+                $sql = 'SELECT * FROM {user} WHERE id = :userid';
 
                 break;
             case 'username': // search on username
@@ -109,7 +109,7 @@ class MergeUserSearch{
             default: // search on all fields by default
 
                 $params = array(
-                    'userid'     => '%' . $input . '%',
+                    'userid'     =>  $input,
                     'username'   => '%' . $input . '%',
                     'firstname'  => '%' . $input . '%',
                     'lastname'   => '%' . $input . '%',
@@ -121,7 +121,7 @@ class MergeUserSearch{
                    'SELECT *
                     FROM {user}
                     WHERE
-                        id LIKE :userid OR
+                        id = :userid OR
                         username LIKE :username OR
                         firstname LIKE :firstname OR
                         lastname LIKE :lastname OR
