@@ -55,12 +55,6 @@ require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
  */
 class MergeUserTool
 {
-
-    /**
-     * @var bool true if current database is supported; false otherwise.
-     */
-    protected $supportedDatabase;
-
     /**
      * @var array associative array showing the user-related fields per database table,
      * without the $CFG->prefix on each.
@@ -129,35 +123,13 @@ class MergeUserTool
      */
     public function __construct(tool_mergeusers_config $config = null, tool_mergeusers_logger $logger = null)
     {
-        global $CFG;
-
         $this->logger = (is_null($logger)) ? new tool_mergeusers_logger() : $logger;
         $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
-        $this->supportedDatabase = true;
 
         $this->checkTransactionSupport();
 
-        switch ($CFG->dbtype) {
-            case 'sqlsrv':
-            case 'mssql':
-                $this->sqlListTables = "SELECT name FROM sys.Tables WHERE name LIKE '" .
-                    $CFG->prefix . "%' AND type = 'U' ORDER BY name";
-                break;
-            case 'mysqli':
-            case 'mariadb':
-                $this->sqlListTables = "SHOW TABLES like '" . $CFG->prefix . "%'";
-                break;
-            case 'pgsql':
-                $this->sqlListTables = "SELECT table_name FROM information_schema.tables WHERE table_name LIKE '" .
-                    $CFG->prefix . "%' AND table_schema = 'public'";
-                break;
-            default:
-                $this->supportedDatabase = false;
-                $this->sqlListTables = "";
-        }
-
-        // these are tables we don't want to modify due to logging or security reasons.
-        // we flip key<-->value to accelerate lookups.
+        // These are tables we don't want to modify due to logging or security reasons.
+        // We flip key<-->value to accelerate lookups.
         $this->tablesToSkip = array_flip($config->exceptions);
         $excluded = explode(',', get_config('tool_mergeusers', 'excluded_exceptions'));
         $excluded = array_flip($excluded);
@@ -167,16 +139,11 @@ class MergeUserTool
             }
         }
 
-        // these are special cases, corresponding to tables with compound indexes that
-        // need a special treatment.
+        // These are special cases, corresponding to tables with compound indexes that need a special treatment.
         $this->tablesWithCompoundIndex = $config->compoundindexes;
 
         // Initializes user-related field names.
-        $userFieldNames = array();
-        foreach ($config->userfieldnames as $tablename => $fields) {
-            $userFieldNames[$tablename] = "'" . implode("','", $fields) . "'";
-        }
-        $this->userFieldNames = $userFieldNames;
+        $this->userFieldNames = $config->userfieldnames;
 
         // Load available TableMerger tools.
         $tableMergers = array();
@@ -194,7 +161,7 @@ class MergeUserTool
                             new moodle_url('/admin/tool/mergeusers/index.php'), $class);
                 }
             }
-            // append any additional table to skip.
+            // Append any additional table to skip.
             $tablesProcessedByTableMergers = array_merge($tablesProcessedByTableMergers, $tm->getTablesToSkip());
             $tableMergers[$tableName] = $tm;
         }
@@ -204,11 +171,7 @@ class MergeUserTool
         $this->alwaysRollback = !empty($config->alwaysRollback);
         $this->debugdb = !empty($config->debugdb);
 
-        // this will abort execution if local database is not supported.
-        $this->checkDatabaseSupport();
-
-        // initializes the list of fields and tables to check in the current database,
-        // given the local configuration.
+        // Initializes the list of fields and tables to check in the current database, given the local configuration.
         $this->init();
     }
 
@@ -258,14 +221,9 @@ class MergeUserTool
      */
     private function _merge($toid, $fromid)
     {
-        global $CFG, $DB;
+        global $DB;
 
         // initial checks.
-        // database type is supported?
-        if (!$this->supportedDatabase) {
-            return array(false, array(get_string('errordatabase', 'tool_mergeusers', $CFG->dbtype)));
-        }
-
         // are they the same?
         if ($fromid == $toid) {
             // yes. do nothing.
@@ -366,27 +324,26 @@ class MergeUserTool
      */
     private function init()
     {
-        global $CFG, $DB;
+        global $DB;
 
         $userFieldsPerTable = array();
 
-        $tableNames = $DB->get_records_sql($this->sqlListTables);
-        $prefixLength = strlen($CFG->prefix);
+        // Name of tables comes without db prefix.
+        $tableNames = $DB->get_tables(false);
 
-        foreach ($tableNames as $fullTableName => $toIgnore) {
+        foreach ($tableNames as $tableName) {
 
-            if (!trim($fullTableName)) {
-                //This section should never be executed due to the way Moodle returns its resultsets
-                // Skipping due to blank table name
+            if (!trim($tableName)) {
+                // This section should never be executed due to the way Moodle returns its resultsets.
+                // Skipping due to blank table name.
                 continue;
             } else {
-                $tableName = substr($fullTableName, $prefixLength);
-                // table specified to be excluded.
+                // Table specified to be excluded.
                 if (isset($this->tablesToSkip[$tableName])) {
-                    $this->tablesSkipped[$tableName] = $fullTableName;
+                    $this->tablesSkipped[$tableName] = $tableName;
                     continue;
                 }
-                // table specified to be processed additionally by a TableMerger.
+                // Table specified to be processed additionally by a TableMerger.
                 if (isset($this->tablesProcessedByTableMergers[$tableName])) {
                     continue;
                 }
@@ -397,10 +354,11 @@ class MergeUserTool
                     $this->userFieldNames[$tableName] :
                     $this->userFieldNames['default'];
 
-            $currentFields = $this->getCurrentUserFieldNames($fullTableName, $userFields);
+            $arrayUserFields = array_flip($userFields);
+            $currentFields = $this->getCurrentUserFieldNames($tableName, $arrayUserFields);
 
             if ($currentFields !== false) {
-                $userFieldsPerTable[$tableName] = array_values($currentFields);
+                $userFieldsPerTable[$tableName] = $currentFields;
             }
         }
 
@@ -434,25 +392,6 @@ class MergeUserTool
 
         // update the attribute with the current existing compound indexes per table.
         $this->tablesWithCompoundIndex = $existingCompoundIndexes;
-    }
-
-    /**
-     * Check whether current Moodle's database type is supported.
-     * If it is not supported, it aborts the execution with an error message, checking whether
-     * it is on a CLI script or on web.
-     */
-    private function checkDatabaseSupport()
-    {
-        global $CFG;
-
-        if (!$this->supportedDatabase) {
-            if (CLI_SCRIPT) {
-                cli_error('Error: ' . __METHOD__ . ':: ' . get_string('errordatabase', 'tool_mergeusers', $CFG->dbtype));
-            } else {
-                print_error('errordatabase', 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php'),
-                        $CFG->dbtype);
-            }
-        }
     }
 
     /**
@@ -492,16 +431,15 @@ class MergeUserTool
      */
     private function getCurrentUserFieldNames($tableName, $userFields)
     {
-        global $CFG, $DB;
-        return $DB->get_fieldset_sql("
-            SELECT DISTINCT column_name
-            FROM
-                INFORMATION_SCHEMA.Columns
-            WHERE
-                TABLE_NAME = ? AND
-                (TABLE_SCHEMA = ? OR TABLE_CATALOG=?) AND
-                COLUMN_NAME IN (" . $userFields . ")",
-            array($tableName, $CFG->dbname, $CFG->dbname));
+        global $DB;
+        $columns = $DB->get_columns($tableName,false);
+        $usercolumns = [];
+        foreach($columns as $column) {
+            if (isset($userFields[$column->name])) {
+                $usercolumns[$column->name] = $column->name;
+            }
+        }
+        return $usercolumns;
     }
 
     /**
@@ -512,7 +450,7 @@ class MergeUserTool
         global $DB, $CFG;
         require_once($CFG->libdir.'/gradelib.php');
 
-        $sql = "SELECT iteminstance, itemmodule, courseid
+        $sql = "SELECT DISTINCT gi.iteminstance, gi.itemmodule, gi.courseid
                 FROM {grade_grades} gg
                 INNER JOIN {grade_items} gi on gg.itemid = gi.id
                 WHERE itemtype = 'mod' AND (gg.userid = :toid OR gg.userid = :fromid)";
