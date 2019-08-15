@@ -1,11 +1,14 @@
 Moodle compatibility
 ====================
 
-This plugin version is compatible **from Moodle 3.4 and upwards**.
+This plugin version is:
+ 
+1. Compatible **from Moodle 3.4 and upwards**.
+1. Supporting any Moodle compatible database.
+
 
 Merge users script for Moodle
 ===============================
-
 
 This script will merge two Moodle user accounts, "user A" and "user B".
 The intent of the script is to assign all activity & records from user A to
