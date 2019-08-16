@@ -31,26 +31,28 @@
 defined('MOODLE_INTERNAL') || die;
 
 if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
-    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib/autoload.php');
-    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
-
-    $ADMIN->add('accounts',
+    /**
+     * @var \part_of_admin_tree $ADMIN
+     */
+    if (!$ADMIN->locate('tool_mergeusers')) {
+        $ADMIN->add('accounts',
             new admin_category('tool_mergeusers', get_string('pluginname', 'tool_mergeusers')));
-    $ADMIN->add('tool_mergeusers',
+        $ADMIN->add('tool_mergeusers',
             new admin_externalpage('tool_mergeusers_merge', get_string('pluginname', 'tool_mergeusers'),
-            $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/index.php',
-            'tool/mergeusers:mergeusers'));
-    $ADMIN->add('tool_mergeusers',
+                $CFG->wwwroot . '/' . $CFG->admin . '/tool/mergeusers/index.php',
+                'tool/mergeusers:mergeusers'));
+        $ADMIN->add('tool_mergeusers',
             new admin_externalpage('tool_mergeusers_viewlog', get_string('viewlog', 'tool_mergeusers'),
-            $CFG->wwwroot.'/'.$CFG->admin.'/tool/mergeusers/view.php',
-            'tool/mergeusers:mergeusers'));
+                $CFG->wwwroot . '/' . $CFG->admin . '/tool/mergeusers/view.php',
+                'tool/mergeusers:mergeusers'));
+    }
 }
 
 if ($hassiteconfig) {
-    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib/autoload.php');
-    require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
+    require_once(__DIR__ . '/lib/autoload.php');
+    require_once(__DIR__ . '/lib.php');
 
-    // Add configuration for making user suspension optional
+    // Add configuration for making user suspension optional.
     $settings = new admin_settingpage('mergeusers_settings',
         get_string('pluginname', 'tool_mergeusers'));
 
@@ -67,38 +69,20 @@ if ($hassiteconfig) {
             get_string($supporting_lang, 'tool_mergeusers'),
         1));
 
-    $config = tool_mergeusers_config::instance();
-    $none = get_string('none');
-    $options = array('none' => $none);
-    foreach ($config->exceptions as $exception) {
-        $options[$exception] = $exception;
-    }
-    unset($options['my_pages']); //duplicated records make MyMoodle does not work.
+    $exceptionoptions = tool_mergeusers_build_exceptions_options();
     $settings->add(new admin_setting_configmultiselect('tool_mergeusers/excluded_exceptions',
         get_string('excluded_exceptions', 'tool_mergeusers'),
-        get_string('excluded_exceptions_desc', 'tool_mergeusers', $none),
-        array('none'), //default value: empty => apply all exceptions.
-        $options));
+        get_string('excluded_exceptions_desc', 'tool_mergeusers', $exceptionoptions->defaultvalue),
+        array($exceptionoptions->defaultkey), //default value: empty => apply all exceptions.
+        $exceptionoptions->options));
 
-    // quiz attempts
-    $quizStrings = new stdClass();
-    $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_REMAIN, 'tool_mergeusers');
-
-    $quizOptions = array(
-    QuizAttemptsMerger::ACTION_RENUMBER => $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER},
-        QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE => $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE},
-        QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET => $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET},
-        QuizAttemptsMerger::ACTION_REMAIN => $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN},
-    );
-
+    // Quiz attempts.
+    $quizoptions = tool_mergeusers_build_quiz_options();
     $settings->add(new admin_setting_configselect('tool_mergeusers/quizattemptsaction',
         get_string('quizattemptsaction', 'tool_mergeusers'),
-        get_string('quizattemptsaction_desc', 'tool_mergeusers', $quizStrings),
-        QuizAttemptsMerger::ACTION_REMAIN,
-        $quizOptions)
+        get_string('quizattemptsaction_desc', 'tool_mergeusers', $quizoptions->allstrings),
+        $quizoptions->defaultkey,
+        $quizoptions->options)
     );
 
     $settings->add(new admin_setting_configcheckbox('tool_mergeusers/uniquekeynewidtomaintain',
