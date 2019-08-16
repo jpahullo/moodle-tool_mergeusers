@@ -15,23 +15,29 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
- *
- * @package    tool
+ * @package tool
  * @subpackage mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
- * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2019 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2019081600;
-$plugin->requires  = 2017111300; // Moodle 3.4, 13 November 2017, https://docs.moodle.org/dev/Releases#Moodle_3.4
-$plugin->component = 'tool_mergeusers';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.20 for Moodle 3.4 and upwards (Build: 2019081600)';
+/**
+ * Ensure kept user is not suspended.
+ * @param object $event stdClass with all event data.
+ */
+function tool_mergeusers_make_kept_user_as_not_suspended($event) {
+    global $DB;
+
+    $userid = $event->other['usersinvolved']['toid'];
+
+    $userkept = new stdClass();
+    $userkept->id = $userid;
+    $userkept->suspended = 0;
+    $userkept->timemodified = time();
+    $DB->update_record('user', $userkept);
+
+    return true;
+}
