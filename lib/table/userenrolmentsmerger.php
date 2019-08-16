@@ -26,6 +26,15 @@
 class UserEnrolmentsMerger extends GenericTableMerger
 {
 
+    protected $tablename;
+
+    public function __construct()
+    {
+        parent::__construct();
+        global $CFG;
+        $this->tablename = $CFG->prefix . 'user_enrolments';
+    }
+
     /**
      * Disables course enrolments for the old user.
      *
@@ -40,12 +49,10 @@ class UserEnrolmentsMerger extends GenericTableMerger
      */
     public function merge($data, &$actionLog, &$errorMessages)
     {
-        global $CFG, $DB;
+        global $DB;
 
-        $sql = 'SELECT id, enrolid, userid, status from ' . $CFG->prefix .
-                'user_enrolments WHERE userid in (' . $data['fromid'] . ', ' .
-                $data['toid'] . ')';
-        $result = $DB->get_records_sql($sql);
+        $sql = 'SELECT id, enrolid, userid, status FROM ' . $this->tablename . ' WHERE userid IN ( ?, ?)';
+        $result = $DB->get_records_sql($sql, array($data['fromid'], $data['toid']));
 
         if (empty($result)) {
             return;
@@ -85,56 +92,99 @@ class UserEnrolmentsMerger extends GenericTableMerger
         unset($result); //free memory
 
         if (!empty($enrolmentsToUpdate)) { // it's possible we won't have any
-            // First, let's move the courses belonging to the old user over to the new one.
-            $updateIds = implode(', ', $enrolmentsToUpdate);
-            $sql = 'UPDATE ' . $CFG->prefix . 'user_enrolments SET userid = ' . $data['toid'] .
-                    ' WHERE id IN (' . $updateIds . ')';
-            if ($DB->execute($sql)) {
-                //all was ok: action done.
-                $actionLog[] = $sql;
-            } else {
-                // a database error occurred.
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#1)") .
-                        ': ' . $DB->get_last_error();
-            }
+            $this->updateAllUserEnrolmentsWithUser($data['toid'], $enrolmentsToUpdate, $actionLog, $errorMessages);
         }
         unset($enrolmentsToUpdate); //free memory
-        unset($sql);
 
         // ok, now let's lock this user out from using the common courses.
         if (!empty($idsToDisable)) {
-            $idsGoByebye = implode(', ', $idsToDisable);
-            $sql = 'UPDATE ' . $CFG->prefix . 'user_enrolments SET status = 2 WHERE id IN (' .
-                    $idsGoByebye . ')  AND status = 0';
-            if ($DB->execute($sql)) {
-                //all was ok: action done.
-                $actionLog[] = $sql;
-            } else {
-                // a database error occurred.
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#2)") .
-                        ': ' . $DB->get_last_error();
-            }
+            $this->lockAllUserEnrolments($idsToDisable, $actionLog, $errorMessages);
         }
         unset($idsToDisable); //free memory
-        unset($sql);
 
         // the enrolment was deactivated before by us.
         // reactivate it again.
         if (!empty($enrolmentsToReactivate)) {
-            $idsReactivate = implode(', ', $enrolmentsToReactivate);
-            $sql = 'UPDATE ' . $CFG->prefix . 'user_enrolments SET status = 0 WHERE id IN (' .
-                    $idsReactivate . ')  AND status = 2';
-            if ($DB->execute($sql)) {
-                //all was ok: action done.
-                $actionLog[] = $sql;
-            } else {
-                // a database error occurred.
-                $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#3)") .
-                        ': ' . $DB->get_last_error();
-            }
+            $this->unlockAllUserEnrolments($enrolmentsToReactivate, $actionLog, $errorMessages);
         }
         unset($enrolmentsToReactivate); //free memory
+    }
+
+    protected function updateAllUserEnrolmentsWithUser(int $userid, array $enrolmentsToUpdate, array &$actionLog, array &$errorMessages)
+    {
+        $chunks = array_chunk($enrolmentsToUpdate, static::CHUNK_SIZE);
+        foreach ($chunks as $chunk) {
+            $this->updateUserEnrolmentsWithUser($userid, $chunk, $actionLog, $errorMessages);
+        }
+        unset($chunks);
+    }
+
+    protected function updateUserEnrolmentsWithUser(int $userid, array $enrolmentsToUpdate, array &$actionLog, array &$errorMessages)
+    {
+        global $DB;
+        $updateIds = implode(', ', $enrolmentsToUpdate);
+        $sql = 'UPDATE ' . $this->tablename . ' SET userid = ' . $userid . ' WHERE id IN (' . $updateIds . ')';
+        if ($DB->execute($sql)) {
+            //all was ok: action done.
+            $actionLog[] = $sql;
+        } else {
+            // a database error occurred.
+            $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#1)") .
+                ': ' . $DB->get_last_error();
+        }
+        unset($updateIds);
         unset($sql);
     }
 
+    protected function lockAllUserEnrolments(array $idsToDisable, array &$actionLog, array &$errorMessages)
+    {
+        $chunks = array_chunk($idsToDisable, static::CHUNK_SIZE);
+        foreach ($chunks as $chunk) {
+            $this->lockUserEnrolments($chunk, $actionLog, $errorMessages);
+        }
+        unset($chunks);
+    }
+
+    protected function lockUserEnrolments(array $idsToDisable, array &$actionLog, array &$errorMessages)
+    {
+        global $DB;
+        $idsToLock = implode(', ', $idsToDisable);
+        $sql = 'UPDATE ' . $this->tablename . ' SET status = 2 WHERE id IN (' . $idsToLock . ')  AND status = 0';
+        if ($DB->execute($sql)) {
+            //all was ok: action done.
+            $actionLog[] = $sql;
+        } else {
+            // a database error occurred.
+            $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#2)") .
+                ': ' . $DB->get_last_error();
+        }
+        unset($idsToLock);
+        unset($sql);
+    }
+
+    protected function unlockAllUserEnrolments(array $enrolmentsToReactivate, array &$actionLog, array &$errorMessages)
+    {
+        $chunks = array_chunk($enrolmentsToReactivate, static::CHUNK_SIZE);
+        foreach ($chunks as $chunk) {
+            $this->unlockUserEnrolments($chunk, $actionLog, $errorMessages);
+        }
+        unset($chunks);
+    }
+
+    protected function unlockUserEnrolments(array $enrolmentsToReactivate, array &$actionLog, array &$errorMessages)
+    {
+        global $DB;
+        $idsToUnlock = implode(', ', $enrolmentsToReactivate);
+        $sql = 'UPDATE ' . $this->tablename . ' SET status = 0 WHERE id IN (' .  $idsToUnlock . ')  AND status = 2';
+        if ($DB->execute($sql)) {
+            //all was ok: action done.
+            $actionLog[] = $sql;
+        } else {
+            // a database error occurred.
+            $errorMessages[] = get_string('tableko', 'tool_mergeusers', "user_enrolments (#3)") .
+                ': ' . $DB->get_last_error();
+        }
+        unset($idsToUnlock);
+        unset($sql);
+    }
 }
