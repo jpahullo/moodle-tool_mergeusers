@@ -23,8 +23,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
 global $CFG;
-
 require_once $CFG->libdir . '/gdlib.php';
 
 /**
@@ -34,7 +34,7 @@ require_once $CFG->libdir . '/gdlib.php';
  * @global moodle_database $DB
  */
 function tool_mergeusers_old_user_suspend($event) {
-    global $DB, $CFG;
+    global $DB;
 
     $oldid = $event->other['usersinvolved']['fromid'];
 
@@ -44,7 +44,7 @@ function tool_mergeusers_old_user_suspend($event) {
         return true;
     }
 
-    // 1. update auth type
+    // 1. update suspended flag
     $olduser = new stdClass();
     $olduser->id = $oldid;
     $olduser->suspended = 1;
@@ -64,7 +64,5 @@ function tool_mergeusers_old_user_suspend($event) {
         $DB->set_field('user', 'picture', $newrev, array('id'=>$oldid));
     }
 
-
     return true;
 }
-
