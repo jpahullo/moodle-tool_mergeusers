@@ -129,6 +129,7 @@ return array(
     // In other words, only column names given below will be search for matching user ids.
     // The key 'default' will be applied for any non matching table name.
     'userfieldnames' => array(
+        'logstore_standard_log' => array('userid', 'relateduserid'),
         'message_contacts' => array('userid', 'contactid'), //compound index
         'message' => array('useridfrom', 'useridto'),
         'message_read' => array('useridfrom', 'useridto'),
