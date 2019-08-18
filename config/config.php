@@ -122,6 +122,18 @@ return array(
             'userfield' => array('userid'),
             'otherfields' => array('wikiid', 'groupid'),
         ),
+        'user_enrolments' => array(
+            'userfield' => array('userid'),
+            'otherfields' => array('enrolid'),
+        ),
+        'assign_user_flags' => array( // They are actually a unique key, but not in DDL.
+            'userfield' => array('userid'),
+            'otherfields' => array('assignment'),
+        ),
+        'assign_user_mapping' => array( // They are actually a unique key, but not in DDL.
+            'userfield' => array('userid'),
+            'otherfields' => array('assignment'),
+        ),
     ),
 
     // List of column names per table, where their content is a user.id.
@@ -141,8 +153,8 @@ return array(
     // 'default' is applied when no specific TableMerger is specified.
     'tablemergers' => array(
         'default' => 'GenericTableMerger',
-        'user_enrolments' => 'UserEnrolmentsMerger',
         'quiz_attempts' => 'QuizAttemptsMerger',
+        'assign_submission' => 'AssignSubmissionTableMerger',
     ),
 
     'alwaysRollback' => false,

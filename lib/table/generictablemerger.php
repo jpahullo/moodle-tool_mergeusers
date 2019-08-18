@@ -69,12 +69,8 @@ class GenericTableMerger implements TableMerger
      */
     public function merge($data, &$actionLog, &$errorMessages)
     {
-        global $DB;
-
         foreach ($data['userFields'] as $fieldName) {
-            $recordsToUpdate = $DB->get_records_sql("SELECT " . self::PRIMARY_KEY .
-                    " FROM {" . $data['tableName'] . "} WHERE " .
-                    $fieldName . " = '" . $data['fromid'] . "'");
+            $recordsToUpdate = $this->get_records_to_be_updated($data, $fieldName);
             if (count($recordsToUpdate) == 0) {
                 //this userid is not present in these table and field names
                 continue;
@@ -89,7 +85,7 @@ class GenericTableMerger implements TableMerger
                         $actionLog, $errorMessages);
             }
 
-            $this->updateRecords($data, $recordsToModify, $fieldName, $actionLog, $errorMessages);
+            $this->updateAllRecords($data, $recordsToModify, $fieldName, $actionLog, $errorMessages);
         }
     }
 
@@ -223,24 +219,27 @@ class GenericTableMerger implements TableMerger
      * Updates the table, replacing the user.id for the $data['toid'] on all
      * records specified by the ids on $recordsToModify.
      *
-     * @global object $CFG
-     * @global moodle_database $DB
-     *
      * @param array $data array with details of merging.
      * @param array $recordsToModify list of record ids to update with $toid.
      * @param string $fieldName field name of the table to update.
      * @param array $actionLog list of performed actions.
      * @param array $errorMessages list of error messages.
      */
-    protected function updateRecords($data, $recordsToModify, $fieldName, &$actionLog, &$errorMessages)
+    protected function updateAllRecords($data, $recordsToModify, $fieldName, &$actionLog, &$errorMessages)
     {
-        global $CFG, $DB;
-
         if (count($recordsToModify) == 0) {
             // if no records, do nothing ;-)
             return;
         }
 
+        $chunks = array_chunk($recordsToModify, self::CHUNK_SIZE);
+        foreach ($chunks as $chunk) {
+            $this->updateRecords($data, $chunk, $fieldName, $actionLog, $errorMessages);
+        }
+    }
+
+    protected function updateRecords(array $data, array $recordsToModify, string $fieldName, array &$actionLog, array &$errorMessages) {
+        global $CFG, $DB;
         $tableName = $CFG->prefix . $data['tableName'];
         $idString = implode(', ', $recordsToModify);
         $updateRecords = "UPDATE " . $tableName . ' ' .
@@ -289,6 +288,13 @@ class GenericTableMerger implements TableMerger
         }
         // default behavior
         return $compoundIndex['otherfields'];
+    }
+
+    protected function get_records_to_be_updated($data, $fieldName) {
+        global $DB;
+        return $DB->get_records_sql("SELECT " . self::PRIMARY_KEY .
+            " FROM {" . $data['tableName'] . "} WHERE " .
+            $fieldName . " = '" . $data['fromid'] . "'");
     }
 
 }
