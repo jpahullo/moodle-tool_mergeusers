@@ -258,9 +258,9 @@ class QuizAttemptsMerger extends GenericTableMerger
      * @param array $actionLog list of performed actions.
      * @param array $errorMessages list of error messages.
      */
-    protected function updateRecords($data, $recordsToModify, $fieldName, &$actionLog, &$errorMessages)
+    protected function updateAllRecords($data, $recordsToModify, $fieldName, &$actionLog, &$errorMessages)
     {
-        parent::updateRecords($data, $recordsToModify, $fieldName, $actionLog, $errorMessages);
+        parent::updateAllRecords($data, $recordsToModify, $fieldName, $actionLog, $errorMessages);
         $this->updateAllQuizzes($data, $recordsToModify, $actionLog);
     }
 
