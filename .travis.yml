@@ -45,7 +45,7 @@ matrix:
       env: DB=pgsql  MOODLE_BRANCH=master
       services: postgresql
       addons:
-        - postgresql: "9.4"
+        - postgresql: "9.5"
 
 before_install:
   - phpenv config-rm xdebug.ini

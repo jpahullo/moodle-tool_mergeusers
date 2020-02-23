@@ -43,7 +43,7 @@ class GenericTableMerger implements TableMerger
 
     public function __construct()
     {
-        $this->newidtomaintain = get_config('uniquekeynewidtomaintain', 'tool_mergeusers');
+        $this->newidtomaintain = get_config('tool_mergeusers', 'uniquekeynewidtomaintain');
     }
 
     /**
