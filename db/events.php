@@ -31,13 +31,13 @@ $observers = array(
     array(
         'eventname'     => 'tool_mergeusers\event\user_merged_success',
         'callback'      => 'tool_mergeusers_old_user_suspend',
-        'includefile'   => '/admin/tool/mergeusers/lib/events/olduser.php',
+        'includefile'   => 'admin/tool/mergeusers/lib/events/olduser.php',
         'internal'      => 1
     ),
     array(
         'eventname'     => 'tool_mergeusers\event\user_merged_success',
         'callback'      => 'tool_mergeusers_make_kept_user_as_not_suspended',
-        'includefile'   => '/admin/tool/mergeusers/lib/events/keptuser.php',
+        'includefile'   => 'admin/tool/mergeusers/lib/events/keptuser.php',
         'internal'      => 1
     ),
 );
