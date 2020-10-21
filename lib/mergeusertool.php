@@ -449,8 +449,8 @@ class MergeUserTool
     private function updateGrades($toid, $fromid) {
         global $DB, $CFG;
         require_once($CFG->libdir.'/gradelib.php');
-
-        $sql = "SELECT DISTINCT gi.iteminstance, gi.itemmodule, gi.courseid
+        $row_id = $DB->sql_concat_join("'_'", ['gi.iteminstance', 'gi.itemmodule', 'gi.courseid']) . ' rowid ';
+        $sql = "SELECT DISTINCT $row_id, gi.iteminstance, gi.itemmodule, gi.courseid
                 FROM {grade_grades} gg
                 INNER JOIN {grade_items} gi on gg.itemid = gi.id
                 WHERE itemtype = 'mod' AND (gg.userid = :toid OR gg.userid = :fromid)";
