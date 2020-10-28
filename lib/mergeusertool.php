@@ -189,6 +189,40 @@ class MergeUserTool
      */
     public function merge($toid, $fromid)
     {
+        /**
+         * Added by rschrenk, fix eduvidual-role first.
+         * We only add the roles in table orgid_userid directly. Any
+         * role assignments should be transferred by the merge tool itself.
+         */
+        global $DB;
+        $roles = $DB->get_records('local_eduvidual_orgid_userid', array('userid' => $fromid));
+        foreach ($roles AS $fromrole) {
+            $torole = $DB->get_record('local_eduvidual_orgid_userid', array('orgid' => $fromrole->orgid, 'userid' => $toid));
+            if (!empty($torole->id)) {
+                // We have a role, set the highest for $toid.
+                switch ($fromrole->role) {
+                    case 'Manager':
+                        if (!in_array($torole->role, array('Manager'))) {
+                            \local_eduvidual\lib_enrol::role_set($toid, $torole->orgid, $fromrole->role, true);
+                        }
+                    break;
+                    case 'Teacher':
+                        if (!in_array($torole->role, array('Manager', 'Teacher'))) {
+                            \local_eduvidual\lib_enrol::role_set($toid, $torole->orgid, $fromrole->role, true);
+                        }
+                    break;
+                    // Student and Parent are seen as equal. We must have one of these roles already if we come here.
+                }
+                // We remove fromid from org, so that the merge can take place.
+                \local_eduvidual\lib_enrol::role_set($fromid, $fromrole->orgid, 'remove', true);
+            } else {
+                // We have no role at this org, set the one that fromuser has.
+                \local_eduvidual\lib_enrol::role_set($toid, $fromrole->orgid, $fromrole->role, true);
+            }
+        }
+        /**
+         * End of modification
+         */
         list($success, $log) = $this->_merge($toid, $fromid);
 
         $eventpath = "\\tool_mergeusers\\event\\";
