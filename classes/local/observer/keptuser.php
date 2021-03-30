@@ -22,22 +22,26 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace tool_mergeusers\local\observer;
 
-/**
- * Ensure kept user is not suspended.
- * @param object $event stdClass with all event data.
- */
-function tool_mergeusers_make_kept_user_as_not_suspended($event) {
-    global $DB;
+use tool_mergeusers\event\user_merged_success;
 
-    $userid = $event->other['usersinvolved']['toid'];
+class keptuser {
 
-    $userkept = new stdClass();
-    $userkept->id = $userid;
-    $userkept->suspended = 0;
-    $userkept->timemodified = time();
-    $DB->update_record('user', $userkept);
+    /**
+     * Ensure kept user is not suspended.
+     *
+     * @param user_merged_success $event Event data.
+     */
+    public static function make_kept_user_as_not_suspended(user_merged_success $event): void {
+        global $DB;
 
-    return true;
+        $userid = $event->other['usersinvolved']['toid'];
+
+        $userkept = new \stdClass();
+        $userkept->id = $userid;
+        $userkept->suspended = 0;
+        $userkept->timemodified = time();
+        $DB->update_record('user', $userkept);
+    }
 }
