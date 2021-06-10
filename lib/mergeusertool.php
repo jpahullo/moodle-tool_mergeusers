@@ -450,7 +450,7 @@ class MergeUserTool
         global $DB, $CFG;
         require_once($CFG->libdir.'/gradelib.php');
 
-        $sql = "SELECT DISTINCT gi.iteminstance, gi.itemmodule, gi.courseid
+        $sql = "SELECT DISTINCT gi.id, gi.iteminstance, gi.itemmodule, gi.courseid
                 FROM {grade_grades} gg
                 INNER JOIN {grade_items} gi on gg.itemid = gi.id
                 WHERE itemtype = 'mod' AND (gg.userid = :toid OR gg.userid = :fromid)";
