@@ -269,6 +269,7 @@ class MergeUserTool
             }
 
             $this->updateGrades($toid, $fromid);
+            $this->reaggregateCompletions($toid);
         } catch (Exception $e) {
             $errorMessages[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
                     html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
@@ -470,5 +471,15 @@ class MergeUserTool
 
             grade_update_mod_grades($activity, $toid);
         }
+    }
+
+    private function reaggregateCompletions($toid) {
+        global $DB;
+
+        $now = time();
+        $DB->execute(
+                'UPDATE {course_completions} set reaggregate = :now where userid = :toid and (timecompleted is null or timecompleted = 0)',
+                ['now' => $now, 'toid' => $toid]
+        );
     }
 }
