@@ -26,7 +26,7 @@ class tool_mergeusers_enrolments_testcase extends advanced_testcase {
     /**
      * Setup the test.
      */
-    public function setUp() {
+    public function setUp(): void {
         global $CFG;
         require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         $this->resetAfterTest(true);

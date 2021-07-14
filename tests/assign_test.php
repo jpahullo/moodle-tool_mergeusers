@@ -35,7 +35,7 @@ class tool_mergeusers_assign_testcase extends mod_assign_base_testcase {
     /**
      *
      */
-    public function setUp() {
+    public function setUp(): void {
         global $CFG;
         require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         parent::setUp();

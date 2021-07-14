@@ -29,7 +29,7 @@ class tool_mergeusers_quiz_testcase extends advanced_testcase {
      * Create two users.
      * Enrol the users onto the courses.
      */
-    public function setUp() {
+    public function setUp(): void {
         global $CFG, $DB;
         require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         $this->resetAfterTest(true);
