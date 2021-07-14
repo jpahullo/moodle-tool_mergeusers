@@ -24,14 +24,13 @@
  */
 class tool_mergeusers_clioptions_testcase extends advanced_testcase {
 
-    public function setUp() {
+    public function setUp(): void {
         global $CFG;
         require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         $this->resetAfterTest(true);
     }
 
-    public function tearDown()
-    {
+    public function tearDown(): void {
         $config = tool_mergeusers_config::instance();
         unset($config->alwaysRollback);
         unset($config->debugdb);
