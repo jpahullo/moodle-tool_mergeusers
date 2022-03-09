@@ -31,7 +31,7 @@ require_once($CFG->dirroot . '/mod/assign/tests/base_test.php');
 /**
  * Class assign_test
  */
-class tool_mergeusers_assign_testcase extends mod_assign_base_testcase {
+class tool_mergeusers_assign_testcase extends mod_assign\base_test {
     /**
      *
      */
