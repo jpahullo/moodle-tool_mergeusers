@@ -294,9 +294,19 @@ class tool_mergeusers_renderer extends plugin_renderer_base
             $flags[] = $this->pix_icon('i/invalid', get_string('eventusermergedfailure', 'tool_mergeusers')); //failure icon
             $flags[] = $this->pix_icon('i/valid', get_string('eventusermergedsuccess', 'tool_mergeusers')); //ok icon
 
+            $output .= html_writer::link(new moodle_url('/admin/tool/mergeusers/view.php', ['export' => 1]),
+                    get_string('exportlogs', 'tool_mergeusers'));
+
             $table = new html_table();
             $table->align = array('center', 'center', 'center', 'center', 'center', 'center');
-            $table->head = array(get_string('olduseridonlog', 'tool_mergeusers'), get_string('newuseridonlog', 'tool_mergeusers'), get_string('date'), get_string('status'), '');
+            $table->head = array(
+                get_string('olduseridonlog', 'tool_mergeusers'),
+                get_string('newuseridonlog', 'tool_mergeusers'),
+                get_string('mergedbyuseridonlog', 'tool_mergeusers'),
+                get_string('date'),
+                get_string('status'),
+                ''
+            );
 
             $rows = array();
             foreach ($logs as $i => $log) {
@@ -308,6 +318,9 @@ class tool_mergeusers_renderer extends plugin_renderer_base
                     ($log->to)
                         ? $this->show_user($log->touserid, $log->to)
                         : get_string('deleted', 'tool_mergeusers', $log->touserid),
+                    ($log->mergedby)
+                        ? $this->show_user($log->mergedbyuserid, $log->mergedby)
+                        : get_string('deleted', 'tool_mergeusers', $log->mergedbyuserid),
                     userdate($log->timemodified, get_string('strftimedaydatetime', 'langconfig')),
                     $flags[$log->success],
                     html_writer::link(

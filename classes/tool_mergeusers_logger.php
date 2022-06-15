@@ -43,12 +43,13 @@ class tool_mergeusers_logger {
      * or a problem description if merging failed.
      */
     public function log($touserid, $fromuserid, $success, $log) {
-        global $DB;
+        global $DB, $USER;
 
         $record = new stdClass();
         $record->touserid = $touserid;
         $record->fromuserid = $fromuserid;
         $record->timemodified = time();
+        $record->mergedbyuserid = $USER->id;
         $record->success = (int)$success;
         $record->log = json_encode($log); //to get it
 
@@ -75,13 +76,16 @@ class tool_mergeusers_logger {
      */
     public function get($filter = null, $limitfrom=0, $limitnum=0, $sort = "timemodified DESC") {
         global $DB;
-        $logs = $DB->get_records('tool_mergeusers', $filter, $sort, 'id, touserid, fromuserid, success, timemodified', $limitfrom, $limitnum);
+        $logs = $DB->get_records('tool_mergeusers', $filter, $sort, 'id, touserid, fromuserid, mergedbyuserid, success, timemodified', $limitfrom, $limitnum);
         if (!$logs) {
             return $logs;
         }
         foreach ($logs as $id => &$log) {
             $log->to = $DB->get_record('user', array('id' => $log->touserid));
             $log->from = $DB->get_record('user', array('id' => $log->fromuserid));
+            if (!empty($log->mergedbyuserid)) {
+                $log->mergedby = $DB->get_record('user', array('id' => $log->mergedbyuserid));
+            }
         }
         return $logs;
     }
