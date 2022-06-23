@@ -58,6 +58,7 @@ $string['loglist'] = 'All these records are merging actions done, showing if the
 $string['newuseridonlog'] = 'User kept';
 $string['olduseridonlog'] = 'User removed';
 $string['mergedbyuseridonlog'] = 'Merged by';
+$string['nomergedby'] = 'Not recorded';
 $string['exportlogs'] = 'Export logs as CSV';
 $string['nologs'] = 'There is no merging logs yet. Good for you!';
 $string['wronglogid'] = 'The log you are asking for does not exist.';

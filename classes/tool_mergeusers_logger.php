@@ -83,7 +83,10 @@ class tool_mergeusers_logger {
         foreach ($logs as $id => &$log) {
             $log->to = $DB->get_record('user', array('id' => $log->touserid));
             $log->from = $DB->get_record('user', array('id' => $log->fromuserid));
-            if (!empty($log->mergedbyuserid)) {
+
+            if (empty($log->mergedbyuserid)) {
+                $log->mergedby = null;
+            } else {
                 $log->mergedby = $DB->get_record('user', array('id' => $log->mergedbyuserid));
             }
         }

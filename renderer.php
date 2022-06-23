@@ -320,7 +320,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
                         : get_string('deleted', 'tool_mergeusers', $log->touserid),
                     ($log->mergedby)
                         ? $this->show_user($log->mergedbyuserid, $log->mergedby)
-                        : get_string('deleted', 'tool_mergeusers', $log->mergedbyuserid),
+                        : get_string('nomergedby', 'tool_mergeusers'),
                     userdate($log->timemodified, get_string('strftimedaydatetime', 'langconfig')),
                     $flags[$log->success],
                     html_writer::link(
