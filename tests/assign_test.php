@@ -23,6 +23,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_assign\base_test as mod_assign_base_testcase;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
