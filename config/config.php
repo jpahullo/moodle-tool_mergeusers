@@ -134,6 +134,10 @@ return array(
             'userfield' => array('userid'),
             'otherfields' => array('assignment'),
         ),
+        'customcert_issues' => array(
+            'userfield' => array('userid'),
+            'otherfields' => array('customcertid'),
+        ),
     ),
 
     // List of column names per table, where their content is a user.id.
