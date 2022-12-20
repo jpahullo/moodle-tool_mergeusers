@@ -73,16 +73,33 @@ class mergeuserform extends moodleform {
         $mform->setType('searchgroup[searcharg]', PARAM_TEXT);
         $mform->addHelpButton('searchgroup', 'searchuser', 'tool_mergeusers');
          
-        // bearch by profile field
+        // Search by profile fields
         $userprofile= new user_filter_profilefield('profile', get_string('profilefields', 'admin'), $advanced);
-        $profiefields = $userprofile->get_profile_fields();
+        $profilefields = $userprofile->get_profile_fields();
+        $allowedprofilefields=get_config('tool_mergeusers','profilefields');
+        
+        $profilefieldarray=array();
+        if(!empty($allowedprofilefields)){
+            $allowedprofilefieldsarray=explode(',',$allowedprofilefields);
+            foreach($allowedprofilefieldsarray as $pfvalue){
+                if($pfvalue<0){
+                    //search by profile is not allowed
+                    $profilefieldarray=array();
+                    break; 
+                }else{
+                    $profilefieldarray[$pfvalue] = $profilefields[$pfvalue];
+                }
+            }
+
+        }
+        if(!empty($profilefieldarray)){
         $searchprofile =array();
         $searchprofile[] = $mform->createElement('text', 'searchprofile');
-        $searchprofile[] = $mform->createElement('select', 'searchprofile', '', $profiefields, '');
+        $searchprofile[] = $mform->createElement('select', 'searchprofile', '', $profilefieldarray, '');
         $mform->addGroup($searchprofile, 'profilegroup', get_string('searchprofile', 'tool_mergeusers'));
         $mform->setType('profilegroup[searchprofile]', PARAM_TEXT);
         $mform->addHelpButton('profilegroup', 'searchprofile', 'tool_mergeusers');
-
+        }
         $mform->addElement('static', 'mergeusersadvanced', get_string('mergeusersadvanced', 'tool_mergeusers'));
         $mform->addHelpButton('mergeusersadvanced', 'mergeusersadvanced', 'tool_mergeusers');
         $mform->setAdvanced('mergeusersadvanced');

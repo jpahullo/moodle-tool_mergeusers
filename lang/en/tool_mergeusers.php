@@ -153,7 +153,8 @@ $string['transactions_setting_desc'] = 'If enabled, merge users will not work
     in your Moodle installation, you can be quiet on running this plugin
     enabling or disabling this option.';
 $string['profilefields'] = 'User profile fields';
-$string['profilefields_desc'] = 'Select user profile fields allowed for users search';
+$string['profilefields_desc'] = 'Select user profile fields allowed for users search
+    <br/> Selecting "none" removes the option for searching by user profile field ';
 
 // quiz attempts strings
 $string['quizattemptsaction'] = 'How to resolve quiz attempts';
