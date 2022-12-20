@@ -108,6 +108,9 @@ $string['searchuser'] = 'Search for User';
 $string['searchuser_help'] = 'Enter a username, first/last name, email address
     or user id to search for potential users. You may also specify if you only
     want to search through a particular field.';
+$string['searchprofile'] = 'Search for User by profile';
+$string['searchprofile_help'] ='Enter profile field value. 
+    You may also specify if you only want to search through a particular field.';
 $string['mergeusersadvanced'] = '<strong>Direct user input</strong>';
 $string['mergeusersadvanced_help'] = 'Here you can enter the below fields if
     you know exactly what users that you want to merge.<br /><br />

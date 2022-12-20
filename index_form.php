@@ -29,7 +29,7 @@
  */
 
 require_once($CFG->libdir.'/formslib.php'); /// forms library
-
+require_once($CFG->dirroot.'/user/filters/profilefield.php');//for profile fields
 /**
  * Define form snippet for getting the userids of the two users to merge
  */
@@ -61,7 +61,8 @@ class mergeuserform extends moodleform {
             'lastname'  => get_string('lastname'),
             'email'     => get_string('email'),
         );
-
+       
+        
         $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));
 
         // Add elements
@@ -71,6 +72,16 @@ class mergeuserform extends moodleform {
         $mform->addGroup($searchuser, 'searchgroup', get_string('searchuser', 'tool_mergeusers'));
         $mform->setType('searchgroup[searcharg]', PARAM_TEXT);
         $mform->addHelpButton('searchgroup', 'searchuser', 'tool_mergeusers');
+         
+        // bearch by profile field
+        $userprofile= new user_filter_profilefield('profile', get_string('profilefields', 'admin'), $advanced);
+        $profiefields = $userprofile->get_profile_fields();
+        $searchprofile =array();
+        $searchprofile[] = $mform->createElement('text', 'searchprofile');
+        $searchprofile[] = $mform->createElement('select', 'searchprofile', '', $profiefields, '');
+        $mform->addGroup($searchprofile, 'profilegroup', get_string('searchprofile', 'tool_mergeusers'));
+        $mform->setType('profilegroup[searchprofile]', PARAM_TEXT);
+        $mform->addHelpButton('profilegroup', 'searchprofile', 'tool_mergeusers');
 
         $mform->addElement('static', 'mergeusersadvanced', get_string('mergeusersadvanced', 'tool_mergeusers'));
         $mform->addHelpButton('mergeusersadvanced', 'mergeusersadvanced', 'tool_mergeusers');
