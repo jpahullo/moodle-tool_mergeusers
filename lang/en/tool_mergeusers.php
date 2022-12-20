@@ -152,6 +152,8 @@ $string['transactions_setting_desc'] = 'If enabled, merge users will not work
     considered by this plugin. If you do not have any third party plugins
     in your Moodle installation, you can be quiet on running this plugin
     enabling or disabling this option.';
+$string['profilefields'] = 'User profile fields';
+$string['profilefields_desc'] = 'Select user profile fields allowed for users search';
 
 // quiz attempts strings
 $string['quizattemptsaction'] = 'How to resolve quiz attempts';
