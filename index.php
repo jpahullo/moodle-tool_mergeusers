@@ -159,6 +159,7 @@ if (!empty($option)) {
     }
 // Any submitted data?
 } else if ($data) {
+    
     // If there is a search argument use this instead of advanced form
     if (!empty($data->searchgroup['searcharg'])) {
 
@@ -166,9 +167,9 @@ if (!empty($option)) {
         $user_select_table = new UserSelectTable($search_users, $renderer);
 
         echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $user_select_table);
-    } else if(!empty($data->searchgroup['searchprofile'])) {
-        //search by profile
-        $search_users = $mus->search_users($data->searchgroup['searcharg'], $data->searchgroup['searchfield']);
+    } else if(!empty($data->profilegroup['searchprofile'])) {
+        //search by custom user profile fields
+        $search_users = $mus->search_users($data->profilegroup['searchprofile'], $data->profilegroup['profilefieldid']);
         $user_select_table = new UserSelectTable($search_users, $renderer);
 
         echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $user_select_table); 

@@ -106,8 +106,25 @@ class MergeUserSearch{
                 $sql = 'SELECT * FROM {user} WHERE idnumber LIKE :idnumber';
 
                 break;
-            default: // search on all fields by default
+            default: 
+                if(is_numeric($searchfield)){
+                 // search by profile field. 
+                 // default is to search on all custom profile fields
+                 $params = array(
+                    'data' => '%' . $input . '%',
+                 );
 
+                 $sql = ' SELECT usr.* FROM {user} usr';
+                 $sql .=' LEFT JOIN {user_info_data} uid ON usr.id=uid.userid ';
+                 $sql .=' WHERE uid.data LIKE :data ';
+                 if (intval($searchfield)>0){// search on a specific field
+                     $params['fieldid'] = intval($searchfield);
+                     $sql .=' AND  uid.fieldid=:fieldid';
+                    }
+                //print_r($data); die("$sql");
+                }else{
+
+                // search on all fields by default
                 $params = array(
                     'userid'     =>  $input,
                     'username'   => '%' . $input . '%',
@@ -127,7 +144,7 @@ class MergeUserSearch{
                         lastname LIKE :lastname OR
                         email LIKE :email OR
                         idnumber LIKE :idnumber';
-
+                }
                 break;
         }
 
@@ -153,13 +170,22 @@ class MergeUserSearch{
     public function verify_user($uinfo, $column){
         global $DB;
         $message = '';
+        $user = null;
+        if(is_numeric($column)){
+        //search by custom user profile field
+            $results = $this->search_users($uinfo, $column);
+        if(!empty($results)){
+                $user = array_shift($results);
+        }
+        }else {
+        //search by field of user table
         try {
             $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
         } catch (Exception $e) {
             $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
             $user = null;
         }
-
+        }
         return array($user, $message);
     }
 

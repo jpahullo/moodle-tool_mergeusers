@@ -97,9 +97,6 @@ if ($hassiteconfig) {
         get_string('profilefields_desc', 'tool_mergeusers', $profilefieldsoptions->defaultvalue),
         array($profilefieldsoptions->defaultkey), //default value: empty => apply all exceptions.
         $profilefieldsoptions->options));
-    //
-    // $settings->add(new admin_setting_configtext('tool_mergeusers/profilefields', get_string('profilefields', 'tool_mergeusers'),
-    //    get_string('profilefields_desc', 'tool_mergeusers'), '', PARAM_TEXT));
-    // Add settings
+    
     $ADMIN->add('tools', $settings);
 }

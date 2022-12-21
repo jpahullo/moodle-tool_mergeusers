@@ -79,15 +79,18 @@ class mergeuserform extends moodleform {
         $allowedprofilefields=get_config('tool_mergeusers','profilefields');
         
         $profilefieldarray=array();
+        $idstypeprofile = array();
         if(!empty($allowedprofilefields)){
             $allowedprofilefieldsarray=explode(',',$allowedprofilefields);
             foreach($allowedprofilefieldsarray as $pfvalue){
                 if($pfvalue<0){
                     //search by profile is not allowed
                     $profilefieldarray=array();
+                    $idstypeprofile=array();
                     break; 
                 }else{
                     $profilefieldarray[$pfvalue] = $profilefields[$pfvalue];
+                    $idstypeprofile[$pfvalue] = get_string('profile').': '.$profilefields[$pfvalue];
                 }
             }
 
@@ -95,15 +98,17 @@ class mergeuserform extends moodleform {
         if(!empty($profilefieldarray)){
         $searchprofile =array();
         $searchprofile[] = $mform->createElement('text', 'searchprofile');
-        $searchprofile[] = $mform->createElement('select', 'searchprofile', '', $profilefieldarray, '');
+        $searchprofile[] = $mform->createElement('select', 'profilefieldid', '', $profilefieldarray, '');
         $mform->addGroup($searchprofile, 'profilegroup', get_string('searchprofile', 'tool_mergeusers'));
         $mform->setType('profilegroup[searchprofile]', PARAM_TEXT);
         $mform->addHelpButton('profilegroup', 'searchprofile', 'tool_mergeusers');
+        $mform->setAdvanced('profilegroup');
         }
         $mform->addElement('static', 'mergeusersadvanced', get_string('mergeusersadvanced', 'tool_mergeusers'));
         $mform->addHelpButton('mergeusersadvanced', 'mergeusersadvanced', 'tool_mergeusers');
         $mform->setAdvanced('mergeusersadvanced');
 
+        $idstype = $idstype + $idstypeprofile;
         $olduser = array();
         $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
         $olduser[] = $mform->createElement('select', 'olduseridtype', '', $idstype, '');
