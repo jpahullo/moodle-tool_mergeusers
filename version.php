@@ -27,10 +27,8 @@
  * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die;
-
-$plugin->version   = 2021072200;
+$plugin->version   = 2021072221;
 $plugin->requires  = 2020061500; // Moodle 3.9, 15 June 2020, https://docs.moodle.org/dev/Releases#Moodle_3.9_.28LTS.29
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;
