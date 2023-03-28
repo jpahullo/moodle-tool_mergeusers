@@ -66,7 +66,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         upgrade_plugin_savepoint(true, 2013112912, 'tool', 'mergeusers');
     }
 
-    if ($oldversion > 2021072218) {
+    if ($oldversion < 2023032700) {
       
         // Define table tool_mergeusers_queue to be created.
         $table = new xmldb_table('tool_mergeusers_queue');
@@ -100,7 +100,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         }
 
         // mergeusers savepoint reached
-        //upgrade_plugin_savepoint(true, 202107221, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2023032700, 'tool', 'mergeusers');
     }
 
 
