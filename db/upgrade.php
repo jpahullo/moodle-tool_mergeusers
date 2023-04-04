@@ -65,5 +65,20 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         upgrade_plugin_savepoint(true, 2013112912, 'tool', 'mergeusers');
     }
 
+    if ($oldversion < 2023040401) {
+
+        // Define field mergedbyuserid to be added to tool_mergeusers.
+        $table = new xmldb_table('tool_mergeusers');
+        $field = new xmldb_field('mergedbyuserid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'success');
+
+        // Conditionally launch add field mergedbyuserid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
+    }
+
     return true;
 }

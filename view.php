@@ -40,6 +40,35 @@ require_capability('tool/mergeusers:mergeusers', context_system::instance());
 admin_externalpage_setup('tool_mergeusers_viewlog');
 
 $logger = new tool_mergeusers_logger();
+
+$export = optional_param('export', 0, PARAM_BOOL);
+
+if ($export) {
+    require_once($CFG->dirroot . '/lib/csvlib.class.php');
+    $csv = new csv_export_writer();
+    $logs = $logger->get();
+    $headings = ['id', 'touserid', 'to', 'fromuserid', 'from', 'mergedbyuserid', 'mergedby', 'success', 'timemodified'];
+    $csv->add_data($headings);
+    foreach ($logs as $log) {
+        $successstringid = $log->success ? 'eventusermergedsuccess' : 'eventusermergedfailure';
+        $successstring = get_string($successstringid, 'tool_mergeusers');
+        $exportlog = [
+            $log->id,
+            $log->touserid,
+            fullname($log->to),
+            $log->fromuserid,
+            fullname($log->from),
+            $log->mergedbyuserid,
+            ($log->mergedby) ? fullname($log->mergedby) : null,
+            $successstring,
+            userdate($log->timemodified)
+        ];
+        $csv->add_data($exportlog);
+    }
+
+    $csv->download_file();
+}
+
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 
 echo $renderer->logs_page($logger->get());
