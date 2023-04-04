@@ -1,12 +1,13 @@
 Release notes
 =============
 
-1. Minimum Moodle version supported is 3.11.
+1. (#211) Export list of logs as CSV. By @marxjohnson.
 
 Contributors
 ============
 
 Maintained by:
+
 * Nicolas Dunand.
 * [Jordi Pujol-Ahulló](https://recursoseducatius.urv.cat).
 

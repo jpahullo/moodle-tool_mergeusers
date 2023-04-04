@@ -232,6 +232,7 @@ Contributors
 ============
 
 Maintained by:
+
 * Nicolas Dunand.
 * [Jordi Pujol-Ahulló](https://recursoseducatius.urv.cat).
 
