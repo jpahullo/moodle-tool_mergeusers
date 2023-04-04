@@ -4,11 +4,11 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     services:
       postgres:
-        image: postgres:9.6
+        image: postgres
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
@@ -28,14 +28,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.4', '7.3', '7.2']
-        moodle-branch: ['MOODLE_39_STABLE', 'MOODLE_310_STABLE', 'MOODLE_311_STABLE']
+        php: ['7.2', '7.3', '7.4']
+        moodle-branch: ['MOODLE_39_STABLE', 'MOODLE_310_STABLE']
         database: ['pgsql', 'mariadb']
         extensions: ["mbstring, pgsql, mysqli"]
         # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-including-new-combinations
-        exclude:
-          - php: '7.2'
-            moodle-branch: 'MOODLE_311_STABLE'
 
     steps:
       - name: Check out repository code
@@ -49,6 +46,7 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: ${{ matrix.extensions }}
           ini-values: max_input_vars=5000
+          tools: phpunit
           coverage: none
 
       - name: Initialise moodle-plugin-ci
