@@ -186,8 +186,17 @@ $string['uniquekeynewidtomaintain_desc'] = 'In case of conflict,
     data from new user (by default). This also means that data from old user is 
     deleted to keep the consistence. Otherwise, if you uncheck this option, 
     data from old user will be kept.';
-
 $string['starttime'] = 'Started merging at {$a}';
 $string['finishtime'] = 'Finished merging at {$a}';
 $string['timetaken'] = 'Merge took {$a} seconds';
 $string['privacy:metadata'] = 'The Merge User Accounts plugin does not store any personal data.';
+$string['get_queue_merging_requests'] = 'Get current queue of user profiles merging requests and launch adhoc task for each single request';
+$string['cannotfindusertoremove'] = 'Cannot find the user to remove. Change the input parameters.';
+$string['toomanyuserstoremovefound'] = 'Too many users to remove found. Change the input parameters.';
+$string['cannotfindusertokeep'] = 'Cannot find the user to keep. Change the input parameters.';
+$string['toomanyuserstokeepfound'] = 'Too many users to keep found. Change the input parameters.';
+$string['maxattempts'] = 'Max number of attempts to merge users';
+$string['maxattempts_desc'] = 'Max number of attempts to merge users accounts. If the adhoc task reaches this number of attempts, 
+    it concludes without exception to prevent queueing again. It will update the status to completed with errors and concludes normally.';
+
+
