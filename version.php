@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 /**
  * Version information
  *
@@ -25,10 +24,11 @@
  * @author     Juan Pablo Torres Herrera
  * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
  * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @author     Nicola Vallinoto <n.vallinoto@liguriadigitale.it>, Liguria Digitale 
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die;
-$plugin->version   = 2021072221;
+$plugin->version   = 2023040402;
 $plugin->requires  = 2020061500; // Moodle 3.9, 15 June 2020, https://docs.moodle.org/dev/Releases#Moodle_3.9_.28LTS.29
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;

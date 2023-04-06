@@ -25,6 +25,7 @@
  * @author     Juan Pablo Torres Herrera
  * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @author     Nicola Vallinoto <n.vallinoto@liguriadigitale.it>, Liguria Digitale 
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -89,6 +90,13 @@ if ($hassiteconfig) {
         get_string('uniquekeynewidtomaintain', 'tool_mergeusers'),
         get_string('uniquekeynewidtomaintain_desc', 'tool_mergeusers'),
         1));
+
+    $settings->add(new admin_setting_configtext('tool_mergeusers/maxattempts',
+            get_string('maxattempts', 'tool_mergeusers'),
+            get_string('maxattempts_desc', 'tool_mergeusers'),
+            3,
+            PARAM_INT
+        ));
 
     // Add settings
     $ADMIN->add('tools', $settings);
