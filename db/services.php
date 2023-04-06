@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /*
 * This file contains a merging request for a queue and. 
-* A function returnig the list of the current queue of the merging requests.
+* A function returning the list of the current queue of the merging requests.
 *
 * @package    merge_users
-* @copyright  2022 Liguria Digitale www.liguriadigitale.it
+* @copyright  2023 Liguria Digitale www.liguriadigitale.it
 * @author     Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
 * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -45,12 +45,12 @@ $functions = [
         //    MOODLE_OFFICIAL_MOBILE_SERVICE,
         //]
         ],
-    'tool_mergeusers_get_queue_list_merging_requests' => [
+    'tool_mergeusers_get_data_merging_requests' => [
         // The name of the namespaced class that the function is located in.
         'classname' => 'tool_mergeusers_external',
-        'methodname' => 'get_queue_list_merging_requests',
+        'methodname' => 'get_data_merging_requests',
         // A brief, human-readable, description of the web service function.
-        'description' => 'Get queue list of merging requests.',
+        'description' => 'Get data of merging requests.',
         // Options include read, and write.
         'type'        => 'read',
         // Whether the service is available for use in AJAX calls from the web.
