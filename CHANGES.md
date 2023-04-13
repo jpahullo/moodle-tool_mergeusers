@@ -1,9 +1,7 @@
 Release notes
 =============
 
-1. Minimum Moodle version supported is 3.9.
-2. Maximum Moodle version supported is 3.10.
-3. Splitted git branches for supporting properly 311 version and up.
+1. (#243) Remove unused class with API insconsistence.
 
 Contributors
 ============
