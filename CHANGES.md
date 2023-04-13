@@ -1,7 +1,7 @@
 Release notes
 =============
 
-1. (#211) Export list of logs as CSV. By @marxjohnson.
+1. (#243) Remove unused class with API insconsistence.
 
 Contributors
 ============
