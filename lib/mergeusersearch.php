@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -32,19 +31,19 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-require_once dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php';
+require_once(__DIR__ . '/../../../../config.php');
 
 global $CFG;
 
-require_once $CFG->dirroot . '/lib/clilib.php';
-require_once __DIR__ . '/autoload.php';
+require_once($CFG->dirroot . '/lib/clilib.php');
+require_once(__DIR__ . '/autoload.php');
 
 /**
  * A class to perform user search and lookup (verification)
  *
  * @author John Hoopes <hoopes@wisc.edu>
  */
-class MergeUserSearch{
+class MergeUserSearch {
 
 
     /**
@@ -54,10 +53,10 @@ class MergeUserSearch{
      * @param string $searchfield The field to search on.  empty string means all fields
      * @return array $results the results of the search
      */
-    public function search_users($input, $searchfield){
+    public function search_users($input, $searchfield) {
         global $DB;
 
-        switch($searchfield){
+        switch($searchfield) {
             case 'id': // search on id field
 
                 $params = array(
@@ -106,45 +105,46 @@ class MergeUserSearch{
                 $sql = 'SELECT * FROM {user} WHERE idnumber LIKE :idnumber';
 
                 break;
-            default: 
-                if(is_numeric($searchfield)){
-                 // search by profile field. 
-                 // default is to search on all custom profile fields
-                 $params = array(
-                    'data' => '%' . $input . '%',
-                 );
+            default:
+                if (is_numeric($searchfield)) {
+                    // search by profile field.
+                    // Default is to search on all custom profile fields.
+                    $params = array(
+                       'data' => '%' . $input . '%',
+                    );
 
-                 $sql = ' SELECT usr.* FROM {user} usr';
-                 $sql .=' LEFT JOIN {user_info_data} uid ON usr.id=uid.userid ';
-                 $sql .=' WHERE uid.data LIKE :data ';
-                 if (intval($searchfield)>0){// search on a specific field
-                     $params['fieldid'] = intval($searchfield);
-                     $sql .=' AND  uid.fieldid=:fieldid';
+                    $sql = ' SELECT usr.* FROM {user} usr';
+                    $sql .= ' LEFT JOIN {user_info_data} uid ON usr.id=uid.userid ';
+                    $sql .= ' WHERE uid.data LIKE :data ';
+                    if (intval($searchfield) > 0) {// Search on a specific field.
+                        $params['fieldid'] = intval($searchfield);
+                        $sql .= ' AND  uid.fieldid=:fieldid';
                     }
-                //print_r($data); die("$sql");
-                }else{
+                } else {
 
-                // search on all fields by default
-                $params = array(
-                    'userid'     =>  $input,
-                    'username'   => '%' . $input . '%',
-                    'firstname'  => '%' . $input . '%',
-                    'lastname'   => '%' . $input . '%',
-                    'email'      => '%' . $input . '%',
-                    'idnumber'      => '%' . $input . '%'
-                );
+                    // search on all fields by default
 
-                $sql =
-                   'SELECT *
-                    FROM {user}
-                    WHERE
-                        id = :userid OR
-                        username LIKE :username OR
-                        firstname LIKE :firstname OR
-                        lastname LIKE :lastname OR
-                        email LIKE :email OR
-                        idnumber LIKE :idnumber';
+                    $params = array(
+                       'userid' => $input,
+                       'username' => '%' . $input . '%',
+                       'firstname' => '%' . $input . '%',
+                       'lastname' => '%' . $input . '%',
+                       'email' => '%' . $input . '%',
+                       'idnumber' => '%' . $input . '%'
+                    );
+
+                    $sql =
+                        'SELECT *
+                         FROM {user}
+                         WHERE
+                            id = :userid OR
+                            username LIKE :username OR
+                            firstname LIKE :firstname OR
+                            lastname LIKE :lastname OR
+                            email LIKE :email OR
+                            idnumber LIKE :idnumber';
                 }
+
                 break;
         }
 
@@ -167,24 +167,24 @@ class MergeUserSearch{
      *          1 => Message for invalid user to display/log
      *      )
      */
-    public function verify_user($uinfo, $column){
+    public function verify_user($uinfo, $column) {
         global $DB;
         $message = '';
         $user = null;
-        if(is_numeric($column)){
-        //search by custom user profile field
+        if (is_numeric($column)) {
+            // Search by custom user profile field.
             $results = $this->search_users($uinfo, $column);
-        if(!empty($results)){
-                $user = array_shift($results);
-        }
-        }else {
-        //search by field of user table
-        try {
-            $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
-        } catch (Exception $e) {
-            $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
-            $user = null;
-        }
+            if (!empty($results)) {
+                   $user = array_shift($results);
+            }
+        } else {
+              // Search by field of user table.
+            try {
+                 $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
+            } catch (Exception $e) {
+                   $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
+                   $user = null;
+            }
         }
         return array($user, $message);
     }
