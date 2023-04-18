@@ -90,10 +90,12 @@ function tool_mergeusers_build_profilefields_options() {
 
     $none = get_string('none');
     $options = array(-1 => $none);
-    foreach ($profiefields as $fieldid=>$fieldname) {
-        $options[$fieldid] = $fieldname;
-    }
+    if(array_diff_key($profiefields, array(0=>'any field'))){
 
+        foreach ($profiefields as $fieldid=>$fieldname) {
+            $options[$fieldid] = $fieldname;
+        }
+    }
     $result = new stdClass();
     $result->defaultkey =-1 ;
     $result->defaultvalue = $none;

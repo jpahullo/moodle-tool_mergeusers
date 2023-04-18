@@ -87,7 +87,16 @@ class mergeuserform extends moodleform {
                     $profilefieldarray=array();
                     $idstypeprofile=array();
                     break; 
-                }else{
+                }elseif($pfvalue==0) {//case any field
+                    $profilefieldarray=array();
+                    $idstypeprofile=array();
+                    for($i=1;$i<count($profilefields);$i++){
+                        $profilefieldarray[$i] = $profilefields[$i]; 
+                        $idstypeprofile[$i] = get_string('profile').': '.$profilefields[$i];
+                    }
+                    break;
+                }
+                else{
                     $profilefieldarray[$pfvalue] = $profilefields[$pfvalue];
                     $idstypeprofile[$pfvalue] = get_string('profile').': '.$profilefields[$pfvalue];
                 }
