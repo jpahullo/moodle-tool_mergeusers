@@ -30,7 +30,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2023040401;
+$plugin->version   = 2023041700;
 $plugin->requires  = 2021051700; // Moodle 3.11, 17 May 2021, https://moodledev.io/general/releases#moodle-311
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;

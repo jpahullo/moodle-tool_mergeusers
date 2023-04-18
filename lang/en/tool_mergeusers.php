@@ -111,9 +111,14 @@ $string['searchuser'] = 'Search for User';
 $string['searchuser_help'] = 'Enter a username, first/last name, email address
     or user id to search for potential users. You may also specify if you only
     want to search through a particular field.';
+$string['searchprofile'] = 'Search for User by custom profile field';
+$string['searchprofile_help'] ='Enter custom profile field value. 
+    You may also specify if you only want to search through a particular field.';
 $string['mergeusersadvanced'] = '<strong>Direct user input</strong>';
 $string['mergeusersadvanced_help'] = 'Here you can enter the below fields if
-    you know exactly what users that you want to merge.<br /><br />
+    you know exactly what users that you want to merge.<br /><br /> 
+    Prefix "'. get_string('profile') . '" means custom user profile field.
+    For custom fields, at most one record will be shown per result <br><br>
     Click the "search" button in order to verify/confirm that the input entered
     are in fact users.';
 $string['mergeusers_confirm'] = 'After confirming the merge process will start.
@@ -152,6 +157,10 @@ $string['transactions_setting_desc'] = 'If enabled, merge users will not work
     considered by this plugin. If you do not have any third party plugins
     in your Moodle installation, you can be quiet on running this plugin
     enabling or disabling this option.';
+
+$string['profilefields'] = 'Custom User profile fields';
+$string['profilefields_desc'] = 'Select custom user profile fields allowed for users search
+    <br/> Selecting "none" removes the option for searching by user profile field ';
 
 // quiz attempts strings
 $string['quizattemptsaction'] = 'How to resolve quiz attempts';

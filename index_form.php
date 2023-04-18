@@ -29,7 +29,7 @@
  */
 
 require_once($CFG->libdir.'/formslib.php'); /// forms library
-
+require_once($CFG->dirroot.'/user/filters/profilefield.php');//for profile fields
 /**
  * Define form snippet for getting the userids of the two users to merge
  */
@@ -72,10 +72,42 @@ class mergeuserform extends moodleform {
         $mform->setType('searchgroup[searcharg]', PARAM_TEXT);
         $mform->addHelpButton('searchgroup', 'searchuser', 'tool_mergeusers');
 
+        // Search by profile fields
+        $userprofile= new user_filter_profilefield('profile', get_string('profilefields', 'admin'), $advanced);
+        $profilefields = $userprofile->get_profile_fields();
+        $allowedprofilefields=get_config('tool_mergeusers','profilefields');
+
+        $profilefieldarray=array();
+        $idstypeprofile = array();
+        if(!empty($allowedprofilefields)){
+            $allowedprofilefieldsarray=explode(',',$allowedprofilefields);
+            foreach($allowedprofilefieldsarray as $pfvalue){
+                if($pfvalue<0){
+                    //search by profile is not allowed
+                    $profilefieldarray=array();
+                    $idstypeprofile=array();
+                    break; 
+                }else{
+                    $profilefieldarray[$pfvalue] = $profilefields[$pfvalue];
+                    $idstypeprofile[$pfvalue] = get_string('profile').': '.$profilefields[$pfvalue];
+                }
+            }
+
+        }
+        if(!empty($profilefieldarray)){
+         $searchprofile =array();
+         $searchprofile[] = $mform->createElement('text', 'searchprofile');
+         $searchprofile[] = $mform->createElement('select', 'profilefieldid', '', $profilefieldarray, '');
+         $mform->addGroup($searchprofile, 'profilegroup', get_string('searchprofile', 'tool_mergeusers'));
+         $mform->setType('profilegroup[searchprofile]', PARAM_TEXT);
+         $mform->addHelpButton('profilegroup', 'searchprofile', 'tool_mergeusers');
+         $mform->setAdvanced('profilegroup');
+        }
         $mform->addElement('static', 'mergeusersadvanced', get_string('mergeusersadvanced', 'tool_mergeusers'));
         $mform->addHelpButton('mergeusersadvanced', 'mergeusersadvanced', 'tool_mergeusers');
         $mform->setAdvanced('mergeusersadvanced');
 
+        $idstype = $idstype + $idstypeprofile;
         $olduser = array();
         $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
         $olduser[] = $mform->createElement('select', 'olduseridtype', '', $idstype, '');
