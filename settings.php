@@ -31,9 +31,9 @@
 defined('MOODLE_INTERNAL') || die;
 
 if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
-    /**
-     * @var \part_of_admin_tree $ADMIN
-     */
+    //
+    // @var \part_of_admin_tree $ADMIN.
+    //
     if (!$ADMIN->locate('tool_mergeusers')) {
         $ADMIN->add('accounts',
             new admin_category('tool_mergeusers', get_string('pluginname', 'tool_mergeusers')));
@@ -61,19 +61,19 @@ if ($hassiteconfig) {
         get_string('suspenduser_setting_desc', 'tool_mergeusers'),
         1));
 
-    $supporting_lang = (tool_mergeusers_transactionssupported()) ? 'transactions_supported' : 'transactions_not_supported';
+    $supportinglang = (tool_mergeusers_transactionssupported()) ? 'transactions_supported' : 'transactions_not_supported';
 
     $settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',
         get_string('transactions_setting', 'tool_mergeusers'),
         get_string('transactions_setting_desc', 'tool_mergeusers') . '<br /><br />' .
-            get_string($supporting_lang, 'tool_mergeusers'),
+            get_string($supportinglang, 'tool_mergeusers'),
         1));
 
     $exceptionoptions = tool_mergeusers_build_exceptions_options();
     $settings->add(new admin_setting_configmultiselect('tool_mergeusers/excluded_exceptions',
         get_string('excluded_exceptions', 'tool_mergeusers'),
         get_string('excluded_exceptions_desc', 'tool_mergeusers', $exceptionoptions->defaultvalue),
-        array($exceptionoptions->defaultkey), //default value: empty => apply all exceptions.
+        array($exceptionoptions->defaultkey), // Default value: empty => apply all exceptions.
         $exceptionoptions->options));
 
     // Quiz attempts.
@@ -90,13 +90,13 @@ if ($hassiteconfig) {
         get_string('uniquekeynewidtomaintain_desc', 'tool_mergeusers'),
         1));
 
-    // Searh by Profile fields
+    // Searh by Profile fields.
     $profilefieldsoptions = tool_mergeusers_build_profilefields_options();
     $settings->add(new admin_setting_configmultiselect('tool_mergeusers/profilefields',
          get_string('profilefields', 'tool_mergeusers'),
          get_string('profilefields_desc', 'tool_mergeusers', $profilefieldsoptions->defaultvalue),
-         array($profilefieldsoptions->defaultkey), //default value: empty => apply all exceptions.
+         array($profilefieldsoptions->defaultkey), // Default value: none.
          $profilefieldsoptions->options));
-    // Add settings
+    // Add settings.
     $ADMIN->add('tools', $settings);
 }

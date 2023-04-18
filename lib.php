@@ -34,7 +34,7 @@ function tool_mergeusers_transactionssupported() {
     // Tricky way of getting real transactions support, without re-programming it.
     // May be in the future, as phpdoc shows, this method will be publicly accessible.
     $method = new ReflectionMethod($DB, 'transactions_supported');
-    $method->setAccessible(true); //method is protected; make it accessible.
+    $method->setAccessible(true); // method is protected; make it accessible.
     return $method->invoke($DB);
 }
 
@@ -47,7 +47,7 @@ function tool_mergeusers_build_exceptions_options() {
     foreach ($config->exceptions as $exception) {
         $options[$exception] = $exception;
     }
-    unset($options['my_pages']); //duplicated records make MyMoodle does not work.
+    unset($options['my_pages']); // Duplicated records make MyMoodle does not work.
 
     $result = new stdClass();
     $result->defaultkey = 'none';
@@ -60,24 +60,24 @@ function tool_mergeusers_build_exceptions_options() {
 function tool_mergeusers_build_quiz_options() {
     require_once(__DIR__ . '/lib/table/quizattemptsmerger.php');
 
-    // quiz attempts
-    $quizStrings = new stdClass();
-    $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_REMAIN, 'tool_mergeusers');
+    // quiz attempts.
+    $quizstrings = new stdClass();
+    $quizstrings->{QuizAttemptsMerger::ACTION_RENUMBER} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
+    $quizstrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
+    $quizstrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET, 'tool_mergeusers');
+    $quizstrings->{QuizAttemptsMerger::ACTION_REMAIN} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_REMAIN, 'tool_mergeusers');
 
-    $quizOptions = array(
-        QuizAttemptsMerger::ACTION_RENUMBER => $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER},
-        QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE => $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE},
-        QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET => $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET},
-        QuizAttemptsMerger::ACTION_REMAIN => $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN},
+    $quizoptions = array(
+        QuizAttemptsMerger::ACTION_RENUMBER => $quizstrings->{QuizAttemptsMerger::ACTION_RENUMBER},
+        QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE => $quizstrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE},
+        QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET => $quizstrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET},
+        QuizAttemptsMerger::ACTION_REMAIN => $quizstrings->{QuizAttemptsMerger::ACTION_REMAIN},
     );
 
     $result = new stdClass();
-    $result->allstrings = $quizStrings;
+    $result->allstrings = $quizstrings;
     $result->defaultkey = QuizAttemptsMerger::ACTION_REMAIN;
-    $result->options = $quizOptions;
+    $result->options = $quizoptions;
 
     return $result;
 }
@@ -85,19 +85,19 @@ function tool_mergeusers_build_quiz_options() {
 function tool_mergeusers_build_profilefields_options() {
     global $CFG;
     require_once($CFG->dirroot.'/user/filters/profilefield.php');
-    $userprofile= new user_filter_profilefield('profile', get_string('profilefields', 'admin'), false);
+    $userprofile = new user_filter_profilefield('profile', get_string('profilefields', 'admin'), false);
     $profiefields = $userprofile->get_profile_fields();
 
     $none = get_string('none');
     $options = array(-1 => $none);
-    if(array_diff_key($profiefields, array(0=>'any field'))){
+    if (array_diff_key($profiefields, array(0 => 'any field'))) {
 
-        foreach ($profiefields as $fieldid=>$fieldname) {
+        foreach ($profiefields as $fieldid => $fieldname) {
             $options[$fieldid] = $fieldname;
         }
     }
     $result = new stdClass();
-    $result->defaultkey =-1 ;
+    $result->defaultkey = -1;
     $result->defaultvalue = $none;
     $result->options = $options;
 

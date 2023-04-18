@@ -28,8 +28,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once($CFG->libdir.'/formslib.php'); /// forms library
-require_once($CFG->dirroot.'/user/filters/profilefield.php');//for profile fields
+require_once(__DIR__ . '/../../config.php');
+require_once($CFG->libdir.'/formslib.php'); // Forms library.
+require_once($CFG->dirroot.'/user/filters/profilefield.php'); // For profile fields.
 /**
  * Define form snippet for getting the userids of the two users to merge
  */
@@ -49,17 +50,17 @@ class mergeuserform extends moodleform {
         $idstype = array(
             'username' => get_string('username'),
             'idnumber' => get_string('idnumber'),
-            'id'       => 'Id',
+            'id' => 'Id',
         );
 
         $searchfields = array(
             'idnumber' => get_string('idnumber'),
-            ''          => get_string('all'),
-            'id'        => 'Id',
-            'username'  => get_string('username'),
+            '' => get_string('all'),
+            'id' => 'Id',
+            'username' => get_string('username'),
             'firstname' => get_string('firstname'),
-            'lastname'  => get_string('lastname'),
-            'email'     => get_string('email'),
+            'lastname' => get_string('lastname'),
+            'email' => get_string('email'),
         );
 
         $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));
@@ -73,44 +74,44 @@ class mergeuserform extends moodleform {
         $mform->addHelpButton('searchgroup', 'searchuser', 'tool_mergeusers');
 
         // Search by profile fields
-        $userprofile= new user_filter_profilefield('profile', get_string('profilefields', 'admin'), $advanced);
+        $advanced = true;
+        $userprofile = new user_filter_profilefield('profile', get_string('profilefields', 'admin'), $advanced);
         $profilefields = $userprofile->get_profile_fields();
-        $allowedprofilefields=get_config('tool_mergeusers','profilefields');
+        $allowedprofilefields = get_config('tool_mergeusers', 'profilefields');
 
-        $profilefieldarray=array();
+        $profilefieldarray = array();
         $idstypeprofile = array();
-        if(!empty($allowedprofilefields)){
-            $allowedprofilefieldsarray=explode(',',$allowedprofilefields);
-            foreach($allowedprofilefieldsarray as $pfvalue){
-                if($pfvalue<0){
-                    //search by profile is not allowed
-                    $profilefieldarray=array();
-                    $idstypeprofile=array();
-                    break; 
-                }elseif($pfvalue==0) {//case any field
-                    $profilefieldarray=array();
-                    $idstypeprofile=array();
-                    for($i=1;$i<count($profilefields);$i++){
-                        $profilefieldarray[$i] = $profilefields[$i]; 
+        if (!empty($allowedprofilefields)) {
+            $allowedprofilefieldsarray = explode(',', $allowedprofilefields);
+            foreach ($allowedprofilefieldsarray as $pfvalue) {
+                if ($pfvalue < 0) {
+                    // Search by profile is not allowed.
+                    $profilefieldarray = array();
+                    $idstypeprofile = array();
+                    break;
+                } else if ($pfvalue == 0) {// Case of 'any field'.
+                    $profilefieldarray = array();
+                    $idstypeprofile = array();
+                    for ($i = 1; $i < count($profilefields); $i++) {
+                        $profilefieldarray[$i] = $profilefields[$i];
                         $idstypeprofile[$i] = get_string('profile').': '.$profilefields[$i];
                     }
                     break;
-                }
-                else{
+                } else {
                     $profilefieldarray[$pfvalue] = $profilefields[$pfvalue];
                     $idstypeprofile[$pfvalue] = get_string('profile').': '.$profilefields[$pfvalue];
                 }
             }
 
         }
-        if(!empty($profilefieldarray)){
-         $searchprofile =array();
-         $searchprofile[] = $mform->createElement('text', 'searchprofile');
-         $searchprofile[] = $mform->createElement('select', 'profilefieldid', '', $profilefieldarray, '');
-         $mform->addGroup($searchprofile, 'profilegroup', get_string('searchprofile', 'tool_mergeusers'));
-         $mform->setType('profilegroup[searchprofile]', PARAM_TEXT);
-         $mform->addHelpButton('profilegroup', 'searchprofile', 'tool_mergeusers');
-         $mform->setAdvanced('profilegroup');
+        if (!empty($profilefieldarray)) {
+            $searchprofile = array();
+            $searchprofile[] = $mform->createElement('text', 'searchprofile');
+            $searchprofile[] = $mform->createElement('select', 'profilefieldid', '', $profilefieldarray, '');
+            $mform->addGroup($searchprofile, 'profilegroup', get_string('searchprofile', 'tool_mergeusers'));
+            $mform->setType('profilegroup[searchprofile]', PARAM_TEXT);
+            $mform->addHelpButton('profilegroup', 'searchprofile', 'tool_mergeusers');
+            $mform->setAdvanced('profilegroup');
         }
         $mform->addElement('static', 'mergeusersadvanced', get_string('mergeusersadvanced', 'tool_mergeusers'));
         $mform->addHelpButton('mergeusersadvanced', 'mergeusersadvanced', 'tool_mergeusers');

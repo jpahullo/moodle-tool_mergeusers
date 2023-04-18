@@ -1,4 +1,18 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Define default English language strings for report
@@ -52,7 +66,7 @@ second one. The first user id (fromid) will 'lose' all its data to be 'migrated'
 into the second one (toid). The user 'toid' will include data from both users.";
 $string['cligathering:stopping'] = 'To stop merging, Ctrl+C or type -1 either on fromid or toid fields.';
 $string['cligathering:fromid'] = 'Source user id (fromid):';
-$string['cligathering:toid'] =   'Target user id   (toid):';
+$string['cligathering:toid'] = 'Target user id   (toid):';
 $string['viewlog'] = 'See merging logs';
 $string['loglist'] = 'All these records are merging actions done, showing if they went ok:';
 $string['newuseridonlog'] = 'User kept';
@@ -69,7 +83,7 @@ $string['errortransactionsonly'] = 'Error: transactions are required, but your d
 $string['eventusermergedsuccess'] = 'Merging success';
 $string['eventusermergedfailure'] = 'Merge failed';
 
-// Settings page
+// Settings page.
 $string['transactions_setting'] = 'Only transactions allowed';
 $string['transactions_setting_desc'] = 'If enabled, merge users will not work
     at all on databases that do NOT support transactions (recommended).
@@ -94,9 +108,9 @@ $string['excluded_exceptions_desc'] = 'Experience on this subject suggests
     If you prefer, you can exclude any of those tables and include them in the
     merging process (not recommended).';
 
-//New strings
+// New strings.
 
-// Progress bar
+// Progress bar.
 $string['choose_users'] = 'Choose users to merge';
 $string['review_users'] = 'Confirm users to merge';
 $string['results'] = 'Merging results and log';
@@ -112,11 +126,11 @@ $string['searchuser_help'] = 'Enter a username, first/last name, email address
     or user id to search for potential users. You may also specify if you only
     want to search through a particular field.';
 $string['searchprofile'] = 'Search for User by custom profile field';
-$string['searchprofile_help'] ='Enter custom profile field value. 
+$string['searchprofile_help'] = 'Enter custom profile field value.
     You may also specify if you only want to search through a particular field.';
 $string['mergeusersadvanced'] = '<strong>Direct user input</strong>';
 $string['mergeusersadvanced_help'] = 'Here you can enter the below fields if
-    you know exactly what users that you want to merge.<br /><br /> 
+    you know exactly what users that you want to merge.<br /><br />
     Prefix "'. get_string('profile') . '" means custom user profile field.
     For custom fields, at most one record will be shown per result <br><br>
     Click the "search" button in order to verify/confirm that the input entered
@@ -193,10 +207,10 @@ $string['qa_chosen_action'] = 'Active option for quiz attempts: {$a}.';
 $string['qa_grades'] = 'Grades recalculated for quizzes: {$a}.';
 
 $string['uniquekeynewidtomaintain'] = 'Keep new user\'s data';
-$string['uniquekeynewidtomaintain_desc'] = 'In case of conflict, 
-    like when the user.id related column is a unique key, this plugin will keep 
-    data from new user (by default). This also means that data from old user is 
-    deleted to keep the consistence. Otherwise, if you uncheck this option, 
+$string['uniquekeynewidtomaintain_desc'] = 'In case of conflict,
+    like when the user.id related column is a unique key, this plugin will keep
+    data from new user (by default). This also means that data from old user is
+    deleted to keep the consistence. Otherwise, if you uncheck this option,
     data from old user will be kept.';
 
 $string['starttime'] = 'Started merging at {$a}';
