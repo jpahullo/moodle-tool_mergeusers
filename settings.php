@@ -31,9 +31,9 @@
 defined('MOODLE_INTERNAL') || die;
 
 if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
-    //
-    // @var \part_of_admin_tree $ADMIN.
-    //
+    /**
+     * @var \part_of_admin_tree $ADMIN
+     */
     if (!$ADMIN->locate('tool_mergeusers')) {
         $ADMIN->add('accounts',
             new admin_category('tool_mergeusers', get_string('pluginname', 'tool_mergeusers')));
@@ -90,7 +90,7 @@ if ($hassiteconfig) {
         get_string('uniquekeynewidtomaintain_desc', 'tool_mergeusers'),
         1));
 
-    // Searh by Profile fields.
+    // Search by Profile fields.
     $profilefieldsoptions = tool_mergeusers_build_profilefields_options();
     $settings->add(new admin_setting_configmultiselect('tool_mergeusers/profilefields',
          get_string('profilefields', 'tool_mergeusers'),
