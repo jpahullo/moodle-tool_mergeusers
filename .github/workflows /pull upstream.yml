@@ -1,0 +1,96 @@
+name: Sync from upstream 
+
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow hour at *:32 minutes
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/pull upstream.yml'
+    branches:
+      - main
+
+env:
+  # Required, URL to upstream (fork base)
+  UPSTREAM_REPO: "jpahullo/moodle-tool_mergeusers"
+  # which Branch to sync from upstream
+  UPSTREAM_BRANCH: "master"
+  PR_BASE_BRANCH: "master"
+  PR_BRANCH: "PR_upstream"
+  PR_ASSIGNEES: "lassnj"
+  PR_REVIEWERS: "lassnj"
+  # ignore changes in these folders (git 
+  IGNORE_PATH: .github/workflows
+
+    
+jobs:
+  sync_latest_from_upstream:
+    runs-on: ubuntu-latest
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+    name: Sync latest commits from upstream repo
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.EDUVIDUAL_BOT_GITHUB_ACTION_PAT }}
+
+      - name: Switch to UPSTREAM_BRANCH 
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.UPSTREAM_BRANCH }}
+          fetch-depth: 0
+          token: ${{ secrets.EDUVIDUAL_BOT_GITHUB_ACTION_PAT }}
+
+      - name: Sync upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+        with:
+          target_sync_branch: ${{ env.UPSTREAM_BRANCH }}
+          target_repo_token: ${{ secrets.EDUVIDUAL_BOT_GITHUB_ACTION_PAT }}
+          upstream_sync_branch: ${{ env.UPSTREAM_BRANCH }}
+          upstream_sync_repo: ${{ env.UPSTREAM_REPO }}
+          # Set test_mode true to run tests instead of the true action!!
+          test_mode: false
+          shallow_since: 5 years ago
+
+      - name: setup username
+        uses: fregante/setup-git-user@v1
+
+      - name: Show git show-ref
+        run: git show-ref
+      
+      - name: Create Pull Request Branch PR_BRANCH
+        run: git show-ref --verify refs/remotes/origin/${{ env.PR_BRANCH }} || git checkout -b '${{ env.PR_BRANCH }}' && git push --set-upstream origin '${{ env.PR_BRANCH }}'|true
+        if: steps.sync.outputs.has_new_commits == 'true'
+
+      - name: Merge UPSTREAM_BRANCH to PR_BRANCH
+        if: steps.sync.outputs.has_new_commits == 'true'
+        run: git show-ref --verify refs/remotes/origin/${{ env.PR_BRANCH }} && git checkout '${{ env.PR_BRANCH }}' && git merge '${{ env.UPSTREAM_BRANCH }}'
+
+      - name: reset IGNORE_PATH to PR_BASE_BRANCH in PR_BRANCH
+        if: steps.sync.outputs.has_new_commits == 'true'
+        run: |
+            git checkout refs/remotes/origin/${{ env.PR_BASE_BRANCH }} -- ${{ env.IGNORE_PATH }}
+            git commit -m "Reset ${{ env.IGNORE_PATH }} to ${{ env.PR_BASE_BRANCH }}"|true
+            git push --set-upstream origin '${{ env.PR_BRANCH }}'|true
+
+      - name: Create Pull Request
+        run: |
+            gh repo set-default  center-for-learning-management/eduvidual-src
+            gh pr create --title "Upstream Moodle Pull Request" --body "Upstream changes by https://github.com/moodle/moodle/tree/${{ env.UPSTREAM_BRANCH }} created a pull request" -B ${{ env.PR_BASE_BRANCH }} --reviewer ${{ env.PR_REVIEWERS }} --assignee ${{ env.PR_ASSIGNEES }}|true
+        env:
+          GITHUB_TOKEN: ${{  secrets.EDUVIDUAL_BOT_GITHUB_ACTION_PAT }}
+    
+      - name: No new commits
+        if: steps.sync.outputs.has_new_commits == 'false'
+        run: echo "There were no new commits."
+
+      - name: Show value of 'has_new_commits'
+        run: echo ${{ steps.sync.outputs.has_new_commits }}
