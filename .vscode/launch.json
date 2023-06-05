@@ -1,0 +1,41 @@
+{
+    "configurations": [
+        {
+            "name": "Listen for Xdebug",
+            "request": "launch",
+            "type": "php",
+            "hostname": "10.11.6.185",
+            //"stopOnEntry": false,
+            /*"pathMappings": {
+                "/var/www/html": "${workspaceFolder}/mergeusers"
+            },*/
+            "port": 9003,
+            "log": true
+        },
+        {
+            "name": "Launch currently open script",
+            "type": "php",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${fileDirname}",
+            "port": 9003,
+            "log": true
+        },
+       
+    {
+       "type": "chrome",
+       "request": "attach",
+       "name": "Attach to Chrome",
+       "port": 9222,
+       "urlFilter": "https://moodlesvi.liguriadigitale.it/*",
+       "webRoot": "${workspaceFolder}"
+    },
+    {
+        "name": "Attach to Chrome sulla 9003",
+        "port": 9003,
+        "request": "attach",
+        "type": "chrome",
+        "webRoot": "${workspaceFolder}"
+    }
+    ]
+}
