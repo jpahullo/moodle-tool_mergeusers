@@ -8,7 +8,7 @@ Release notes
 Contributors
 ============
 Web services developed by:
-* Nicola Vallinoto at Liguria Digitale (https://github.com/ndunand/moodle-tool_mergeusers/issues/218).
+* Nicola Vallinoto at LiguriaDigitale (https://github.com/ndunand/moodle-tool_mergeusers/issues/218).
 
 Maintained by:
 * Nicolas Dunand.
