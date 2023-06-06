@@ -1,3 +1,2 @@
-.github/workflows/moodle-ci.yml
-config/config.php
+.github/workflows/moodle-ci.ymlgit
 .github/workflows/moodle-release.yml -A 
