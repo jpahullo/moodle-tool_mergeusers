@@ -7,14 +7,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace tool_mergeusers;
-/**
- * Merge request definition.
- *
- * @package   tool_mergeusers
- * @author    Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
- * @copyright 2023 Liguria Digitale (https://www.liguriadigitale.it)
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * */
 class merge_request {
       /**
      * Missing merging request id This id really does not exist.
