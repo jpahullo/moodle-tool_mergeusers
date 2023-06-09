@@ -23,11 +23,12 @@ use external_multiple_structure;
 use external_single_structure;
 use external_value;
 /**
- * Merge users external api.
+ * Version information
  *
- * @package     mergeuser
- * @author      Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
- * @copyright   2023 Liguria Digitale (https://www.liguriadigitale.it)
+ * @package     tool
+ * @subpackage  mergeusers
+ * @author      Nicola Vallinoto, Liguria Digitale
+ * @author      Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class get_data_merge_requests extends \external_api {

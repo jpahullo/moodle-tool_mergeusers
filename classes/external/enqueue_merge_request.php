@@ -13,13 +13,15 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-/*
-* Merge users external api.
-* @package     mergeuser
-* @author      Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
-* @copyright   2023 Liguria Digitale (https://www.liguriadigitale.it)
-* @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-*/
+/**
+ * Version information
+ *
+ * @package     tool
+ * @subpackage  mergeusers
+ * @author      Nicola Vallinoto, Liguria Digitale
+ * @author      Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 namespace tool_mergeusers\external;
 defined('MOODLE_INTERNAL') || die();
 global $CFG;

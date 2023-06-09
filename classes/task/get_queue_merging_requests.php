@@ -39,18 +39,16 @@ class get_queue_merging_requests extends \core\task\scheduled_task {
         // Update STATUS of each record added to adhoc task.
         $recordsnotyetscheduled = $DB->get_records(merge_request::TABLE_MERGE_REQUEST,
                                                     ['status' => merge_request::QUEUED_NOT_PROCESSED]);
-        foreach ($recordsnotyetscheduled as $record) {
+        foreach ($recordsnotyetscheduled as $mergerequest) {
             // Add to adhoc_task - Create the instance.
-            $mergerequestid = $record->id;
             $mytask = new \tool_mergeusers\task\merge_user_accounts();
-            $mytask->set_custom_data(['mergerequestid' => $mergerequestid]);
+            $mytask->set_custom_data(['mergerequestid' => $mergerequest->id]);
             // Queue the task.
             \core\task\manager::queue_adhoc_task($mytask);
             // Update the status of the tasked request.
-            $this->update_status_table($mergerequestid,
+            $this->update_status_table($mergerequest->id,
                                         merge_request::QUEUED_TO_BE_PROCESSED);
-            mtrace("User to remove: ".$record->removeuservalue." - User to keep: ".$record->keepuservalue);
-            mtrace("Adhoc task: merge request n. ".$mergerequestid." queued.");
+            mtrace("Adhoc task: merge request n. ".$mergerequest->id." queued.");
         }
         mtrace("Task get_queue_merging_requests completed!");
     }
@@ -60,7 +58,7 @@ class get_queue_merging_requests extends \core\task\scheduled_task {
     private function update_status_table(int $idrecord,
                                             int $status): void {
         global $DB;
-        $sql = $DB->update_record(
+        $DB->update_record(
             merge_request::TABLE_MERGE_REQUEST,
             (object)[
                 'id' => $idrecord,

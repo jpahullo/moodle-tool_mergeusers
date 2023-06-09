@@ -1,35 +1,38 @@
 <?php
 /**
- * Merge user accounts
- * @package   tool_mergeusers
- * @author    Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
- * @copyright 2023 Liguria Digitale (https://www.liguriadigitale.it)
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Version information
+ *
+ * @package     tool
+ * @subpackage  mergeusers
+ * @author      Nicola Vallinoto, Liguria Digitale
+ * @author      Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace tool_mergeusers;
+defined('MOODLE_INTERNAL') || die();
 class merge_request {
       /**
-     * Missing merging request id This id really does not exist.
+     * Missing merge request id. This id really does not exist.
      * @var integer
      */
-    const MISSING_MERGING_REQUEST_ID = 1;
+    const MISSING_MERGE_REQUEST_ID = 1;
     /**
-     * Merging request queued but not yet processed.
+     * Merge request queued but not yet processed.
      * @var integer
      */
     const QUEUED_NOT_PROCESSED = 2;
     /**
-     * Merging request queued, to be processed (the adhoc task is created for it).
+     * Merge request queued, to be processed (the adhoc task is created for it).
      * @var integer
      */
     const QUEUED_TO_BE_PROCESSED = 3;
     /**
-     * Merging request is in progress but not concluded (its adhoc_task has started).
+     * Merge request is in progress but not concluded (its adhoc_task has started).
      * @var integer
      */
     const INPROGRESS_NOT_CONCLUDED = 4;
     /**
-     * Tried with error; pending of retrial (the merging process has found some error
+     * Tried with error; pending of retrial (the merge process has found some error
      * and the adhoc_task is queued to be retried in the future).
      * @var integer
      */
@@ -40,7 +43,7 @@ class merge_request {
      */
     const COMPLETED_WITH_SUCCESS = 6;
     /**
-     * Completed with errors (even with all the current retries the merging process
+     * Completed with errors (even with all the current retries the merge process
      * could not end with success).
      * @var integer
      */
@@ -103,21 +106,21 @@ class merge_request {
         return $this->data;
     }
 
-    public function export_data_to_new_table(string $oldtable, 
-                                            string $newtable) {
+    public static function export_data_to_new_table() {
         global $DB;
         $filter = array('status' => self::QUEUED_NOT_PROCESSED);
         $limitfrom=0;
         $limitnum=0; 
         $sort = "id DESC";
-        $records = $DB->get_records($oldtable, $filter, $sort, 
-                                'id, touserid, fromuserid, success, timemodified, log', 
-                                $limitfrom, $limitnum);
+        $records = $DB->get_records(merge_request::TABLE_MERGE_REQUEST_OLD, 
+                                    $filter, $sort, 
+                                    'id, touserid, fromuserid, success, timemodified, log', 
+                                    $limitfrom, $limitnum);
         if (!$records) {
             return $records;
         }
         foreach ($records as $item) {
-            //insert item into new table
+            // Insert item into new table.
             if ($item->status == 1) {
                 $status = merge_request::COMPLETED_WITH_SUCCESS;
             } else if ($item->status == 0) {
@@ -131,7 +134,7 @@ class merge_request {
                 [
                     'removeuserid' => $item->fromuserid,  
                     'keepuserid' => $item->touserid,
-                    'timeadded' => $timemodified,
+                    'timeadded' => time(),
                     'timemodified' => time(),
                     'status' => $status,
                     'log' =>  json_encode($logs)

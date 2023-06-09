@@ -13,17 +13,16 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-/*
-* This file contains a merge request for a queue and.
-* A function returning the list of the current queue of the merge requests.
-*
-* @package    merge_users
-* @copyright  2023 Liguria Digitale www.liguriadigitale.it
-* @author     Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
-* @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+/**
+ * Version information
+ *
+ * @package     tool
+ * @subpackage  mergeusers
+ * @author      Nicola Vallinoto, Liguria Digitale
+ * @author      Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
-
 $functions = [
     // The name of your web service function, as discussed above.
     'tool_mergeusers_enqueue_merge_request' => [
