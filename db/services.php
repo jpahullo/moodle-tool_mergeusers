@@ -25,35 +25,17 @@
 $functions = [
     // The name of your web service function, as discussed above.
     'tool_mergeusers_enqueue_merging_request' => [
-        // The name of the namespaced class that the function is located in.
-        //'classname'   => 'tool_mergeusers\external\queue_merging_request',
-        'classname' => 'tool_mergeusers_external', 
-	    // A brief, human-readable, description of the web service function.
-        //'methodname' => 'execute',
-	    'methodname' => 'enqueue_merging_request',
+        'classname'   => 'tool_mergeusers\external\enqueue_merging_request',
+        'methodname' => 'enqueue_merging_request',
         'description' => 'Enqueue merging request',
-        // Options include read, and write.
         'type'        => 'write',
-        // Whether the service is available for use in AJAX calls from the web.
         'ajax'        => true,
-        // An optional list of services where the function will be included.
-        //'services' => [
-            // A standard Moodle install includes one default service:
-            // - MOODLE_OFFICIAL_MOBILE_SERVICE.
-            // Specifying this service means that your function will be available for.
-            // Use in the Moodle Mobile App.
-        //    MOODLE_OFFICIAL_MOBILE_SERVICE,
-        //]
         ],
     'tool_mergeusers_get_data_merging_requests' => [
-        // The name of the namespaced class that the function is located in.
-        'classname' => 'tool_mergeusers_external',
+        'classname' => 'tool_mergeusers\external\get_data_merging_requests',
         'methodname' => 'get_data_merging_requests',
-        // A brief, human-readable, description of the web service function.
         'description' => 'Get data of merging requests.',
-        // Options include read, and write.
         'type'        => 'read',
-        // Whether the service is available for use in AJAX calls from the web.
         'ajax'        => true,
     ]
 ];
