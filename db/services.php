@@ -30,13 +30,13 @@ $functions = [
         'methodname' => 'execute',
         'description' => 'Enqueue merge request',
         'type'        => 'write',
-        'ajax'        => true,
+        'ajax'        => false,
         ],
     'tool_mergeusers_get_data_merge_requests' => [
         'classname' => 'tool_mergeusers\external\get_data_merge_requests',
         'methodname' => 'execute',
         'description' => 'Get data of merge requests.',
         'type'        => 'read',
-        'ajax'        => true,
+        'ajax'        => false,
     ]
 ];

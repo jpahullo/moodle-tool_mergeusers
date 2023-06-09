@@ -36,9 +36,8 @@ class merge_user_accounts extends \core\task\adhoc_task {
         // Merge the users.
         global $DB, $CFG;
         $data = $this->get_custom_data();
-        $mergerequestid = $data->mergerequestid;
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
-        $record = (object)$DB->get_record(merge_request::TABLE_MERGE_REQUEST, ['id' => $mergerequestid]);
+        $record = (object)$DB->get_record(merge_request::TABLE_MERGE_REQUEST, ['id' => $data->mergerequestid]);
         $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($record);
         $mergerequest = $this->merge($record, $maxattempts, merge_request::TRIED_WITH_ERROR);
         if ($mergerequest->status == merge_request::COMPLETED_WITH_SUCCESS) {
@@ -56,16 +55,13 @@ class merge_user_accounts extends \core\task\adhoc_task {
     /**
      * Function for merging two users.
      */
-    private function merge(object $record, int $maxattempts, int $statusforerror) {
-        $mergerequestid = $record->id;
-        $usertokeep = $record->keepuserid;
-        $usertoremove = $record->removeuserid;
+    private function merge(object $record, int $maxattempts, int $statusforerror) {       
         $retries = $record->retries + 1;
         // Update retries.
-        $this->update_retries_in_table($mergerequestid, $retries);
+        $this->update_retries_in_table($record->id, $retries);
         $logs = $record->log;
         $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($usertokeep, $usertoremove);
+        list($success, $log, $logid) = $mut->merge($record->keepuserid, $record->removeuserid);
         if ($success) {
             $status = merge_request::COMPLETED_WITH_SUCCESS;
         } else {
@@ -77,7 +73,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
             }
         }
         $logs[$retries] = $log;
-        $this->update_status_and_log_in_table($mergerequestid,
+        $this->update_status_and_log_in_table($record->id,
                                             $status,
                                             $logs);
         $record->log = $logs;
@@ -119,9 +115,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
         if (count($usertoremove) > 1) {
             throw new moodle_exception(get_string('toomanyuserstoremovefound', 'tool_mergeusers'));
         }
-        // Update removeuserid in the table merge_request::TABLE_MERGE_REQUEST if not present - to do.
         if (is_null($record->removeuserid)) {
-            // Update TABLE_MERGE_REQUEST.
             $this->update_removeuserid_in_table($record->id , $usertoremove->id);
         }
         // Verify user to keep.
@@ -132,7 +126,6 @@ class merge_user_accounts extends \core\task\adhoc_task {
         if (count($usertokeep) > 1) {
             throw new moodle_exception(get_string('toomanyuserstokeepfound', 'tool_mergeusers'));
         }
-        // Update keepuserid in the table merge_request::TABLE_MERGE_REQUEST if not present - to do.
         if (is_null($record->keepuserid)) {
             // Update TABLE_MERGE_REQUEST.
             $this->update_keepuserid_in_table($record->id , $usertokeep->id);
