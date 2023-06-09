@@ -13,53 +13,44 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-/**
- * Merge user accounts
- * @package   tool_mergeusers
- * @author    Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
- * @copyright 2023 Liguria Digitale
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 namespace tool_mergeusers\task;
 use \tool_mergeusers\merge_request;
 /**
- * Get queue merging requests task class
- * @package   tool_mergeusers
- * @author    Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
- * @copyright 2023 Liguria Digitale 
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Version information
+ *
+ * @package     tool
+ * @subpackage  mergeusers
+ * @author      Nicola Vallinoto, Liguria Digitale
+ * @author      Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class get_queue_merging_requests extends \core\task\scheduled_task {
     public function get_name() {
-        return get_string('get_queue_merging_requests','tool_mergeusers');
+        return get_string('get_queue_merging_requests', 'tool_mergeusers');
     }
     /**
      * Run task for getting the merging requests and adding them to adhoc task.
      */
     public function execute() {
         mtrace("Task get_queue_merging_requests started.");
-        global $DB;
-        global $CFG;
+        global $DB, $CFG;
         // Read from moodle table records with status = QUEUED_NOT_PROCESSED.
-        // Add each record to adhoc task. 
+        // Add each record to adhoc task.
         // Update STATUS of each record added to adhoc task.
-        $notscheduled = merge_request::QUEUED_NOT_PROCESSED; 
-        $tablerequests = merge_request::TABLE_MERGE_REQUEST;      
-        $recordsnotyetscheduled = $DB->get_records($tablerequests, 
-                                                    ['status' => $notscheduled]);
+        $recordsnotyetscheduled = $DB->get_records(merge_request::TABLE_MERGE_REQUEST,
+                                                    ['status' => merge_request::QUEUED_NOT_PROCESSED]);
         foreach ($recordsnotyetscheduled as $record) {
-            // Add to adhoc_task - Create the instance.   
+            // Add to adhoc_task - Create the instance.
             $mergerequestid = $record->id;
             $mytask = new \tool_mergeusers\task\merge_user_accounts();
             $mytask->set_custom_data(['mergerequestid' => $mergerequestid]);
             // Queue the task.
             \core\task\manager::queue_adhoc_task($mytask);
             // Update the status of the tasked request.
-            $updated = merge_request::QUEUED_TO_BE_PROCESSED;
             $this->update_status_table($mergerequestid,
-                                        $updated);
+                                        merge_request::QUEUED_TO_BE_PROCESSED);
             mtrace("User to remove: ".$record->removeuservalue." - User to keep: ".$record->keepuservalue);
-            mtrace("Adhoc task: merge request n. ".$mergerequestid." queued.");                            
+            mtrace("Adhoc task: merge request n. ".$mergerequestid." queued.");
         }
         mtrace("Task get_queue_merging_requests completed!");
     }
@@ -67,7 +58,7 @@ class get_queue_merging_requests extends \core\task\scheduled_task {
      * Function for updating the status of the record to be executed.
      */
     private function update_status_table(int $idrecord,
-                                            int $status) {
+                                            int $status): void {
         global $DB;
         $sql = $DB->update_record(
             merge_request::TABLE_MERGE_REQUEST,
@@ -75,7 +66,6 @@ class get_queue_merging_requests extends \core\task\scheduled_task {
                 'id' => $idrecord,
                 'status' => $status
             ],
-            $bulk = false
         );
     }
 }
