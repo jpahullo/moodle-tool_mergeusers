@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Version information
  *
@@ -9,7 +24,6 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace tool_mergeusers;
-defined('MOODLE_INTERNAL') || die();
 class merge_request {
       /**
      * Missing merge request id. This id really does not exist.
@@ -50,19 +64,20 @@ class merge_request {
     const COMPLETED_WITH_ERRORS = 7;
     /**
      * Reference table for merge requests.
+     * @var string
      */
     const TABLE_MERGE_REQUEST = 'tool_mergeusers_queue';
      /**
      * Reference table for merge requests. Before web service integration.
+     * @var string
      */
     const TABLE_MERGE_REQUEST_OLD = 'tool_mergeusers';
     /**
      * Reference table for users.
+     * @var string
      */
     const TABLE_USERS = 'user';
-    
     private $data;
-
     private function __construct(stdClass $data) {
         $this->data = $data;
     }
@@ -71,8 +86,7 @@ class merge_request {
         return new self($data);
     }
 
-    public function __get($name)
-    {
+    public function __get($name) {
         if (isset($this->data->${name})) {
             $value = $this->data->${name};
             if ($name == 'log') {
@@ -82,9 +96,7 @@ class merge_request {
         }
         return null;
     }
-
-    public function __set($name, $value)
-    {
+    public function __set($name, $value) {
         if (isset($this->data->${name})) {
             if ($name == 'log') {
                 $value = json_encode($value);
@@ -110,8 +122,8 @@ class merge_request {
         global $DB;
         $filter = array('status' => self::QUEUED_NOT_PROCESSED);
         $sort = "id DESC";
-        $fields =  "id, touserid, fromuserid, success, timemodified, log";
-        $records = $DB->get_recordset(merge_request::TABLE_MERGE_REQUEST_OLD, 
+        $fields = "id, touserid, fromuserid, success, timemodified, log";
+        $records = $DB->get_recordset(self::TABLE_MERGE_REQUEST_OLD,
                                     $filter, $sort, $fields);
         if (!$records->valid()) {
             return $records;
@@ -119,21 +131,26 @@ class merge_request {
         foreach ($records as $item) {
             // Insert item into new table.
             if ($item->status == 1) {
-                $status = merge_request::COMPLETED_WITH_SUCCESS;
+                $status = self::COMPLETED_WITH_SUCCESS;
             } else if ($item->status == 0) {
-                $status = merge_request::COMPLETED_WITH_ERRORS;
+                $status = self::COMPLETED_WITH_ERRORS;
             }
-        $logs = [];
-        $logs[1] = json_decode($item->log, true);    
+            $logs = [];
+            // Take all data of $item->fromuserid and $item->touserid.
+            $logs[1] = json_decode($item->log, true);
             $idrecord = $DB->insert_record(
-                merge_request::TABLE_MERGE_REQUEST ,
+                self::TABLE_MERGE_REQUEST ,
                 [
-                    'removeuserid' => $item->fromuserid,  
+                    'removeuserid' => $item->fromuserid,
+                    'removeuserfield' => 'id',
+                    'removeuservalue' => $item->fromuserid,
                     'keepuserid' => $item->touserid,
+                    'keepuserfield' => 'id',
+                    'keepuservalue' => $item->touserid,
                     'timeadded' => time(),
                     'timemodified' => time(),
                     'status' => $status,
-                    'log' =>  json_encode($logs)
+                    'log' => json_encode($logs)
                 ],
             );
         }
