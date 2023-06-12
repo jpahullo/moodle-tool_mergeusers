@@ -26,7 +26,6 @@ namespace tool_mergeusers\external;
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once("{$CFG->libdir}/externallib.php");
-defined('MOODLE_INTERNAL') || die();
 use \tool_mergeusers\merge_request;
 use external_function_parameters;
 use external_multiple_structure;
@@ -49,15 +48,17 @@ class enqueue_merge_request extends \external_api {
         );
     }
     /**
-     * Return identifier of the enqueue merge request
+     * Enqueue merge request in Moodle table tool_mergeusers_queue
      *
-     * @param $removeuserid
-     * @param $removeuservalue
-     * @param $keepuserid
-     * @param $keepuservalue
+     * @param string $removeuserfield user field used to remove
+     * @param string $removeuservalue user value used to remove (associated to $removeuserfield)
+     * @param string $keepuserfield user field used to keep
+     * @param string $keepuservalue user value used to keep (associated to $keepuserfield)
+     * 
+     * @return int Returns the identifier of the merge request
      */
     public static function execute(string $removeuserfield,
-                                     string $removeuservalue,
+                                   string $removeuservalue,
                                    string $keepuserfield,
                                    string $keepuservalue): int {
         // Validate all of the parameters.
@@ -68,9 +69,10 @@ class enqueue_merge_request extends \external_api {
                                             'keepuservalue' => $keepuservalue
                                             ]);
         global $DB;
-        // Insert of the merge request into mdl_merge_request_queue Moodle table.
+        // Insert of the merge request into tool_mergeusers_queue Moodle table.
         $usertoremove = $DB->get_records(merge_request::TABLE_USERS,
-                                        [$removeuserfield => $removeuservalue]);
+                                        ['removeuserfield' => $removeuserfield, 
+                                         'removeuservalue' => $removeuservalue]);
         if (count($usertoremove) == 0) {
             throw new Exception(get_string('cannotfindusertoremove', 'tool_mergeusers'));
         }
@@ -95,7 +97,7 @@ class enqueue_merge_request extends \external_api {
         $timeadded = time();
         $status = merge_request::QUEUED_NOT_PROCESSED;
         $retries = 0;
-        $idrecord = $DB->insert_record(
+        return $DB->insert_record(
             merge_request::TABLE_MERGE_REQUEST,
             [
                 'removeuserfield' => $removeuserfield,
@@ -107,12 +109,8 @@ class enqueue_merge_request extends \external_api {
                 'timeadded' => $timeadded,
                 'status' => $status,
                 'retries' => $retries
-            ],
-            $returnid = true,
-            $bulk = false
+            ]
         );
-        // Return a value as described in the returns function.
-        return $idrecord;
     }
     public static function execute_returns() {
             return new external_value(PARAM_INT, 'Identifier of the merge request');

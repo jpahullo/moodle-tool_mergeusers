@@ -62,20 +62,29 @@ class get_data_merge_requests extends \external_api {
     /**
      * Return data of the custom queue of the merge request
      *
-     * @param $mergeusers
-     * @param $removeuserid
-     * @param $removeuservalue
-     * @param $keepuserid
-     * @param $keepuservalue
+     * @param $mergeusers id of the merge users request
+     *
+     * Return array with data of the custom queue of the merge request
      * @param $id
-     * @param $status
+     * @param $removeuserfield Remove user field
+     * @param $removeuserid Remove user id
+     * @param $removeuservalue Remove user value
+     * @param $keepuserfield Keep user field
+     * @param $keepuserid Keep user id
+     * @param $keepuservalue Keep user value
+     * @param $timeadded Time creation
+     * @param $timemodified Time modified
+     * @param $status Status
+     * @param $retries Number of retries
+     * @param $log Log
+     * 
      */
     public static function execute(array $mergeusers) {
         global $DB;
         // Validate all of the parameters.
         $params = array();
-        /*$params = self::validate_parameters(self::execute_parameters(),
-                                                array('id' => $mergeusers->id));*/
+        $params = self::validate_parameters(self::execute_parameters(),
+                                                array('id' => $mergeusers->id));
         $tablemr = merge_request::TABLE_MERGE_REQUEST;
         $sql = "SELECT
                     id, removeuserfield, removeuservalue, removeuserid,
@@ -85,40 +94,39 @@ class get_data_merge_requests extends \external_api {
                    {".$tablemr."}
                 WHERE
                      (1=1) ";
-        if ($mergeusers['removeuserfield'] != "" || $mergeusers['removeuserfield'] != null) {
+        if (isset($mergeusers['removeuserfield']) && !empty($mergeusers['removeuserfield'])) {
             $sql = $sql." AND removeuserfield = ?";
             array_push($params, $mergeusers['removeuserfield']);
         }
-        if ($mergeusers['removeuservalue'] != "" || $mergeusers['removeuservalue'] != null) {
+        if (isset($mergeusers['removeuservalue']) && !empty($mergeusers['removeuservalue'])) {
             $sql = $sql." AND removeuservalue = ?";
             array_push($params, $mergeusers['removeuservalue']);
         }
-        if ($mergeusers['removeuserid'] != "" || $mergeusers['removeuserid'] != null) {
+        if (isset($mergeusers['removeuserid']) && !empty($mergeusers['removeuserid'])) {
             $sql = $sql." AND removeuserid = ?";
             array_push($params, $mergeusers['removeuserid']);
         }
-        if ($mergeusers['keepuserfield'] != '' || $mergeusers['keepuserfield'] != null) {
+        if (isset($mergeusers['keepuserfield']) && !empty($mergeusers['keepuserfield'])) {
             $sql = $sql." AND keepuserfield = ?";
             array_push($params, $mergeusers['keepuserfield']);
         }
-        if ($mergeusers['keepuservalue'] != "" || $mergeusers['keepuservalue'] != null) {
+        if (isset($mergeusers['keepuservalue']) && !empty($mergeusers['keepuservalue'])) {
             $sql = $sql." AND keepuservalue = ?";
             array_push($params, $mergeusers['keepuservalue']);
         }
-        if ($mergeusers['keepuserid'] != "" || $mergeusers['keepuserid'] != null) {
+        if (isset($mergeusers['keepuserid']) && !empty($mergeusers['keepuserid'])) {
             $sql = $sql." AND keepuserid = ?";
             array_push($params, $mergeusers['keepuserid']);
         }
-        if ($mergeusers['id'] != "" || $mergeusers['id'] != null) {
+        if (isset($mergeusers['id']) && !empty($mergeusers['id'])) {
             $sql = $sql." AND id = ?";
             array_push($params, $mergeusers['id']);
         }
-        if ($mergeusers['status'] != "" || $mergeusers['status'] != null) {
+        if (isset($mergeusers['status']) && !empty($mergeusers['status'])) {
             $sql = $sql." AND status = ?";
             array_push($params, $mergeusers['status']);
         }
-        $queuelist  = $DB->get_records_sql($sql, $params);
-        return $queuelist;
+        return $DB->get_records_sql($sql, $params);
     }
 
     public static function execute_returns() {

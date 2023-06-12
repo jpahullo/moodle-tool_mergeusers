@@ -29,7 +29,8 @@ class get_queue_merging_requests extends \core\task\scheduled_task {
         return get_string('get_queue_merging_requests', 'tool_mergeusers');
     }
     /**
-     * Run task for getting the merging requests and adding them to adhoc task.
+     * Run task for getting merge requests and adding them to adhoc task list.
+     * 
      */
     public function execute() {
         mtrace("Task get_queue_merging_requests started.");
@@ -37,9 +38,11 @@ class get_queue_merging_requests extends \core\task\scheduled_task {
         // Read from moodle table records with status = QUEUED_NOT_PROCESSED.
         // Add each record to adhoc task.
         // Update STATUS of each record added to adhoc task.
-        $recordsnotyetscheduled = $DB->get_records(merge_request::TABLE_MERGE_REQUEST,
-                                                    ['status' => merge_request::QUEUED_NOT_PROCESSED]);
-        foreach ($recordsnotyetscheduled as $mergerequest) {
+        $mergerequestsnotyetscheduled = $DB->get_recordset(merge_request::TABLE_MERGE_REQUEST,
+                                                        ['status' => merge_request::QUEUED_NOT_PROCESSED],
+                                                        $sort='',
+                                                        $fields = 'id');
+        foreach ($mergerequestsnotyetscheduled as $mergerequest) {
             // Add to adhoc_task - Create the instance.
             $mytask = new \tool_mergeusers\task\merge_user_accounts();
             $mytask->set_custom_data(['mergerequestid' => $mergerequest->id]);
@@ -56,7 +59,7 @@ class get_queue_merging_requests extends \core\task\scheduled_task {
      * Function for updating the status of the record to be executed.
      */
     private function update_status_table(int $idrecord,
-                                            int $status): void {
+                                         int $status): void {
         global $DB;
         $DB->update_record(
             merge_request::TABLE_MERGE_REQUEST,

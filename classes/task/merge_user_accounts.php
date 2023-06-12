@@ -30,7 +30,7 @@ use \tool_mergeusers\merge_request;
  * */
 class merge_user_accounts extends \core\task\adhoc_task {
     /**
-     * Execute the task.
+     * Execute the task of merge users accounts.
      */
     public function execute() {
         // Merge the users.
@@ -38,7 +38,6 @@ class merge_user_accounts extends \core\task\adhoc_task {
         $data = $this->get_custom_data();
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
         $record = (object)$DB->get_record(merge_request::TABLE_MERGE_REQUEST, ['id' => $data->mergerequestid]);
-        
         $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($record);
         $mergerequest = $this->merge($record, $maxattempts, merge_request::TRIED_WITH_ERROR);
         if ($mergerequest->status == merge_request::COMPLETED_WITH_SUCCESS) {
@@ -56,7 +55,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
     /**
      * Function for merging two users.
      */
-    private function merge(object $record, int $maxattempts, int $statusforerror) {       
+    private function merge(object $record, int $maxattempts, int $statusforerror) {
         $retries = $record->retries + 1;
         // Update retries.
         $this->update_retries_in_table($record->id, $retries);
@@ -176,5 +175,19 @@ class merge_user_accounts extends \core\task\adhoc_task {
                 'keepuserid' => $keepuserid
             ]
         );
+    }
+    /**
+     * Function to find user id or fail.
+     */
+    protected function find_user_id_or_fail(int $mergerequestid, string $userfield, string $uservalue): int {
+        global $DB;
+        $user = $DB->get_records(merge_request::TABLE_USERS, [$userfield => $uservalue]);
+        if (count($usertoremove) == 0) {
+            throw new moodle_exception(get_string('cannotfinduser', 'tool_mergeusers', (object)['userfield' => $userfield, 'uservalue' => $uservalue]));
+        } 
+        if (count($usertoremove) > 1) {
+            throw new moodle_exception(get_string('toomanyusers', 'tool_mergeusers', (object)['userfield' => $userfield, 'uservalue' => $uservalue]));
+        }
+        $this->update_removeuserid_in_table($mergerequestid , $user->id);
     }
 }
