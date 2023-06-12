@@ -109,29 +109,15 @@ class merge_user_accounts extends \core\task\adhoc_task {
         $removeuservalue = $record->removeuservalue;
         // Verify user to remove.
         $usertoremove = $DB->get_records(merge_request::TABLE_USERS, [$removeuserfield => $removeuservalue]);
-        if (count($usertoremove) == 0) {
-            throw new moodle_exception(get_string('cannotfindusertoremove', 'tool_mergeusers'));
-        }
-        if (count($usertoremove) > 1) {
-            throw new moodle_exception(get_string('toomanyuserstoremovefound', 'tool_mergeusers'));
-        }
         if (is_null($record->removeuserid)) {
-            $this->update_removeuserid_in_table($record->id , $usertoremove->id);
+            $this->removeuserid = $this->find_user_id_or_fail($record->removeuserfield, $record->removeuservalue);
         }
         // Verify user to keep.
         $usertokeep = $DB->get_records(merge_request::TABLE_USERS, [$keepuserfield => $keepuservalue]);
-        if (count($usertokeep) == 0) {
-            throw new moodle_exception(get_string('cannotfindusertokeep', 'tool_mergeusers'));
-        }
-        if (count($usertokeep) > 1) {
-            throw new moodle_exception(get_string('toomanyuserstokeepfound', 'tool_mergeusers'));
-        }
         if (is_null($record->keepuserid)) {
-            // Update TABLE_MERGE_REQUEST.
-            $this->update_keepuserid_in_table($record->id , $usertokeep->id);
+            $this->keepuserid = $this->find_user_id_or_fail($record->keepuserfield, $record->keepuservalue);
         }
-        $returnvalue = 1;
-        return $returnvalue;
+        return $returnvalue = 1;
     }
     /**
      * Function for updating number of retries.
