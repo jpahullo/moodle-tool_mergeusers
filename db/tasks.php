@@ -26,10 +26,10 @@ defined('MOODLE_INTERNAL') || die();
 
 $tasks = array(
     array(
-        'classname' => 'tool_mergeusers\task\get_queue_merging_requests',
+        'classname' => 'tool_mergeusers\task\queue_to_process_pending_merge_requests',
         'blocking' => 0,
-        'minute' => '0',
-        'hour' => '0',
+        'minute' => '*/5',
+        'hour' => '*',
         'day' => '*',
         'month' => '*',
         'dayofweek' => '*',
