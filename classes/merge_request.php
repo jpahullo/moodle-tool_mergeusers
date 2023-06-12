@@ -106,17 +106,14 @@ class merge_request {
         return $this->data;
     }
 
-    public static function export_data_to_new_table() {
+    public static function export_data_to_new_table(): object {
         global $DB;
         $filter = array('status' => self::QUEUED_NOT_PROCESSED);
-        $limitfrom=0;
-        $limitnum=0; 
         $sort = "id DESC";
-        $records = $DB->get_records(merge_request::TABLE_MERGE_REQUEST_OLD, 
-                                    $filter, $sort, 
-                                    'id, touserid, fromuserid, success, timemodified, log', 
-                                    $limitfrom, $limitnum);
-        if (!$records) {
+        $fields =  "id, touserid, fromuserid, success, timemodified, log";
+        $records = $DB->get_recordset(merge_request::TABLE_MERGE_REQUEST_OLD, 
+                                    $filter, $sort, $fields);
+        if (!$records->valid()) {
             return $records;
         }
         foreach ($records as $item) {
@@ -127,8 +124,7 @@ class merge_request {
                 $status = merge_request::COMPLETED_WITH_ERRORS;
             }
         $logs = [];
-        $logs[1] = json_decode($item->log, true);
-       
+        $logs[1] = json_decode($item->log, true);    
             $idrecord = $DB->insert_record(
                 merge_request::TABLE_MERGE_REQUEST ,
                 [
@@ -141,5 +137,6 @@ class merge_request {
                 ],
             );
         }
+        $records->close();
     }
 }

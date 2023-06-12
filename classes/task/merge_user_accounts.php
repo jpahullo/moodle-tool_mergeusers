@@ -38,6 +38,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
         $data = $this->get_custom_data();
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
         $record = (object)$DB->get_record(merge_request::TABLE_MERGE_REQUEST, ['id' => $data->mergerequestid]);
+        
         $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($record);
         $mergerequest = $this->merge($record, $maxattempts, merge_request::TRIED_WITH_ERROR);
         if ($mergerequest->status == merge_request::COMPLETED_WITH_SUCCESS) {
