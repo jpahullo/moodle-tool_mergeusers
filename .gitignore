@@ -1,6 +1,5 @@
 tests/mergeusers.code-workspace
 .vscode/launch.json
-.gitignore
 lang/it/tool_mergeusers.php
 .idea
 /config/config.local.php
