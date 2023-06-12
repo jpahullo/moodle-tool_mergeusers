@@ -24,7 +24,6 @@
  */
 defined('MOODLE_INTERNAL') || die();
 $functions = [
-    // The name of your web service function, as discussed above.
     'tool_mergeusers_enqueue_merge_request' => [
         'classname'   => 'tool_mergeusers\external\enqueue_merge_request',
         'methodname' => 'execute',
