@@ -26,7 +26,7 @@ use \tool_mergeusers\merge_request;
  */
 class queue_to_process_pending_merge_requests extends \core\task\scheduled_task {
     public function get_name() {
-        return get_string('get_queue_merging_requests', 'tool_mergeusers');
+        return get_string('queue_to_process_pending_merge_requests', 'tool_mergeusers');
     }
     /**
      * Run task for getting merge requests and adding them to adhoc task list.
