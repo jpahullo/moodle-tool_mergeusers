@@ -58,7 +58,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         // Mergeusers savepoint reached.
         upgrade_plugin_savepoint(true, 2013112912, 'tool', 'mergeusers');
     }
-    if ($oldversion < 2023040460) {
+    if ($oldversion < 2023060801) {
         // Define table tool_mergeusers_queue to be created.
         $table = new xmldb_table('tool_mergeusers_queue');
         // Adding fields to table tool_mergeusers_queue.
@@ -83,43 +83,14 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         $table->add_index('mdl_toolmergqueu_tms_ix', XMLDB_INDEX_NOTUNIQUE, ['timemodified', 'status']);
         $table->add_index('mdl_toolmergqueu_rui_ix', XMLDB_INDEX_NOTUNIQUE, ['removeuserid']);
         $table->add_index('mdl_toolmergqueu_kui_ix', XMLDB_INDEX_NOTUNIQUE, ['keepuserid']);
-      
         // Conditionally launch create table for tool_mergeusers_queue and populate it importing data from old table.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
             // Export data from mergeusers table to the new one tool_mergeusers_queue.
-            
-            $filter=null;
-            $limitfrom=0;
-            $limitnum=0; 
-            $sort = " id ASC";
-            $records = $DB->get_records(merge_request::TABLE_MERGE_REQUEST_OLD, $filter, $sort, 
-                                    'id, touserid, fromuserid, success, timemodified, log', 
-                                    $limitfrom, $limitnum);
-            foreach ($records as $item) {
-                if ($item->success == 1) {
-                    $status = merge_request::COMPLETED_WITH_SUCCESS;
-                } else if ($item->success == 0) {
-                    $status = merge_request::COMPLETED_WITH_ERRORS;
-                }
-            $logs = [];
-            $logs[1] = json_decode($item->log, true);
-                $idrecord = $DB->insert_record(
-                    merge_request::TABLE_MERGE_REQUEST ,
-                    [
-                        'removeuserid' => $item->fromuserid,  
-                        'keepuserid' => $item->touserid,
-                        'timeadded' => $item->timemodified,
-                        'timemodified' => time(),
-                        'status' => $status,
-                        'retries' => 0,
-                        'log' =>  json_encode($logs)
-                    ],
-                );
-            }
-        }
+            merge_request::export_data_to_new_table();
         // Mergeusers savepoint reached.
-        upgrade_plugin_savepoint(true, 2023040460, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2023060801, 'tool', 'mergeusers');
+        }
     }
     return true;
 }
