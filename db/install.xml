@@ -28,6 +28,8 @@
         <INDEX NAME="mdl_toolmerg_kuv_ix" UNIQUE="false" FIELDS="keepuservalue" COMMENT="Index for fromuserid field."/>
         <INDEX NAME="mdl_toolmerg_tcs_ix" UNIQUE="false" FIELDS="timeadded, status" COMMENT="When listing the queue you probably would like to see the last updated or the last created to see how it went. Without indexes, that listing would be very expensive."/>
         <INDEX NAME="mdl_toolmerg_tms_ix" UNIQUE="false" FIELDS="timemodified, status" COMMENT="When listing the queue you probably would like to see the last updated or the last created to see how it went. Without indexes, that listing would be very expensive."/>
+        <INDEX NAME="mdl_toolmerg_rui_ix" UNIQUE="false" FIELDS="removeuserid" COMMENT="Index for removeuserid field."/>
+        <INDEX NAME="mdl_toolmerg_kui_ix" UNIQUE="false" FIELDS="keepuserid" COMMENT="Index for keepuserid field."/>
       </INDEXES>
     </TABLE>
   </TABLES>

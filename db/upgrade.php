@@ -85,6 +85,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
             // Export data from mergeusers table to the new one tool_mergeusers_queue.
+            
             $filter=null;
             $limitfrom=0;
             $limitnum=0; 
