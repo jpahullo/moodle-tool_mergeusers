@@ -71,13 +71,19 @@ class enqueue_merge_request extends \external_api {
         global $DB;
         // Insert of the merge request into tool_mergeusers_queue Moodle table.
         $usertoremove = $DB->get_records(merge_request::TABLE_USERS,
-                                        ['removeuserfield' => $removeuserfield, 
-                                         'removeuservalue' => $removeuservalue]);
+                                        [$removeuserfield => $removeuservalue]);
         if (count($usertoremove) == 0) {
-            throw new Exception(get_string('cannotfindusertoremove', 'tool_mergeusers'));
+            throw new Exception(get_string('cannotfindusertoremove', 
+                                            'tool_mergeusers',
+                                            (object)['userfield' => $removeuserfield, 
+                                            'uservalue'  => $removeuservalue]));
         }
         if (count($usertoremove) > 1) {
-            throw new Exception(get_string('toomanyuserstoremovefound', 'tool_mergeusers'));
+            throw new Exception(get_string('toomanyuserstoremovefound', 
+                                            'tool_mergeusers',
+                                            (object)['userfield' => $removeuserfield, 
+                                            'uservalue'  => $removeuservalue]));
+
         }
         foreach ($usertoremove as $item) {
             $removeuserid = $item->id;
@@ -86,10 +92,16 @@ class enqueue_merge_request extends \external_api {
         $usertokeep = $DB->get_records(merge_request::TABLE_USERS,
                                         [$keepuserfield => $keepuservalue]);
         if (count($usertokeep) == 0) {
-            throw new Exception(get_string('cannotfindusertokeep', 'tool_mergeusers'));
+            throw new Exception(get_string('cannotfindusertokeep', 
+                                            'tool_mergeusers',
+                                            (object)['userfield' => $keepuserfield, 
+                                            'uservalue'  => $keepuservalue]));
         }
         if (count($usertokeep) > 1) {
-            throw new Exception(get_string('toomanyuserstokeepfound', 'tool_mergeusers'));
+            throw new Exception(get_string('toomanyuserstokeepfound', 
+                                            'tool_mergeusers',
+                                            (object)['userfield' => $keepuserfield, 
+                                            'uservalue'  => $keepuservalue]));
         }
         foreach ($usertokeep as $item) {
             $keepuserid = $item->id;
