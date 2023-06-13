@@ -73,13 +73,13 @@ class enqueue_merge_request extends \external_api {
         $usertoremove = $DB->get_records(merge_request::TABLE_USERS,
                                         [$removeuserfield => $removeuservalue]);
         if (count($usertoremove) == 0) {
-            throw new Exception(get_string('cannotfindusertoremove', 
+            throw new Exception(get_string('cannotfinduser', 
                                             'tool_mergeusers',
                                             (object)['userfield' => $removeuserfield, 
                                             'uservalue'  => $removeuservalue]));
         }
         if (count($usertoremove) > 1) {
-            throw new Exception(get_string('toomanyuserstoremovefound', 
+            throw new Exception(get_string('toomanyusers', 
                                             'tool_mergeusers',
                                             (object)['userfield' => $removeuserfield, 
                                             'uservalue'  => $removeuservalue]));
@@ -92,13 +92,13 @@ class enqueue_merge_request extends \external_api {
         $usertokeep = $DB->get_records(merge_request::TABLE_USERS,
                                         [$keepuserfield => $keepuservalue]);
         if (count($usertokeep) == 0) {
-            throw new Exception(get_string('cannotfindusertokeep', 
+            throw new Exception(get_string('cannotfinduser', 
                                             'tool_mergeusers',
                                             (object)['userfield' => $keepuserfield, 
                                             'uservalue'  => $keepuservalue]));
         }
         if (count($usertokeep) > 1) {
-            throw new Exception(get_string('toomanyuserstokeepfound', 
+            throw new Exception(get_string('toomanyusers', 
                                             'tool_mergeusers',
                                             (object)['userfield' => $keepuserfield, 
                                             'uservalue'  => $keepuservalue]));
