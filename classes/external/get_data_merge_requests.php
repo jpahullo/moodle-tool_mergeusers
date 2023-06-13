@@ -91,7 +91,7 @@ class get_data_merge_requests extends \external_api {
                     keepuserfield, keepuservalue, keepuserid,
                     timeadded, timemodified, status, retries, log
                 FROM
-                   {".$tablemr."}
+                   {".merge_request::TABLE_MERGE_REQUEST."}
                 WHERE
                      (1=1) ";
         if (isset($mergeusers['removeuserfield']) && !empty($mergeusers['removeuserfield'])) {
