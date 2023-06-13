@@ -37,17 +37,22 @@ class merge_user_accounts extends \core\task\adhoc_task {
         global $DB, $CFG;
         $data = $this->get_custom_data();
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
-        $record = (object)$DB->get_record(merge_request::TABLE_MERGE_REQUEST, ['id' => $data->mergerequestid]);
-        $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($record);
+        $mergerequest = $DB->get_record(merge_request::TABLE_MERGE_REQUEST, 
+                                            ['id' => $data->mergerequestid]);
+        if (!$mergerequest) {
+            // Merge request was removed before running this task.
+            return;
+        }
+        $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($mergerequest);
         $mergerequest = $this->merge($record, $maxattempts, merge_request::TRIED_WITH_ERROR);
-        if ($mergerequest->status == merge_request::COMPLETED_WITH_SUCCESS) {
+        if ($mergerequestresult->status == merge_request::COMPLETED_WITH_SUCCESS) {
             /* We run the merge request AGAIN because the user may be interacting with Moodle
             * while merge request is being processed, so that NO ALL records are correctly migrated
             * into the user to keep. It will ensure ALL records are correctly migrated into the user to keep. */
-            $mergerequest = $this->merge($mergerequest, $maxattempts, merge_request::COMPLETED_WITH_ERRORS);
+            $mergerequestresult = $this->merge($mergerequestresult, $maxattempts, merge_request::COMPLETED_WITH_ERRORS);
         }
-        if ($mergerequest->status != merge_request::COMPLETED_WITH_ERRORS &&
-            $mergerequest->status != merge_request::COMPLETED_WITH_SUCCESS) {
+        if ($mergerequestresult->status != merge_request::COMPLETED_WITH_ERRORS &&
+            $mergerequestresult->status != merge_request::COMPLETED_WITH_SUCCESS) {
             // Throwing exception will ensure this adhoc task is re-queued until $maxretries is reached.
             throw new moodle_exception(get_string('failedmergerequest', 'tool_mergeusers'));
         }
