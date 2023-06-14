@@ -118,7 +118,7 @@ class merge_request {
         return $this->data;
     }
 
-    public static function export_data_to_new_table(): object {
+    public static function export_data_to_new_table(): void {
         global $DB;
         $filter = array('status' => self::QUEUED_NOT_PROCESSED);
         $sort = "id DESC";
@@ -126,7 +126,7 @@ class merge_request {
         $records = $DB->get_recordset(self::TABLE_MERGE_REQUEST_OLD,
                                     $filter, $sort, $fields);
         if (!$records->valid()) {
-            return $records;
+            return;
         }
         foreach ($records as $item) {
             // Insert item into new table.

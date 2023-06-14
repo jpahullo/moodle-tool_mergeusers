@@ -65,18 +65,6 @@ class get_data_merge_requests extends \external_api {
      * @param $mergeusers id of the merge users request
      *
      * Return array with data of the custom queue of the merge request
-     * @param $id
-     * @param $removeuserfield Remove user field
-     * @param $removeuserid Remove user id
-     * @param $removeuservalue Remove user value
-     * @param $keepuserfield Keep user field
-     * @param $keepuserid Keep user id
-     * @param $keepuservalue Keep user value
-     * @param $timeadded Time creation
-     * @param $timemodified Time modified
-     * @param $status Status
-     * @param $retries Number of retries
-     * @param $log Log
      * 
      */
     public static function execute(array $mergeusers) {
@@ -85,7 +73,6 @@ class get_data_merge_requests extends \external_api {
         $params = array();
         $params = self::validate_parameters(self::execute_parameters(),
                                                 array('id' => $mergeusers->id));
-        $tablemr = merge_request::TABLE_MERGE_REQUEST;
         $sql = "SELECT
                     id, removeuserfield, removeuservalue, removeuserid,
                     keepuserfield, keepuservalue, keepuserid,

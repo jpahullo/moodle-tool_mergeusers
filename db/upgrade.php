@@ -86,11 +86,12 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         // Conditionally launch create table for tool_mergeusers_queue and populate it importing data from old table.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
-            // Export data from mergeusers table to the new one tool_mergeusers_queue.
-            merge_request::export_data_to_new_table();
-        // Mergeusers savepoint reached.
         upgrade_plugin_savepoint(true, 2023060801, 'tool', 'mergeusers');
         }
+    }
+    if ($oldversion < 2023061400) {
+        merge_request::export_data_to_new_table();
+        upgrade_plugin_savepoint(true, 2023061400, 'tool', 'mergeusers');
     }
     return true;
 }
