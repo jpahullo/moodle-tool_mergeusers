@@ -171,13 +171,14 @@ class merge_user_accounts extends \core\task\adhoc_task {
      */
     protected function find_user_id_or_fail(int $mergerequestid, string $userfield, string $uservalue): int {
         global $DB;
-        $user = $DB->get_records(merge_request::TABLE_USERS, [$userfield => $uservalue]);
-        if (count($usertoremove) == 0) {
+        $users = $DB->get_records(merge_request::TABLE_USERS, [$userfield => $uservalue]);
+        if (count($users) == 0) {
             throw new moodle_exception(get_string('cannotfinduser', 'tool_mergeusers', (object)['userfield' => $userfield, 'uservalue' => $uservalue]));
         } 
-        if (count($usertoremove) > 1) {
+        if (count($users) > 1) {
             throw new moodle_exception(get_string('toomanyusers', 'tool_mergeusers', (object)['userfield' => $userfield, 'uservalue' => $uservalue]));
         }
+        $user = reset($users);
         $this->update_removeuserid_in_table($mergerequestid , $user->id);
     }
 }
