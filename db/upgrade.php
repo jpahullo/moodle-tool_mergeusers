@@ -76,6 +76,8 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         $table->add_field('log', XMLDB_TYPE_TEXT, null, null, null, null, null);
         // Adding keys to table tool_mergeusers_queue.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('removeuserid', XMLDB_KEY_FOREIGN, ['removeuserid'], 'user', ['id']);
+        $table->add_key('keepuserid', XMLDB_KEY_FOREIGN, ['keepuserid'], 'user', ['id']);
         // Adding indexes to table tool_mergeusers_queue.
         $table->add_index('mdl_toolmergqueu_ruv_ix', XMLDB_INDEX_NOTUNIQUE, ['removeuservalue']);
         $table->add_index('mdl_toolmergqueu_kuv_ix', XMLDB_INDEX_NOTUNIQUE, ['keepuservalue']);
