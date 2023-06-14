@@ -34,7 +34,7 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
      */
     public function execute() {
         mtrace("Task queue_to_process_pending_merge_requests started.");
-        global $DB, $CFG;
+        global $DB;
         // Read from moodle table records with status = QUEUED_NOT_PROCESSED.
         // Add each record to adhoc task.
         // Update STATUS of each record added to adhoc task.

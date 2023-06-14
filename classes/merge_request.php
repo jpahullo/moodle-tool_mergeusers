@@ -132,7 +132,7 @@ class merge_request {
             // Insert item into new table.
             if ($item->status == 1) {
                 $status = self::COMPLETED_WITH_SUCCESS;
-            } else if ($item->status == 0) {
+            } else {
                 $status = self::COMPLETED_WITH_ERRORS;
             }
             $logs = [];
@@ -147,8 +147,8 @@ class merge_request {
                     'keepuserid' => $item->touserid,
                     'keepuserfield' => 'id',
                     'keepuservalue' => $item->touserid,
-                    'timeadded' => time(),
-                    'timemodified' => time(),
+                    'timeadded' => $item->timemodified,
+                    'timemodified' => $item->timemodified,
                     'status' => $status,
                     'log' => json_encode($logs)
                 ],

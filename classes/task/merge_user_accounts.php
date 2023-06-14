@@ -16,7 +16,6 @@
 namespace tool_mergeusers\task;
 defined('MOODLE_INTERNAL') || die();
 use MergeUserTool;
-require_once(__DIR__ . '/../../lib/autoload.php');
 use \tool_mergeusers\merge_request;
 /**
  * Adhoc task to merge user accounts.
@@ -34,7 +33,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
      */
     public function execute() {
         // Merge the users.
-        global $DB, $CFG;
+        global $DB;
         $data = $this->get_custom_data();
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
         $mergerequest = $DB->get_record(merge_request::TABLE_MERGE_REQUEST, 
