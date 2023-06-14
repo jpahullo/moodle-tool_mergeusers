@@ -15,6 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use mod_quiz\grade_calculator;
+use mod_quiz\quiz_settings;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
@@ -85,8 +88,8 @@ class QuizAttemptsMerger extends GenericTableMerger
     }
 
     /**
-     * This TableMerger processes quiz_attempts accordingly, regrading when 
-     * necessary. So that tables quiz_grades and quiz_grades_history 
+     * This TableMerger processes quiz_attempts accordingly, regrading when
+     * necessary. So that tables quiz_grades and quiz_grades_history
      * have to be omitted from processing by other TableMergers.
      *
      * @return array
@@ -128,7 +131,7 @@ class QuizAttemptsMerger extends GenericTableMerger
 
     /**
      * Merges the records related to the given users given in $data,
-     * updating/appending the list of $errorMessages and $actionLog, 
+     * updating/appending the list of $errorMessages and $actionLog,
      * by having the union of all attempts and being renumbered by
      * the timestart of each attempt.
      *
@@ -187,19 +190,19 @@ class QuizAttemptsMerger extends GenericTableMerger
 
                 // Now we know that we have to gather all attempts and renumber them
                 // by their timestart.
-                // 
-                // In order to prevent key collisions for (userid, quiz and attempt), 
+                //
+                // In order to prevent key collisions for (userid, quiz and attempt),
                 // we adopt the following procedure:
-                // 
+                //
                 //   1. Renumber all attempts updating their attempt to $max + $nattempt.
                 //   2. Update all above attempts to subtract $max to their attempt value.
-                //   
+                //
                 // In step 1. we have $max set to the total number of attempts from both
                 // users, and $nattempt is just an incremental value.
-                // 
+                //
                 // In step 2. we renumber all attempts to start from 1 by just subtracting
                 // the $max value to their attempt column.
-                // 
+                //
                 //
                 // total number of attempts from both users.
                 $max = count($attempts);
@@ -251,7 +254,7 @@ class QuizAttemptsMerger extends GenericTableMerger
 
     /**
      * Overriding the default implementation to add a final task: updateQuizzes.
-     * 
+     *
      * @param array $data array with details of merging.
      * @param array $recordsToModify list of record ids to update with $toid.
      * @param string $fieldName field name of the table to update.
@@ -301,7 +304,8 @@ class QuizAttemptsMerger extends GenericTableMerger
             foreach ($quizzes as $quiz) {
                 // https://moodle.org/mod/forum/discuss.php?d=258979
                 // recalculate grades for affected quizzes.
-                quiz_update_all_final_grades($quiz);
+                $quizobj = quiz_settings::create($quiz->id);
+                $quizobj->get_grade_calculator()->recompute_all_final_grades();
             }
         }
     }
