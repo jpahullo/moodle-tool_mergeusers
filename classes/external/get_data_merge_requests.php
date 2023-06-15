@@ -131,8 +131,7 @@ class get_data_merge_requests extends \external_api {
         }
         return $DB->get_records_sql($sql, $paramsquery);
     }
-
-    public static function execute_returns() {     
+    public static function execute_returns() {
         return new external_multiple_structure(
             new external_single_structure( [
                     'id' => new external_value(PARAM_INT, 'Merge users id'),
@@ -148,7 +147,7 @@ class get_data_merge_requests extends \external_api {
                     'retries' => new external_value(PARAM_INT, 'Number of retries'),
                     'log' => new external_value(PARAM_RAW, 'Log')
                 ]
-            )   
+            )
         );
     }
 }

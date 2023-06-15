@@ -54,7 +54,7 @@ class enqueue_merge_request extends \external_api {
      * @param string $removeuservalue user value used to remove (associated to $removeuserfield)
      * @param string $keepuserfield user field used to keep
      * @param string $keepuservalue user value used to keep (associated to $keepuserfield)
-     * 
+     *
      * @return int Returns the identifier of the merge request
      */
     public static function execute(string $removeuserfield,
@@ -73,15 +73,15 @@ class enqueue_merge_request extends \external_api {
         $usertoremove = $DB->get_records(merge_request::TABLE_USERS,
                                         [$removeuserfield => $removeuservalue]);
         if (count($usertoremove) == 0) {
-            throw new Exception(get_string('cannotfinduser', 
+            throw new Exception(get_string('cannotfinduser',
                                             'tool_mergeusers',
-                                            (object)['userfield' => $removeuserfield, 
+                                            (object)['userfield' => $removeuserfield,
                                             'uservalue'  => $removeuservalue]));
         }
         if (count($usertoremove) > 1) {
-            throw new Exception(get_string('toomanyusers', 
+            throw new Exception(get_string('toomanyusers',
                                             'tool_mergeusers',
-                                            (object)['userfield' => $removeuserfield, 
+                                            (object)['userfield' => $removeuserfield,
                                             'uservalue'  => $removeuservalue]));
 
         }
@@ -92,15 +92,15 @@ class enqueue_merge_request extends \external_api {
         $usertokeep = $DB->get_records(merge_request::TABLE_USERS,
                                         [$keepuserfield => $keepuservalue]);
         if (count($usertokeep) == 0) {
-            throw new Exception(get_string('cannotfinduser', 
+            throw new Exception(get_string('cannotfinduser',
                                             'tool_mergeusers',
-                                            (object)['userfield' => $keepuserfield, 
+                                            (object)['userfield' => $keepuserfield,
                                             'uservalue'  => $keepuservalue]));
         }
         if (count($usertokeep) > 1) {
-            throw new Exception(get_string('toomanyusers', 
+            throw new Exception(get_string('toomanyusers',
                                             'tool_mergeusers',
-                                            (object)['userfield' => $keepuserfield, 
+                                            (object)['userfield' => $keepuserfield,
                                             'uservalue'  => $keepuservalue]));
         }
         foreach ($usertokeep as $item) {
