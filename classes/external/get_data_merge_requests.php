@@ -95,42 +95,34 @@ class get_data_merge_requests extends \external_api {
         $params_query = array();
         if (isset($removeuserfield) && !empty($removeuserfield)) {
             $whereclauses[] = 'removeuserfield = ?';
-            //array_push($params, $removeuserfield);
             array_push($params_query, $removeuserfield);
         }
         if (isset($removeuservalue) && !empty($removeuservalue)) {
             $whereclauses[] = 'removeuservalue = ?';
-            //array_push($params, $removeuservalue);
             array_push($params_query, $removeuservalue);
         }
         if (isset($removeuserid) && !empty($removeuserid)) {
             $whereclauses[] = 'removeuserid = ?';
-            //array_push($params, $removeuserid);
             array_push($params_query, $removeuserid);
         }
         if (isset($keepuserfield) && !empty($keepuserfield)) {
-            $sql = $sql." AND keepuserfield = ?";
-            //array_push($params, $keepuserfield);
+            $whereclauses[] = 'keepuserfield = ?';
             array_push($params_query, $keepuserfield);
         }
         if (isset($keepuservalue) && !empty($keepuservalue)) {
             $whereclauses[] = 'keepuservalue = ?';
-            //array_push($params, $keepuservalue);
             array_push($params_query, $keepuservalue);
         }
         if (isset($keepuserid) && !empty($keepuserid)) {
             $whereclauses[] = 'keepuserid = ?';
-            //array_push($params, $keepuserid);
             array_push($params_query, $keepuserid);
         }
         if (isset($id) && !empty($id)) {
             $whereclauses[] = 'id = ?';
-            //array_push($params, $id);
             array_push($params_query, $id);
         }
         if (isset($status) && !empty($status)) {
             $whereclauses[] = 'status = ?';
-            //array_push($params, $status);
             array_push($params_query, $status);
         }
         if (count($whereclauses) > 0) {
