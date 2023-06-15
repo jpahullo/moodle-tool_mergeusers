@@ -133,7 +133,7 @@ class get_data_merge_requests extends \external_api {
 
     public static function execute_returns() {
         return new external_single_structure([
-                'id' => new external_value(PARAM_INT, 'User id'),
+                'id' => new external_value(PARAM_INT, 'Merge users id'),
                 'removeuserfield' => new external_value(PARAM_TEXT, 'Remove user field'),
                 'removeuservalue' => new external_value(PARAM_TEXT, 'Remove user value'),
                 'removeuserid' => new external_value(PARAM_INT, 'Remove user id'),
