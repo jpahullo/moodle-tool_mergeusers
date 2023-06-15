@@ -66,7 +66,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
         $mut = new MergeUserTool();
         list($success, $log, $logid) = $mut->merge($record->keepuserid, $record->removeuserid);
         if ($success) {
-            $status = merge_request::COMPLETED_WITH_SUCCESS;
+            
         } else {
             if ($retries >= $maxattempts) {
                 $status = merge_request::COMPLETED_WITH_ERRORS;
@@ -90,14 +90,24 @@ class merge_user_accounts extends \core\task\adhoc_task {
                                                     int $status,
                                                     array $log): void {
         global $DB;
-        $DB->update_record(
-            merge_request::TABLE_MERGE_REQUEST,
-            (object)[
+        if ($status = merge_request::COMPLETED_WITH_SUCCESS || 
+                    $status = merge_request::COMPLETED_WITH_ERRORS) {
+            $update =  (object)[
                 'id' => $idrecord,
                 'status' => $status,
-                'timecompleted' >= time(),
+                'timecompleted' => time(),
                 'log' => json_encode($log),
-            ]
+            ];
+        } else {
+            $update =  (object)[
+                'id' => $idrecord,
+                'status' => $status,
+                'log' => json_encode($log),
+            ];
+        };
+        $DB->update_record(
+            merge_request::TABLE_MERGE_REQUEST,
+            $update
         );
     }
     /**
