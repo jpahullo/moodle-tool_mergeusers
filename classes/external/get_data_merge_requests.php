@@ -65,51 +65,64 @@ class get_data_merge_requests extends \external_api {
      * Return array with data of the custom queue of the merge request
      *
      */
-    public static function execute(array $mergeusers) {
+    public static function execute(string $removeuserfield, 
+                                    string $removeuservalue,
+                                    string $removeuserid,
+                                    string $keepuserfield, 
+                                    string $keepuservalue,
+                                    string $keepuserid,
+                                    int $id, 
+                                    int $status) {
         global $DB;
         // Validate all of the parameters.
         $params = array();
         $params = self::validate_parameters(self::execute_parameters(),
-                            array('id' => $mergeusers->id));
+                                            ['removeuserfield' => $removeuserfield,
+                                            'removeuservalue' => $removeuservalue,
+                                            'removeuserid' => $removeuserid,
+                                            'keepuserfield' => $keepuserfield,
+                                            'keepuservalue' => $keepuservalue,
+                                            'keepuserid' => $keepuserid,
+                                            'id' => $id,
+                                            'status' => $status]);
         $sql = "SELECT
                     id, removeuserfield, removeuservalue, removeuserid,
                     keepuserfield, keepuservalue, keepuserid,
                     timeadded, timemodified, status, retries, log
                 FROM
                    {".merge_request::TABLE_MERGE_REQUEST."}
-                WHERE
-                     (1=1) ";
-        if (isset($mergeusers['removeuserfield']) && !empty($mergeusers['removeuserfield'])) {
+                ";
+        if (isset($removeuserfield) && !empty($removeuserfield)) {
             $whereclauses[] = 'removeuserfield = ?';
-            array_push($params, $mergeusers['removeuserfield']);
+            array_push($params, $removeuserfield);
         }
-        if (isset($mergeusers['removeuservalue']) && !empty($mergeusers['removeuservalue'])) {
+        if (isset($removeuservalue) && !empty($removeuservalue)) {
             $whereclauses[] = 'removeuservalue = ?';
-            array_push($params, $mergeusers['removeuservalue']);
+            array_push($params, $removeuservalue);
         }
-        if (isset($mergeusers['removeuserid']) && !empty($mergeusers['removeuserid'])) {
+        if (isset($removeuserid) && !empty($removeuserid)) {
             $whereclauses[] = 'removeuserid = ?';
-            array_push($params, $mergeusers['removeuserid']);
+            array_push($params, $removeuserid);
         }
-        if (isset($mergeusers['keepuserfield']) && !empty($mergeusers['keepuserfield'])) {
+        if (isset($keepuserfield) && !empty($keepuserfield)) {
             $sql = $sql." AND keepuserfield = ?";
-            array_push($params, $mergeusers['keepuserfield']);
+            array_push($params, $keepuserfield);
         }
-        if (isset($mergeusers['keepuservalue']) && !empty($mergeusers['keepuservalue'])) {
+        if (isset($keepuservalue) && !empty($keepuservalue)) {
             $whereclauses[] = 'keepuservalue = ?';
-            array_push($params, $mergeusers['keepuservalue']);
+            array_push($params, $keepuservalue);
         }
-        if (isset($mergeusers['keepuserid']) && !empty($mergeusers['keepuserid'])) {
+        if (isset($keepuserid) && !empty($keepuserid)) {
             $whereclauses[] = 'keepuserid = ?';
-            array_push($params, $mergeusers['keepuserid']);
+            array_push($params, $keepuserid);
         }
-        if (isset($mergeusers['id']) && !empty($mergeusers['id'])) {
+        if (isset($id) && !empty($id)) {
             $whereclauses[] = 'id = ?';
-            array_push($params, $mergeusers['id']);
+            array_push($params, $id);
         }
-        if (isset($mergeusers['status']) && !empty($mergeusers['status'])) {
+        if (isset($status) && !empty($status)) {
             $whereclauses[] = 'status = ?';
-            array_push($params, $mergeusers['status']);
+            array_push($params, $status);
         }
         if (count($whereclauses) > 0) {
             $sql .= 'WHERE ' . implode(' AND ', $whereclauses);
