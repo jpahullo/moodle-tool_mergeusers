@@ -65,13 +65,13 @@ class get_data_merge_requests extends \external_api {
      * Return array with data of the custom queue of the merge request
      *
      */
-    public static function execute(string $removeuserfield, 
+    public static function execute(string $removeuserfield,
                                     string $removeuservalue,
                                     string $removeuserid,
-                                    string $keepuserfield, 
+                                    string $keepuserfield,
                                     string $keepuservalue,
                                     string $keepuserid,
-                                    int $id, 
+                                    int $id,
                                     int $status) {
         global $DB;
         // Validate all of the parameters.
@@ -90,45 +90,45 @@ class get_data_merge_requests extends \external_api {
                     keepuserfield, keepuservalue, keepuserid,
                     timeadded, timemodified, status, retries, log
                 FROM
-                   {".merge_request::TABLE_MERGE_REQUEST."}
+                   {" .merge_request::TABLE_MERGE_REQUEST. "}
                 ";
-        $params_query = array();
+        $paramsquery = array();
         if (isset($removeuserfield) && !empty($removeuserfield)) {
             $whereclauses[] = 'removeuserfield = ?';
-            array_push($params_query, $removeuserfield);
+            array_push($paramsquery, $removeuserfield);
         }
         if (isset($removeuservalue) && !empty($removeuservalue)) {
             $whereclauses[] = 'removeuservalue = ?';
-            array_push($params_query, $removeuservalue);
+            array_push($paramsquery, $removeuservalue);
         }
         if (isset($removeuserid) && !empty($removeuserid)) {
             $whereclauses[] = 'removeuserid = ?';
-            array_push($params_query, $removeuserid);
+            array_push($paramsquery, $removeuserid);
         }
         if (isset($keepuserfield) && !empty($keepuserfield)) {
             $whereclauses[] = 'keepuserfield = ?';
-            array_push($params_query, $keepuserfield);
+            array_push($paramsquery, $keepuserfield);
         }
         if (isset($keepuservalue) && !empty($keepuservalue)) {
             $whereclauses[] = 'keepuservalue = ?';
-            array_push($params_query, $keepuservalue);
+            array_push($paramsquery, $keepuservalue);
         }
         if (isset($keepuserid) && !empty($keepuserid)) {
             $whereclauses[] = 'keepuserid = ?';
-            array_push($params_query, $keepuserid);
+            array_push($paramsquery, $keepuserid);
         }
         if (isset($id) && !empty($id)) {
             $whereclauses[] = 'id = ?';
-            array_push($params_query, $id);
+            array_push($paramsquery, $id);
         }
         if (isset($status) && !empty($status)) {
             $whereclauses[] = 'status = ?';
-            array_push($params_query, $status);
+            array_push($paramsquery, $status);
         }
         if (count($whereclauses) > 0) {
             $sql .= 'WHERE ' . implode(' AND ', $whereclauses);
         }
-        return $DB->get_records_sql($sql, $params_query);
+        return $DB->get_records_sql($sql, $paramsquery);
     }
 
     public static function execute_returns() {
