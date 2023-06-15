@@ -124,10 +124,15 @@ class merge_request {
         $sort = "id DESC";
         $fields = "id, touserid, fromuserid, success, timemodified, log";
         $records = $DB->get_recordset(self::TABLE_MERGE_REQUEST_OLD,
-                                    $filter, $sort, $fields);
-        if (!$records->valid()) {
+                                        $filter,
+                                        $sort,
+                                        $fields);
+        if (!$records) {
+            // There is no need to migrate. That's all!
             return;
         }
+        $oldrequests = [];
+        $orderedoldrequests = [];
         foreach ($records as $item) {
             // Insert item into new table.
             if ($item->status == 1) {

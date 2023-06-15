@@ -30,17 +30,17 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
     }
     /**
      * Run task for getting merge requests and adding them to adhoc task list.
-     * 
+     *
      */
     public function execute() {
-        mtrace("Task ".$this::class." started.");
+        mtrace("Task " .$this::class. " started.");
         global $DB;
         // Read from moodle table records with status = QUEUED_NOT_PROCESSED.
         // Add each record to adhoc task.
         // Update STATUS of each record added to adhoc task.
         $mergerequestsnotyetscheduled = $DB->get_recordset(merge_request::TABLE_MERGE_REQUEST,
                                                         ['status' => merge_request::QUEUED_NOT_PROCESSED],
-                                                        $sort='',
+                                                        $sort = '',
                                                         $fields = 'id');
         foreach ($mergerequestsnotyetscheduled as $mergerequest) {
             // Add to adhoc_task - Create the instance.
@@ -51,9 +51,9 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
             // Update the status of the tasked request.
             $this->update_status_table($mergerequest->id,
                                         merge_request::QUEUED_TO_BE_PROCESSED);
-            mtrace("Adhoc task: merge request n. ".$mergerequest->id." queued.");
+            mtrace("Adhoc task: merge request n. " .$mergerequest->id. " queued.");
         }
-        mtrace("Task ".$this::class." completed!");
+        mtrace("Task " .$this::class. " completed!");
     }
     /**
      * Function for updating the status of the record to be executed.

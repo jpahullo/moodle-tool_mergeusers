@@ -39,24 +39,22 @@ class get_data_merge_requests extends \external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'mergeusers' => new external_single_structure([
                 'removeuserfield' => new external_value(
-                    PARAM_TEXT, 'Remove user field', VALUE_OPTIONAL),
+                    PARAM_TEXT, 'Remove user field',  VALUE_DEFAULT, ''),
                 'removeuservalue' => new external_value(
-                    PARAM_RAW, 'Remove user value', VALUE_OPTIONAL),
+                    PARAM_RAW, 'Remove user value',  VALUE_DEFAULT, ''),
                 'removeuserid' => new external_value(
-                    PARAM_INT, 'Identifier of the remove user id', VALUE_OPTIONAL),
+                    PARAM_INT, 'Identifier of the remove user id',  VALUE_DEFAULT, 0),
                 'keepuserfield' => new external_value(
-                    PARAM_TEXT, 'Keep user field', VALUE_OPTIONAL),
+                    PARAM_TEXT, 'Keep user field',  VALUE_DEFAULT, ''),
                 'keepuservalue' => new external_value(
-                    PARAM_RAW, 'Keep user value', VALUE_OPTIONAL),
+                    PARAM_RAW, 'Keep user value',  VALUE_DEFAULT, ''),
                 'keepuserid' => new external_value(
-                    PARAM_INT, 'Identifier of the keep user id', VALUE_OPTIONAL),
+                    PARAM_INT, 'Identifier of the keep user id',  VALUE_DEFAULT, 0),
                 'id' => new external_value(
-                    PARAM_INT, 'Identifier of the merge request', VALUE_OPTIONAL),
+                    PARAM_INT, 'Identifier of the merge request',  VALUE_DEFAULT, 0),
                 'status' => new external_value(
-                    PARAM_INT, 'Status of the merge request', VALUE_OPTIONAL)
-            ])
+                    PARAM_INT, 'Status of the merge request',  VALUE_DEFAULT, 0)
         ]);
     }
     /**
@@ -65,14 +63,14 @@ class get_data_merge_requests extends \external_api {
      * @param $mergeusers id of the merge users request
      *
      * Return array with data of the custom queue of the merge request
-     * 
+     *
      */
     public static function execute(array $mergeusers) {
         global $DB;
         // Validate all of the parameters.
         $params = array();
         $params = self::validate_parameters(self::execute_parameters(),
-                                                array('id' => $mergeusers->id));
+                            array('id' => $mergeusers->id));
         $sql = "SELECT
                     id, removeuserfield, removeuservalue, removeuserid,
                     keepuserfield, keepuservalue, keepuserid,
@@ -82,15 +80,15 @@ class get_data_merge_requests extends \external_api {
                 WHERE
                      (1=1) ";
         if (isset($mergeusers['removeuserfield']) && !empty($mergeusers['removeuserfield'])) {
-            $sql = $sql." AND removeuserfield = ?";
+            $whereclauses[] = 'removeuserfield = ?';
             array_push($params, $mergeusers['removeuserfield']);
         }
         if (isset($mergeusers['removeuservalue']) && !empty($mergeusers['removeuservalue'])) {
-            $sql = $sql." AND removeuservalue = ?";
+            $whereclauses[] = 'removeuservalue = ?';
             array_push($params, $mergeusers['removeuservalue']);
         }
         if (isset($mergeusers['removeuserid']) && !empty($mergeusers['removeuserid'])) {
-            $sql = $sql." AND removeuserid = ?";
+            $whereclauses[] = 'removeuserid = ?';
             array_push($params, $mergeusers['removeuserid']);
         }
         if (isset($mergeusers['keepuserfield']) && !empty($mergeusers['keepuserfield'])) {
@@ -98,27 +96,29 @@ class get_data_merge_requests extends \external_api {
             array_push($params, $mergeusers['keepuserfield']);
         }
         if (isset($mergeusers['keepuservalue']) && !empty($mergeusers['keepuservalue'])) {
-            $sql = $sql." AND keepuservalue = ?";
+            $whereclauses[] = 'keepuservalue = ?';
             array_push($params, $mergeusers['keepuservalue']);
         }
         if (isset($mergeusers['keepuserid']) && !empty($mergeusers['keepuserid'])) {
-            $sql = $sql." AND keepuserid = ?";
+            $whereclauses[] = 'keepuserid = ?';
             array_push($params, $mergeusers['keepuserid']);
         }
         if (isset($mergeusers['id']) && !empty($mergeusers['id'])) {
-            $sql = $sql." AND id = ?";
+            $whereclauses[] = 'id = ?';
             array_push($params, $mergeusers['id']);
         }
         if (isset($mergeusers['status']) && !empty($mergeusers['status'])) {
-            $sql = $sql." AND status = ?";
+            $whereclauses[] = 'status = ?';
             array_push($params, $mergeusers['status']);
+        }
+        if (count($whereclauses) > 0) {
+            $sql .= 'WHERE ' . implode(' AND ', $whereclauses);
         }
         return $DB->get_records_sql($sql, $params);
     }
 
     public static function execute_returns() {
-        return new external_multiple_structure(
-            new external_single_structure([
+        return new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'User id'),
                 'removeuserfield' => new external_value(PARAM_TEXT, 'Remove user field'),
                 'removeuservalue' => new external_value(PARAM_TEXT, 'Remove user value'),
@@ -131,7 +131,7 @@ class get_data_merge_requests extends \external_api {
                 'status' => new external_value(PARAM_INT, 'Status'),
                 'retries' => new external_value(PARAM_INT, 'Number of retries'),
                 'log' => new external_value(PARAM_RAW, 'Log')
-            ])
+            ]
         );
     }
 }
