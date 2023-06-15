@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 namespace tool_mergeusers\external;
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
@@ -67,12 +68,12 @@ class get_data_merge_requests extends \external_api {
      */
     public static function execute(string $removeuserfield,
                                     string $removeuservalue,
-                                    string $removeuserid,
+                                    int $removeuserid,
                                     string $keepuserfield,
                                     string $keepuservalue,
-                                    string $keepuserid,
+                                    int $keepuserid,
                                     int $id,
-                                    int $status) {
+                                    int $status): array {
         global $DB;
         // Validate all of the parameters.
         $params = array();
@@ -126,26 +127,28 @@ class get_data_merge_requests extends \external_api {
             array_push($paramsquery, $status);
         }
         if (count($whereclauses) > 0) {
-            $sql .= 'WHERE ' . implode(' AND ', $whereclauses);
+            $sql .= ' WHERE ' . implode(' AND ', $whereclauses);
         }
         return $DB->get_records_sql($sql, $paramsquery);
     }
 
-    public static function execute_returns() {
-        return new external_single_structure([
-                'id' => new external_value(PARAM_INT, 'Merge users id'),
-                'removeuserfield' => new external_value(PARAM_TEXT, 'Remove user field'),
-                'removeuservalue' => new external_value(PARAM_TEXT, 'Remove user value'),
-                'removeuserid' => new external_value(PARAM_INT, 'Remove user id'),
-                'keepuserfield' => new external_value(PARAM_TEXT, 'Keep user field'),
-                'keepuservalue' => new external_value(PARAM_TEXT, 'Keep user value'),
-                'keepuserid' => new external_value(PARAM_INT, 'Keep user id'),
-                'timeadded' => new external_value(PARAM_RAW, 'Time creation'),
-                'timemodified' => new external_value(PARAM_RAW, 'Time modified'),
-                'status' => new external_value(PARAM_INT, 'Status'),
-                'retries' => new external_value(PARAM_INT, 'Number of retries'),
-                'log' => new external_value(PARAM_RAW, 'Log')
-            ]
+    public static function execute_returns() {     
+        return new external_multiple_structure(
+            new external_single_structure( [
+                    'id' => new external_value(PARAM_INT, 'Merge users id'),
+                    'removeuserfield' => new external_value(PARAM_TEXT, 'Remove user field'),
+                    'removeuservalue' => new external_value(PARAM_TEXT, 'Remove user value'),
+                    'removeuserid' => new external_value(PARAM_INT, 'Remove user id'),
+                    'keepuserfield' => new external_value(PARAM_TEXT, 'Keep user field'),
+                    'keepuservalue' => new external_value(PARAM_TEXT, 'Keep user value'),
+                    'keepuserid' => new external_value(PARAM_INT, 'Keep user id'),
+                    'timeadded' => new external_value(PARAM_RAW, 'Time creation'),
+                    'timemodified' => new external_value(PARAM_RAW, 'Time modified'),
+                    'status' => new external_value(PARAM_INT, 'Status'),
+                    'retries' => new external_value(PARAM_INT, 'Number of retries'),
+                    'log' => new external_value(PARAM_RAW, 'Log')
+                ]
+            )   
         );
     }
 }
