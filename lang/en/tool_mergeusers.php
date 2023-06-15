@@ -191,10 +191,9 @@ $string['finishtime'] = 'Finished merging at {$a}';
 $string['timetaken'] = 'Merge took {$a} seconds';
 $string['privacy:metadata'] = 'The Merge User Accounts plugin does not store any personal data.';
 $string['queue_to_process_pending_merge_requests'] = 'Get queue of the pending merge requests and launch adhoc task for each single request';
-$string['cannotfinduser'] = 'Cannot find the user. Change the input parameters.';
-$string['toomanyusers'] = 'Too many users found. Change the input parameters.';
-$string['maxattempts'] = 'Max number of attempts to merge users';
-$string['maxattempts_desc'] = 'Max number of attempts to merge users accounts. If the adhoc task reaches this number of attempts, 
-    it concludes without exception to prevent queueing again. It will update the status to completed with errors and concludes normally.';
+$string['cannotfinduser'] = 'Cannot find the user with {$a->userfield} {$a->uservalue}. Change the input parameters.';
+$string['toomanyusers'] = 'ERROR: More than one user found with {$a->userfield} {$a->uservalue}.';
+$string['maxattempts'] = 'Max number of attempts of a merge request.';
+$string['maxattempts_desc'] = 'This is the maximum number of attempts that a merge request will be tried to merge. After that number of attempts without success, the request will not be processed anymore and it will be updated as ended with errors.';
 $string['failedmergerequest'] = 'Failed merge request.';
 
