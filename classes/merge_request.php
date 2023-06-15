@@ -25,7 +25,7 @@
  */
 namespace tool_mergeusers;
 class merge_request {
-      /**
+    /**
      * Missing merge request id. This id really does not exist.
      * @var integer
      */
@@ -120,11 +120,9 @@ class merge_request {
 
     public static function export_data_to_new_table(): void {
         global $DB;
-        $filter = array('status' => self::QUEUED_NOT_PROCESSED);
         $sort = "id DESC";
         $fields = "id, touserid, fromuserid, success, timemodified, log";
         $records = $DB->get_recordset(self::TABLE_MERGE_REQUEST_OLD,
-                                        $filter,
                                         $sort,
                                         $fields);
         if (!$records) {
