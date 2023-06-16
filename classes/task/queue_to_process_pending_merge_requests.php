@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 namespace tool_mergeusers\task;
+require_once("{$CFG->libdir}/externallib.php");
 use \tool_mergeusers\merge_request;
 /**
  * Version information
@@ -42,7 +43,7 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
                                                         ['status' => merge_request::QUEUED_NOT_PROCESSED],
                                                         $sort = '',
                                                         $fields = 'id');
-        mtrace('There are ' . count($mergerequestsnotyetscheduled) . ' pending requests to schedule.');
+        $conta = 0;
         foreach ($mergerequestsnotyetscheduled as $mergerequest) {
             // Add to adhoc_task - Create the instance.
             $mytask = new \tool_mergeusers\task\merge_user_accounts();
@@ -52,8 +53,10 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
             // Update the status of the tasked request.
             $this->update_status_table($mergerequest->id,
                                         merge_request::QUEUED_TO_BE_PROCESSED);
+            $conta = $conta + 1;
             mtrace("Adhoc task: merge request n. " .$mergerequest->id. " queued.");
         }
+        mtrace('There are ' .$conta. ' pending requests to schedule.');
         mtrace("Task " .$this::class. " completed!");
     }
     /**
