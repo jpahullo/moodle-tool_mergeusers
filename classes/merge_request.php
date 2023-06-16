@@ -120,11 +120,10 @@ class merge_request {
 
     public static function export_data_to_new_table(): void {
         global $DB;
-        $sort = "id DESC";
-        $fields = "id, touserid, fromuserid, success, timemodified, log";
+        $sort = "id ASC";
         $records = $DB->get_recordset(self::TABLE_MERGE_REQUEST_OLD,
-                                        $sort,
-                                        $fields);
+                                        null,
+                                        $sort);
         if (!$records) {
             // There is no need to migrate. That's all!
             return;
@@ -132,31 +131,36 @@ class merge_request {
         $oldrequests = [];
         $orderedoldrequests = [];
         foreach ($records as $item) {
-            // Insert item into new table.
-            if ($item->status == 1) {
-                $status = self::COMPLETED_WITH_SUCCESS;
-            } else {
-                $status = self::COMPLETED_WITH_ERRORS;
+            if (!isset($oldrequests[$item->fromuserid])) {
+               $oldrequests[$item->fromuserid] = [];
             }
-            $logs = [];
-            // Take all data of $item->fromuserid and $item->touserid.
-            $logs[1] = json_decode($item->log, true);
-            $idrecord = $DB->insert_record(
-                self::TABLE_MERGE_REQUEST ,
-                [
-                    'removeuserid' => $item->fromuserid,
-                    'removeuserfield' => 'id',
-                    'removeuservalue' => $item->fromuserid,
-                    'keepuserid' => $item->touserid,
-                    'keepuserfield' => 'id',
-                    'keepuservalue' => $item->touserid,
-                    'timeadded' => $item->timemodified,
-                    'timemodified' => $item->timemodified,
-                    'status' => $status,
-                    'log' => json_encode($logs)
-                ],
-            );
+            if (isset($oldrequests[$item->fromuserid][$item->touserid])) {
+                 $baseitem = $oldrequests[$item->fromuserid][$item->touserid];
+            } else {
+                $baseitem = new \stdClass();
+                $baseitem->removeuserfield = 'id';
+                $baseitem->removeuservalue = $item->fromuserid;
+                $baseitem->removeuserid = $item->fromuserid;
+                $baseitem->keepuserfield = 'id';
+                $baseitem->keepuservalue = $item->touserid;
+                $baseitem->keepuserid = $item->touserid;
+                $baseitem->timeadded = $item->timemodified;
+                $baseitem->log = [];
+                $oldrequests[$item->fromuserid][$item->touserid] = $baseitem;
+                $orderedoldrequests[$baseitem->timeadded] = $baseitem;
+            }
+            // Old logs are obtained in ASC order, so we can safely update this values.
+            $baseitem->timemodified = $item->timemodified;
+            $baseitem->timecompleted = $item->timemodified;
+            // Append logs to the list.
+            $baseitem->log[$item->timemodified] =  json_decode($item->log, true);
+            $baseitem->status = ($item->status == 1) ? merge_request::COMPLETED_WITH_SUCCESS: 
+ merge_request::COMPLETED_WITH_ERRORS;
+       }
+       // Insert ordered and simplified old records into new format.
+       foreach ($orderedoldrecords as $newrecord) {
+           $newrecord->log = json_encode($newrecord->log);
+           $DB->insert_record(merge_merge_request::TABLE_MERGE_REQUEST, $newrecord);
         }
-        $records->close();
     }
 }
