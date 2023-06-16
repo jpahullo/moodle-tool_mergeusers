@@ -180,7 +180,8 @@ class merge_user_accounts extends \core\task\adhoc_task {
     /**
      * Function to find user id or fail.
      */
-    protected function find_user_id_or_fail(int $mergerequestid, string $userfield, string $uservalue): int {
+    protected function find_user_id_or_fail(int $mergerequestid, 
+                                            string $userfield, string $uservalue): int {
         global $DB;
         $users = $DB->get_records(merge_request::TABLE_USERS, [$userfield => $uservalue]);
         if (count($users) == 0) {
@@ -192,6 +193,6 @@ class merge_user_accounts extends \core\task\adhoc_task {
                                         (object)['userfield' => $userfield, 'uservalue' => $uservalue]));
         }
         $user = reset($users);
-        $this->update_removeuserid_in_table($mergerequestid , $user->id);
+        return $user->id;
     }
 }
