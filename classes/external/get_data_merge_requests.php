@@ -76,7 +76,6 @@ class get_data_merge_requests extends \external_api {
                                     int $status): array {
         global $DB;
         // Validate all of the parameters.
-        $params = array();
         $params = self::validate_parameters(self::execute_parameters(),
                                             ['removeuserfield' => $removeuserfield,
                                             'removeuservalue' => $removeuservalue,

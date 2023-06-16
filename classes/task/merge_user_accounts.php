@@ -32,6 +32,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
      */
     public function execute() {
         // Merge the users.
+        mtrace("Task " .$this::class. " started.");
         global $DB;
         $data = $this->get_custom_data();
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
@@ -42,8 +43,10 @@ class merge_user_accounts extends \core\task\adhoc_task {
             return;
         }
         $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($mergerequest);
+        mtrace("User to keep: field = " .$record->keepuserfield. " and value = " .$record->keepuservalue. " ");
+        mtrace("User to remove: field = " .$record->removeuserfield. " and value = " .$record->removeuservalue. " ");
         $mergerequest = $this->merge($record, $maxattempts, merge_request::TRIED_WITH_ERROR);
-        if ($mergerequestresult->status == merge_request::COMPLETED_WITH_SUCCESS) {
+         if ($mergerequestresult->status == merge_request::COMPLETED_WITH_SUCCESS) {
             /* We run the merge request AGAIN because the user may be interacting with Moodle
             * while merge request is being processed, so that NO ALL records are correctly migrated
             * into the user to keep. It will ensure ALL records are correctly migrated into the user to keep. */
@@ -54,6 +57,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
             // Throwing exception will ensure this adhoc task is re-queued until $maxretries is reached.
             throw new moodle_exception(get_string('failedmergerequest', 'tool_mergeusers'));
         }
+        mtrace("Task " .$this::class. " completed!");
     }
     /**
      * Function for merging two users.
@@ -66,7 +70,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
         $mut = new MergeUserTool();
         list($success, $log, $logid) = $mut->merge($record->keepuserid, $record->removeuserid);
         if ($success) {
-            
+            // Do nothing.    
         } else {
             if ($retries >= $maxattempts) {
                 $status = merge_request::COMPLETED_WITH_ERRORS;
@@ -115,7 +119,6 @@ class merge_user_accounts extends \core\task\adhoc_task {
      */
     private function verify_users_to_keep_and_remove(object $record): void {
         global $DB;
-        $returnvalue = 0;
         $keepuserfield = $record->keepuserfield;
         $keepuservalue = $record->keepuservalue;
         $removeuserfield = $record->removeuserfield;
