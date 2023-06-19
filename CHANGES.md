@@ -3,7 +3,8 @@ Release notes
 
 2023061900
 
-1. 2023-06-19 #247 - Fix proper support for Moodle 4.2, thanks to Matthias Opitz.
+1. 2023-06-19 #245 - Add list of incremental changes on file CHANGES.md.
+2. 2023-06-19 #247 - Fix proper support for Moodle 4.2, thanks to Matthias Opitz.
 
 2023040402
 
