@@ -28,15 +28,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - php: '8.1'
-            moodle-branch: 'master'
-            extensions: "mbstring, pgsql, mysqli"
-            database: 'pgsql'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_402_STABLE'
-            extensions: "mbstring, pgsql, mysqli"
-            database: 'mariadb'
+        php: ['8.0', '8.1']
+        moodle-branch: ['MOODLE_402_STABLE', 'master']
+        database: ['pgsql', 'mariadb']
+        extensions: ["mbstring, pgsql, mysqli"]
 
     steps:
       - name: Check out repository code
