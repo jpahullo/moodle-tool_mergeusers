@@ -17,7 +17,7 @@
 namespace tool_mergeusers\external;
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
-require_once("{$CFG->libdir}/externallib.php");
+//require_once("{$CFG->libdir}/externallib.php");
 use \tool_mergeusers\merge_request;
 use external_function_parameters;
 use external_multiple_structure;

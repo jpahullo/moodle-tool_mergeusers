@@ -33,7 +33,6 @@ class merge_user_accounts extends \core\task\adhoc_task {
      */
     public function execute() {
         // Merge the users.
-        mtrace("Task " .$this::class. " started.");
         global $DB;
         $data = $this->get_custom_data();
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
@@ -58,7 +57,6 @@ class merge_user_accounts extends \core\task\adhoc_task {
             // Throwing exception will ensure this adhoc task is re-queued until $maxretries is reached.
             throw new moodle_exception(get_string('failedmergerequest', 'tool_mergeusers'));
         }
-        mtrace("Task " .$this::class. " completed!");
     }
     /**
      * Function for merging two users.

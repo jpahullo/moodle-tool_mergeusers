@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 namespace tool_mergeusers\task;
+global $CFG;
 require_once("{$CFG->libdir}/externallib.php");
+require_once(__DIR__ . '/../../lib/autoload.php');
 use \tool_mergeusers\merge_request;
 /**
  * Version information
@@ -34,7 +36,6 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
      *
      */
     public function execute() {
-        mtrace("Task " .$this::class. " started.");
         global $DB;
         // Read from moodle table records with status = QUEUED_NOT_PROCESSED.
         // Add each record to adhoc task.
@@ -57,7 +58,6 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
             mtrace("Adhoc task: merge request n. " .$mergerequest->id. " queued.");
         }
         mtrace('There are ' .$conta. ' pending requests to schedule.');
-        mtrace("Task " .$this::class. " completed!");
     }
     /**
      * Function for updating the status of the record to be executed.
