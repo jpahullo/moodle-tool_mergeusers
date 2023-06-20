@@ -16,7 +16,7 @@
 
 namespace tool_mergeusers\external;
 defined('MOODLE_INTERNAL') || die();
-global $CFG;
+//global $CFG;
 //require_once("{$CFG->libdir}/externallib.php");
 use \tool_mergeusers\merge_request;
 use external_function_parameters;
@@ -128,6 +128,7 @@ class get_data_merge_requests extends \external_api {
         if (count($whereclauses) > 0) {
             $sql .= ' WHERE ' . implode(' AND ', $whereclauses);
         }
+        
         return $DB->get_records_sql($sql, $paramsquery);
     }
     public static function execute_returns() {

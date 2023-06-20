@@ -32,7 +32,6 @@ class merge_user_accounts extends \core\task\adhoc_task {
      * Execute the task of merge users accounts.
      */
     public function execute() {
-        // Merge the users.
         global $DB;
         $data = $this->get_custom_data();
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
