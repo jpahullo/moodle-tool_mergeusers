@@ -92,7 +92,7 @@ class get_data_merge_requests extends \external_api {
                 FROM
                    {" .merge_request::TABLE_MERGE_REQUEST. "}
                 ";
-       $paramsquery = array();
+        $paramsquery = array();
         if (isset($removeuserfield) && !empty($removeuserfield)) {	
 			[$insql, $params] = $DB->get_in_or_equal($removeuserfield);
 			$whereclauses[] = 'removeuserfield '.$insql; 
@@ -109,7 +109,6 @@ class get_data_merge_requests extends \external_api {
             array_push($paramsquery, $removeuserid);
         }
         if (isset($keepuserfield) && !empty($keepuserfield)) {
-			array_push($paramsquery, $keepuserfield);            
 			[$insql, $params] = $DB->get_in_or_equal($keepuserfield);
 			$whereclauses[] = 'keepuserfield ' .$insql;
             array_push($paramsquery, $keepuserfield); 
@@ -120,17 +119,17 @@ class get_data_merge_requests extends \external_api {
             array_push($paramsquery, $keepuservalue);
         } 
         if (isset($keepuserid) && !empty($keepuserid)) {
-            [$insql, $inparams] = $DB->get_in_or_equal($keepuserid);
+            [$insql, $params] = $DB->get_in_or_equal($keepuserid);
 			$whereclauses[] = 'keepuserid ' .$insql; 
             array_push($paramsquery, $keepuserid);
         }
         if (isset($id) && !empty($id)) {
-         	[$insql, $inparams] = $DB->get_in_or_equal($id);
+         	[$insql, $params] = $DB->get_in_or_equal($id);
 			$whereclauses[] = 'id '.$insql; 
             array_push($paramsquery, $id);
         }
         if (isset($status) && !empty($status)) {
-         	[$insql, $inparams] = $DB->get_in_or_equal($status);
+         	[$insql, $params] = $DB->get_in_or_equal($status);
 			$whereclauses[] = 'status ' .$insql; 
             array_push($paramsquery, $status);
         }
