@@ -132,7 +132,7 @@ class merge_request {
         $orderedoldrequests = [];
         foreach ($records as $item) {
             if (!isset($oldrequests[$item->fromuserid])) {
-               $oldrequests[$item->fromuserid] = [];
+                $oldrequests[$item->fromuserid] = [];
             }
             if (isset($oldrequests[$item->fromuserid][$item->touserid])) {
                  $baseitem = $oldrequests[$item->fromuserid][$item->touserid];
@@ -153,14 +153,13 @@ class merge_request {
             $baseitem->timemodified = $item->timemodified;
             $baseitem->timecompleted = $item->timemodified;
             // Append logs to the list.
-            $baseitem->log[$item->timemodified] =  json_decode($item->log, true);
-            $baseitem->status = ($item->status == 1) ? merge_request::COMPLETED_WITH_SUCCESS: 
- merge_request::COMPLETED_WITH_ERRORS;
-       }
-       // Insert ordered and simplified old records into new format.
-       foreach ($orderedoldrecords as $newrecord) {
-           $newrecord->log = json_encode($newrecord->log);
-           $DB->insert_record(merge_merge_request::TABLE_MERGE_REQUEST, $newrecord);
+            $baseitem->log[$item->timemodified] = json_decode($item->log, true);
+            $baseitem->status = ($item->status == 1) ? self::COMPLETED_WITH_SUCCESS : self::COMPLETED_WITH_ERRORS;
+        }
+        // Insert ordered and simplified old records into new format.
+        foreach ($orderedoldrecords as $newrecord) {
+            $newrecord->log = json_encode($newrecord->log);
+            $DB->insert_record(merge_merge_request::TABLE_MERGE_REQUEST, $newrecord);
         }
     }
 }
