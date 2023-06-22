@@ -13,11 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 namespace tool_mergeusers\external;
 defined('MOODLE_INTERNAL') || die();
-//global $CFG;
-//require_once("{$CFG->libdir}/externallib.php");
 use \tool_mergeusers\merge_request;
 use external_function_parameters;
 use external_multiple_structure;
@@ -93,44 +90,44 @@ class get_data_merge_requests extends \external_api {
                    {" .merge_request::TABLE_MERGE_REQUEST. "}
                 ";
         $paramsquery = array();
-        if (isset($removeuserfield) && !empty($removeuserfield)) {	
-			[$insql, $params] = $DB->get_in_or_equal($removeuserfield);
-			$whereclauses[] = 'removeuserfield '.$insql; 
+        if (isset($removeuserfield) && !empty($removeuserfield)) {
+            [$insql, $params] = $DB->get_in_or_equal($removeuserfield);
+            $whereclauses[] = 'removeuserfield '.$insql;
             array_push($paramsquery, $removeuserfield);
         }
         if (isset($removeuservalue) && !empty($removeuservalue)) {
             [$insql, $params] = $DB->get_in_or_equal($removeuservalue);
-			$whereclauses[] = 'removeuservalue '.$insql; 
+            $whereclauses[] = 'removeuservalue '.$insql;
             array_push($paramsquery, $removeuservalue);
         }
         if (isset($removeuserid) && !empty($removeuserid)) {
-			[$insql, $params] = $DB->get_in_or_equal($removeuserid);
-			$whereclauses[] = 'removeuserid '.$insql; 
+            [$insql, $params] = $DB->get_in_or_equal($removeuserid);
+            $whereclauses[] = 'removeuserid '.$insql;
             array_push($paramsquery, $removeuserid);
         }
         if (isset($keepuserfield) && !empty($keepuserfield)) {
-			[$insql, $params] = $DB->get_in_or_equal($keepuserfield);
-			$whereclauses[] = 'keepuserfield ' .$insql;
-            array_push($paramsquery, $keepuserfield); 
+            [$insql, $params] = $DB->get_in_or_equal($keepuserfield);
+            $whereclauses[] = 'keepuserfield ' .$insql;
+            array_push($paramsquery, $keepuserfield);
         }
         if (isset($keepuservalue) && !empty($keepuservalue)) {
-			[$insql, $params] = $DB->get_in_or_equal($keepuservalue);
-			$whereclauses[] = 'keepuservalue '.$insql; 
+            [$insql, $params] = $DB->get_in_or_equal($keepuservalue);
+            $whereclauses[] = 'keepuservalue '.$insql;
             array_push($paramsquery, $keepuservalue);
-        } 
+        }
         if (isset($keepuserid) && !empty($keepuserid)) {
             [$insql, $params] = $DB->get_in_or_equal($keepuserid);
-			$whereclauses[] = 'keepuserid ' .$insql; 
+            $whereclauses[] = 'keepuserid ' .$insql;
             array_push($paramsquery, $keepuserid);
         }
         if (isset($id) && !empty($id)) {
-         	[$insql, $params] = $DB->get_in_or_equal($id);
-			$whereclauses[] = 'id '.$insql; 
+            [$insql, $params] = $DB->get_in_or_equal($id);
+            $whereclauses[] = 'id '.$insql;
             array_push($paramsquery, $id);
         }
         if (isset($status) && !empty($status)) {
-         	[$insql, $params] = $DB->get_in_or_equal($status);
-			$whereclauses[] = 'status ' .$insql; 
+            [$insql, $params] = $DB->get_in_or_equal($status);
+            $whereclauses[] = 'status ' .$insql;
             array_push($paramsquery, $status);
         }
         if (count($whereclauses) > 0) {
