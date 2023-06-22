@@ -93,7 +93,52 @@ class get_data_merge_requests extends \external_api {
                    {" .merge_request::TABLE_MERGE_REQUEST. "}
                 ";
         $paramsquery = array();
-        if (isset($removeuserfield) && !empty($removeuserfield)) {
+        if (isset($removeuserfield) && !empty($removeuserfield)) {	
+			[$insql, $params] = $DB->get_in_or_equal($removeuserfield);
+			$whereclauses[] = 'removeuserfield '.$insql; 
+            array_push($paramsquery, $inparams);
+        }
+        if (isset($removeuservalue) && !empty($removeuservalue)) {
+            [$insql, $params] = $DB->get_in_or_equal($removeuservalue);
+			$whereclauses[] = 'removeuservalue '.$insql; 
+            array_push($paramsquery, $inparams);
+        }
+        if (isset($removeuserid) && !empty($removeuserid)) {
+			[$insql, $params] = $DB->get_in_or_equal($removeuserid);
+			$whereclauses[] = 'removeuserid '.$insql; 
+            array_push($paramsquery, $inparams);
+        }
+        if (isset($keepuserfield) && !empty($keepuserfield)) {
+			array_push($paramsquery, $keepuserfield);            
+			[$insql, $params] = $DB->get_in_or_equal($keepuserfield);
+			$whereclauses[] = 'keepuserfield '.$insql;
+            array_push($paramsquery, $inparams); 
+        }
+        if (isset($keepuservalue) && !empty($keepuservalue)) {
+			[$insql, $params] = $DB->get_in_or_equal($keepuservalue);
+			$whereclauses[] = 'keepuservalue '.$insql; 
+            array_push($paramsquery, $inparams);
+        } 
+        if (isset($keepuserid) && !empty($keepuserid)) {
+            [$insql, $inparams] = $DB->get_in_or_equal($keepuserid);
+			$whereclauses[] = 'keepuserid '.$insql; 
+            array_push($paramsquery, $inparams);
+        }
+        if (isset($id) && !empty($id)) {
+         	[$insql, $inparams] = $DB->get_in_or_equal($id);
+			$whereclauses[] = 'id '.$insql; 
+            array_push($paramsquery, $inparams);
+        }
+        if (isset($status) && !empty($status)) {
+         	[$insql, $inparams] = $DB->get_in_or_equal($status);
+			$whereclauses[] = 'status ' .$insql; 
+            array_push($paramsquery, $inparams);
+        }
+        if (count($whereclauses) > 0) {
+            $sql .= ' WHERE ' . implode(' AND ', $whereclauses);
+        }
+        return $DB->get_records_sql($sql, $paramsquery);
+        /*if (isset($removeuserfield) && !empty($removeuserfield)) {
             $whereclauses[] = 'removeuserfield = ?';
             array_push($paramsquery, $removeuserfield);
         }
@@ -127,9 +172,9 @@ class get_data_merge_requests extends \external_api {
         }
         if (count($whereclauses) > 0) {
             $sql .= ' WHERE ' . implode(' AND ', $whereclauses);
-        }
+        }*/
         
-        return $DB->get_records_sql($sql, $paramsquery);
+        
     }
     public static function execute_returns() {
         return new external_multiple_structure(
