@@ -92,89 +92,52 @@ class get_data_merge_requests extends \external_api {
                 FROM
                    {" .merge_request::TABLE_MERGE_REQUEST. "}
                 ";
-        $paramsquery = array();
+       $paramsquery = array();
         if (isset($removeuserfield) && !empty($removeuserfield)) {	
 			[$insql, $params] = $DB->get_in_or_equal($removeuserfield);
 			$whereclauses[] = 'removeuserfield '.$insql; 
-            array_push($paramsquery, $inparams);
+            array_push($paramsquery, $removeuserfield);
         }
         if (isset($removeuservalue) && !empty($removeuservalue)) {
             [$insql, $params] = $DB->get_in_or_equal($removeuservalue);
 			$whereclauses[] = 'removeuservalue '.$insql; 
-            array_push($paramsquery, $inparams);
+            array_push($paramsquery, $removeuservalue);
         }
         if (isset($removeuserid) && !empty($removeuserid)) {
 			[$insql, $params] = $DB->get_in_or_equal($removeuserid);
 			$whereclauses[] = 'removeuserid '.$insql; 
-            array_push($paramsquery, $inparams);
+            array_push($paramsquery, $removeuserid);
         }
         if (isset($keepuserfield) && !empty($keepuserfield)) {
 			array_push($paramsquery, $keepuserfield);            
 			[$insql, $params] = $DB->get_in_or_equal($keepuserfield);
-			$whereclauses[] = 'keepuserfield '.$insql;
-            array_push($paramsquery, $inparams); 
+			$whereclauses[] = 'keepuserfield ' .$insql;
+            array_push($paramsquery, $keepuserfield); 
         }
         if (isset($keepuservalue) && !empty($keepuservalue)) {
 			[$insql, $params] = $DB->get_in_or_equal($keepuservalue);
 			$whereclauses[] = 'keepuservalue '.$insql; 
-            array_push($paramsquery, $inparams);
+            array_push($paramsquery, $keepuservalue);
         } 
         if (isset($keepuserid) && !empty($keepuserid)) {
             [$insql, $inparams] = $DB->get_in_or_equal($keepuserid);
-			$whereclauses[] = 'keepuserid '.$insql; 
-            array_push($paramsquery, $inparams);
+			$whereclauses[] = 'keepuserid ' .$insql; 
+            array_push($paramsquery, $keepuserid);
         }
         if (isset($id) && !empty($id)) {
          	[$insql, $inparams] = $DB->get_in_or_equal($id);
 			$whereclauses[] = 'id '.$insql; 
-            array_push($paramsquery, $inparams);
+            array_push($paramsquery, $id);
         }
         if (isset($status) && !empty($status)) {
          	[$insql, $inparams] = $DB->get_in_or_equal($status);
 			$whereclauses[] = 'status ' .$insql; 
-            array_push($paramsquery, $inparams);
+            array_push($paramsquery, $status);
         }
         if (count($whereclauses) > 0) {
             $sql .= ' WHERE ' . implode(' AND ', $whereclauses);
         }
         return $DB->get_records_sql($sql, $paramsquery);
-        /*if (isset($removeuserfield) && !empty($removeuserfield)) {
-            $whereclauses[] = 'removeuserfield = ?';
-            array_push($paramsquery, $removeuserfield);
-        }
-        if (isset($removeuservalue) && !empty($removeuservalue)) {
-            $whereclauses[] = 'removeuservalue = ?';
-            array_push($paramsquery, $removeuservalue);
-        }
-        if (isset($removeuserid) && !empty($removeuserid)) {
-            $whereclauses[] = 'removeuserid = ?';
-            array_push($paramsquery, $removeuserid);
-        }
-        if (isset($keepuserfield) && !empty($keepuserfield)) {
-            $whereclauses[] = 'keepuserfield = ?';
-            array_push($paramsquery, $keepuserfield);
-        }
-        if (isset($keepuservalue) && !empty($keepuservalue)) {
-            $whereclauses[] = 'keepuservalue = ?';
-            array_push($paramsquery, $keepuservalue);
-        }
-        if (isset($keepuserid) && !empty($keepuserid)) {
-            $whereclauses[] = 'keepuserid = ?';
-            array_push($paramsquery, $keepuserid);
-        }
-        if (isset($id) && !empty($id)) {
-            $whereclauses[] = 'id = ?';
-            array_push($paramsquery, $id);
-        }
-        if (isset($status) && !empty($status)) {
-            $whereclauses[] = 'status = ?';
-            array_push($paramsquery, $status);
-        }
-        if (count($whereclauses) > 0) {
-            $sql .= ' WHERE ' . implode(' AND ', $whereclauses);
-        }*/
-        
-        
     }
     public static function execute_returns() {
         return new external_multiple_structure(
