@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 namespace tool_mergeusers\task;
+defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . '/../../lib/autoload.php');
 use MergeUserTool;
 use \tool_mergeusers\merge_request;
@@ -45,7 +46,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
         mtrace("User to keep: field = " .$record->keepuserfield. " and value = " .$record->keepuservalue. " ");
         mtrace("User to remove: field = " .$record->removeuserfield. " and value = " .$record->removeuservalue. " ");
         $mergerequest = $this->merge($record, $maxattempts, merge_request::TRIED_WITH_ERROR);
-         if ($mergerequestresult->status == merge_request::COMPLETED_WITH_SUCCESS) {
+        if ($mergerequestresult->status == merge_request::COMPLETED_WITH_SUCCESS) {
             /* We run the merge request AGAIN because the user may be interacting with Moodle
             * while merge request is being processed, so that NO ALL records are correctly migrated
             * into the user to keep. It will ensure ALL records are correctly migrated into the user to keep. */
@@ -67,9 +68,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
         $logs = $record->log;
         $mut = new MergeUserTool();
         list($success, $log, $logid) = $mut->merge($record->keepuserid, $record->removeuserid);
-        if ($success) {
-            // Do nothing.    
-        } else {
+        if (!$success) {
             if ($retries >= $maxattempts) {
                 $status = merge_request::COMPLETED_WITH_ERRORS;
                 // Send a notification to administrator ?
@@ -92,16 +91,16 @@ class merge_user_accounts extends \core\task\adhoc_task {
                                                     int $status,
                                                     array $log): void {
         global $DB;
-        if ($status = merge_request::COMPLETED_WITH_SUCCESS || 
+        if ($status = merge_request::COMPLETED_WITH_SUCCESS ||
                     $status = merge_request::COMPLETED_WITH_ERRORS) {
-            $update =  (object)[
+            $update = (object)[
                 'id' => $idrecord,
                 'status' => $status,
                 'timecompleted' => time(),
                 'log' => json_encode($log),
             ];
         } else {
-            $update =  (object)[
+            $update = (object)[
                 'id' => $idrecord,
                 'status' => $status,
                 'log' => json_encode($log),
