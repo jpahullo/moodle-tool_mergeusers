@@ -4,7 +4,6 @@
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    </TABLE>
     <TABLE NAME="tool_mergeusers_queue" COMMENT="List of users merging request: data from removeuservalue user is merged into keepuservalue user.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
@@ -14,6 +13,7 @@
         <FIELD NAME="keepuserfield" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="User that will remain with data of both users."/>
         <FIELD NAME="keepuservalue" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="User that will remain with data of both users."/>
         <FIELD NAME="keepuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User that will remain with data of both users."/>
+        <FIELD NAME="mergedbyuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="timeadded" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time stamp when the merging request was added to the queue."/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Time stamp when the merging request status has beeen updated."/>
         <FIELD NAME="status" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false" COMMENT="Was the action concluded ok?"/>
@@ -22,6 +22,8 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="removeuserid" TYPE="foreign" FIELDS="removeuserid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="keepuserid" TYPE="foreign" FIELDS="keepuserid" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="mdl_toolmergqueu_rui_ix" UNIQUE="false" FIELDS="removeuserid" COMMENT="Index for removeuserid field."/>

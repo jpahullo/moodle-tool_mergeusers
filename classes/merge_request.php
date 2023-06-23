@@ -144,6 +144,9 @@ class merge_request {
                 $baseitem->keepuserfield = 'id';
                 $baseitem->keepuservalue = $item->touserid;
                 $baseitem->keepuserid = $item->touserid;
+                if (isset( $item->mergedbyuserid)) {
+                    $baseitem->mergedbyuserid = $item->mergedbyuserid;
+                }
                 $baseitem->timeadded = $item->timemodified;
                 $baseitem->log = [];
                 $oldrequests[$item->fromuserid][$item->touserid] = $baseitem;
@@ -155,11 +158,12 @@ class merge_request {
             // Append logs to the list.
             $baseitem->log[$item->timemodified] = json_decode($item->log, true);
             $baseitem->status = ($item->status == 1) ? self::COMPLETED_WITH_SUCCESS : self::COMPLETED_WITH_ERRORS;
+            $baseitem->retries = 0;
         }
         // Insert ordered and simplified old records into new format.
-        foreach ($orderedoldrecords as $newrecord) {
+        foreach ($orderedoldrequests as $newrecord) {
             $newrecord->log = json_encode($newrecord->log);
-            $DB->insert_record(merge_merge_request::TABLE_MERGE_REQUEST, $newrecord);
+            $DB->insert_record(merge_request::TABLE_MERGE_REQUEST, $newrecord);
         }
     }
 }
