@@ -156,7 +156,8 @@ class merge_request {
             $baseitem->timemodified = $item->timemodified;
             $baseitem->timecompleted = $item->timemodified;
             // Append logs to the list.
-            $baseitem->log[$item->timemodified] = json_decode($item->log, true);
+            $baseitem->log[$item->timemodified] = json_decode($item->log, false);
+            //$baseitem->log[0] = "Migrated from old record with id = ".$item->id;
             $baseitem->status = ($item->status == 1) ? self::COMPLETED_WITH_SUCCESS : self::COMPLETED_WITH_ERRORS;
             $baseitem->retries = 0;
         }

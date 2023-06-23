@@ -82,7 +82,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
     }
     
-    if ($oldversion < 2023062310) {
+    if ($oldversion < 2023062315) {
         // Define table tool_mergeusers_queue to be created.
         $table = new xmldb_table('tool_mergeusers_queue');
         // Adding fields to table tool_mergeusers_queue.
@@ -112,7 +112,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
             merge_request::export_data_to_new_table();
-            upgrade_plugin_savepoint(true, 2023062310, 'tool', 'mergeusers');
+            upgrade_plugin_savepoint(true, 2023062315, 'tool', 'mergeusers');
         }
     }
    
