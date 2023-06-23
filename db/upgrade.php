@@ -104,10 +104,10 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         $table->add_key('removeuserid', XMLDB_KEY_FOREIGN, ['removeuserid'], 'user', ['id']);
         $table->add_key('keepuserid', XMLDB_KEY_FOREIGN, ['keepuserid'], 'user', ['id']);
         // Adding indexes to table tool_mergeusers_queue.
-        $table->add_index('mdl_toolmergqueu_ruv_ix', XMLDB_INDEX_NOTUNIQUE, ['removeuservalue']);
-        $table->add_index('mdl_toolmergqueu_kuv_ix', XMLDB_INDEX_NOTUNIQUE, ['keepuservalue']);
-        $table->add_index('mdl_toolmergqueu_tas_ix', XMLDB_INDEX_NOTUNIQUE, ['timeadded', 'status']);
-        $table->add_index('mdl_toolmergqueu_tms_ix', XMLDB_INDEX_NOTUNIQUE, ['timemodified', 'status']);
+        $table->add_index('mdl_toolmergqueu_rem_ix', XMLDB_INDEX_NOTUNIQUE, ['removeuservalue']);
+        $table->add_index('mdl_toolmergqueu_kee_ix', XMLDB_INDEX_NOTUNIQUE, ['keepuservalue']);
+        $table->add_index('mdl_toolmergqueu_timsta_ix', XMLDB_INDEX_NOTUNIQUE, ['timeadded', 'status']);
+        $table->add_index('mdl_toolmergqueu_timsta2_ix', XMLDB_INDEX_NOTUNIQUE, ['timemodified', 'status']);
         // Conditionally launch create table for tool_mergeusers_queue and populate it importing data from old table.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
