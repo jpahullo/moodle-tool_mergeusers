@@ -24,7 +24,7 @@
  * @author     Juan Pablo Torres Herrera
  * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
  * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
- * @author     Nicola Vallinoto <n.vallinoto@liguriadigitale.it>, Liguria Digitale 
+ * @author     Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die;
