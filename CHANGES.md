@@ -2,7 +2,7 @@ Release notes
 =============
 
 1. Minimum Moodle version supported is 3.9.
-1. (#218) [Creation of a web service for Merge user accounts plugin.]
+1. (#218) [Creation of a web service for Merge user accounts plugin]
 (https://github.com/ndunand/moodle-tool_mergeusers/issues/218)
 
 Contributors
