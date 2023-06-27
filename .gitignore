@@ -1,2 +1,6 @@
-.github/workflows/moodle-ci.ymlgit
-.github/workflows/moodle-release.yml -A 
+tests/mergeusers.code-workspace
+.vscode/launch.json
+lang/it/tool_mergeusers.php
+.idea
+/config/config.local.php
+-phpunit.xml

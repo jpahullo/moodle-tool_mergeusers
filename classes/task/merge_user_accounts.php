@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 namespace tool_mergeusers\task;
-use MergeUserTool;
+defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . '/../../lib/autoload.php');
+use MergeUserTool;
 use \tool_mergeusers\merge_request;
 /**
- * Adhoc task to merge user accounts. 
- * 
+ * Adhoc task to merge user accounts.
+ *
  * @package   tool_mergeusers
  * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
  * @author    Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
@@ -29,46 +30,45 @@ use \tool_mergeusers\merge_request;
  * */
 class merge_user_accounts extends \core\task\adhoc_task {
     /**
-     * Execute the task.
+     * Execute the task of merge users accounts.
      */
     public function execute() {
-        // Merge the users.
         global $DB;
-        global $CFG;
         $data = $this->get_custom_data();
-        $mergerequestid = $data->mergerequestid;
         $maxattempts = get_config('tool_mergeusers', 'maxattempts');
-        $record = (object)$DB->get_record(merge_request::TABLE_MERGE_REQUEST, ['id' => $mergerequestid]);
-        $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($record);
+        $mergerequest = $DB->get_record(merge_request::TABLE_MERGE_REQUEST,
+                                            ['id' => $data->mergerequestid]);
+        if (!$mergerequest) {
+            // Merge request was removed before running this task.
+            return;
+        }
+        $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($mergerequest);
+        mtrace("User to keep: field = " .$record->keepuserfield. " and value = " .$record->keepuservalue. " ");
+        mtrace("User to remove: field = " .$record->removeuserfield. " and value = " .$record->removeuservalue. " ");
         $mergerequest = $this->merge($record, $maxattempts, merge_request::TRIED_WITH_ERROR);
-        if ($mergerequest->status == merge_request::COMPLETED_WITH_SUCCESS) {
+        if ($mergerequestresult->status == merge_request::COMPLETED_WITH_SUCCESS) {
             /* We run the merge request AGAIN because the user may be interacting with Moodle
             * while merge request is being processed, so that NO ALL records are correctly migrated
             * into the user to keep. It will ensure ALL records are correctly migrated into the user to keep. */
-            $mergerequest = $this->merge($mergerequest, $maxattempts, merge_request::COMPLETED_WITH_ERRORS);
+            $mergerequestresult = $this->merge($mergerequestresult, $maxattempts, merge_request::COMPLETED_WITH_ERRORS);
         }
-        if ($mergerequest->status != merge_request::COMPLETED_WITH_ERRORS &&
-            $mergerequest->status != merge_request::COMPLETED_WITH_SUCCESS) {
-            // Throwing exception will ensure this adhoc task is re-queued until $maxretries is reached. 
+        if ($mergerequestresult->status != merge_request::COMPLETED_WITH_ERRORS &&
+            $mergerequestresult->status != merge_request::COMPLETED_WITH_SUCCESS) {
+            // Throwing exception will ensure this adhoc task is re-queued until $maxretries is reached.
             throw new moodle_exception(get_string('failedmergerequest', 'tool_mergeusers'));
         }
     }
-   /**
-     * Function for merging two users 
+    /**
+     * Function for merging two users.
      */
     private function merge(object $record, int $maxattempts, int $statusforerror) {
-        $mergerequestid = $record->id;
-        $usertokeep = $record->keepuserid;
-        $usertoremove = $record->removeuserid;
         $retries = $record->retries + 1;
-        // Update retries
-        $this->update_retries_in_table($mergerequestid, $retries);
+        // Update retries.
+        $this->update_retries_in_table($record->id, $retries);
         $logs = $record->log;
         $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($usertokeep, $usertoremove);
-        if ($success) {
-            $status = merge_request::COMPLETED_WITH_SUCCESS;
-        } else {
+        list($success, $log, $logid) = $mut->merge($record->keepuserid, $record->removeuserid);
+        if (!$success) {
             if ($retries >= $maxattempts) {
                 $status = merge_request::COMPLETED_WITH_ERRORS;
                 // Send a notification to administrator ?
@@ -77,77 +77,65 @@ class merge_user_accounts extends \core\task\adhoc_task {
             }
         }
         $logs[$retries] = $log;
-        $this->update_status_and_log_in_table($mergerequestid,
+        $this->update_status_and_log_in_table($record->id,
                                             $status,
                                             $logs);
         $record->log = $logs;
         $record->status = $status;
         return $record;
-        // Reset mut session. $SESSION->mut = null;
     }
     /**
      * Function for updating the status of the merging request.
      */
     private function update_status_and_log_in_table(int $idrecord,
                                                     int $status,
-                                                    array $log) {
+                                                    array $log): void {
         global $DB;
-        $DB->update_record(
-            merge_request::TABLE_MERGE_REQUEST,
-            (object)[
+        if ($status = merge_request::COMPLETED_WITH_SUCCESS ||
+                    $status = merge_request::COMPLETED_WITH_ERRORS) {
+            $update = (object)[
                 'id' => $idrecord,
                 'status' => $status,
-                'timecompleted' >= time(),
+                'timecompleted' => time(),
                 'log' => json_encode($log),
-            ]
+            ];
+        } else {
+            $update = (object)[
+                'id' => $idrecord,
+                'status' => $status,
+                'log' => json_encode($log),
+            ];
+        };
+        $DB->update_record(
+            merge_request::TABLE_MERGE_REQUEST,
+            $update
         );
     }
     /**
      * Function for verifying the users to keep and remove.
      */
-    private function verify_users_to_keep_and_remove(object $record) {
+    private function verify_users_to_keep_and_remove(object $record): void {
         global $DB;
-        $return_value = 0;
         $keepuserfield = $record->keepuserfield;
         $keepuservalue = $record->keepuservalue;
         $removeuserfield = $record->removeuserfield;
-        $removeuservalue = $record->removeuservalue;               
-        // Verify user to remove
+        $removeuservalue = $record->removeuservalue;
+        // Verify user to remove.
         $usertoremove = $DB->get_records(merge_request::TABLE_USERS, [$removeuserfield => $removeuservalue]);
-        if (count($usertoremove) == 0) {
-            throw new moodle_exception(get_string('cannotfindusertoremove', 'tool_mergeusers'));
-        } 
-        if (count($usertoremove) > 1) {
-            throw new moodle_exception(get_string('toomanyuserstoremovefound', 'tool_mergeusers'));
-        }
-        // Update removeuserid in the table merge_request::TABLE_MERGE_REQUEST if not present - to do. 
         if (is_null($record->removeuserid)) {
-            //update TABLE_MERGE_REQUEST
-            $this->update_removeuserid_in_table($record->id , $usertoremove->id);
+            $this->removeuserid = $this->find_user_id_or_fail($record->removeuserfield, $record->removeuservalue);
         }
-        // Verify user to keep
+        // Verify user to keep.
         $usertokeep = $DB->get_records(merge_request::TABLE_USERS, [$keepuserfield => $keepuservalue]);
-        if (count($usertokeep) == 0) {
-            throw new moodle_exception(get_string('cannotfindusertokeep', 'tool_mergeusers'));
-        } 
-        if (count($usertokeep) > 1) {
-            throw new moodle_exception(get_string('toomanyuserstokeepfound', 'tool_mergeusers'));
-        }
-        // Update keepuserid in the table merge_request::TABLE_MERGE_REQUEST if not present - to do. 
         if (is_null($record->keepuserid)) {
-            //update TABLE_MERGE_REQUEST
-            $this->update_keepuserid_in_table($record->id , $usertokeep->id);
+            $this->keepuserid = $this->find_user_id_or_fail($record->keepuserfield, $record->keepuservalue);
         }
-        $return_value = 1;
-        return $return_value;
     }
-
-  
     /**
      * Function for updating number of retries.
      */
     private function update_retries_in_table(int $idrecord,
-                                             int $retries) {
+                                             int $retries): void {
         global $DB;
         $DB->update_record(
             merge_request::TABLE_MERGE_REQUEST,
@@ -158,11 +146,11 @@ class merge_user_accounts extends \core\task\adhoc_task {
             ]
         );
     }
-     /**
+    /**
      * Function for updating removeuserid.
      */
     private function update_removeuserid_in_table(int $idrecord,
-                                                        int $removeuserid) {
+                                                        int $removeuserid): void {
         global $DB;
         $DB->update_record(
             merge_request::TABLE_MERGE_REQUEST,
@@ -172,7 +160,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
             ]
         );
     }
-     /**
+    /**
      * Function for updating keepuserid.
      */
     private function update_keepuserid_in_table(int $idrecord,
@@ -186,7 +174,22 @@ class merge_user_accounts extends \core\task\adhoc_task {
             ]
         );
     }
-
-    
-  
+    /**
+     * Function to find user id or fail.
+     */
+    protected function find_user_id_or_fail(int $mergerequestid, 
+                                            string $userfield, string $uservalue): int {
+        global $DB;
+        $users = $DB->get_records(merge_request::TABLE_USERS, [$userfield => $uservalue]);
+        if (count($users) == 0) {
+            throw new moodle_exception(get_string('cannotfinduser', 'tool_mergeusers',
+                                        (object)['userfield' => $userfield, 'uservalue' => $uservalue]));
+        }
+        if (count($users) > 1) {
+            throw new moodle_exception(get_string('toomanyusers', 'tool_mergeusers',
+                                        (object)['userfield' => $userfield, 'uservalue' => $uservalue]));
+        }
+        $user = reset($users);
+        return $user->id;
+    }
 }

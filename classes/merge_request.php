@@ -1,43 +1,52 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
- * Merge user accounts
- * @package   tool_mergeusers
- * @author    Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
- * @copyright 2023 Liguria Digitale (https://www.liguriadigitale.it)
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Version information
+ *
+ * @package     tool
+ * @subpackage  mergeusers
+ * @author      Nicola Vallinoto, Liguria Digitale
+ * @author      Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace tool_mergeusers;
-/**
- * Merge request definition.
- *
- * @package   tool_mergeusers
- * @author    Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
- * @copyright 2023 Liguria Digitale (https://www.liguriadigitale.it)
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * */
 class merge_request {
-      /**
-     * Missing merging request id This id really does not exist.
+    /**
+     * Missing merge request id. This id really does not exist.
      * @var integer
      */
-    const MISSING_MERGING_REQUEST_ID = 1;
+    const MISSING_MERGE_REQUEST_ID = 1;
     /**
-     * Merging request queued but not yet processed.
+     * Merge request queued but not yet processed.
      * @var integer
      */
     const QUEUED_NOT_PROCESSED = 2;
     /**
-     * Merging request queued, to be processed (the adhoc task is created for it).
+     * Merge request queued, to be processed (the adhoc task is created for it).
      * @var integer
      */
     const QUEUED_TO_BE_PROCESSED = 3;
     /**
-     * Merging request is in progress but not concluded (its adhoc_task has started).
+     * Merge request is in progress but not concluded (its adhoc_task has started).
      * @var integer
      */
     const INPROGRESS_NOT_CONCLUDED = 4;
     /**
-     * Tried with error; pending of retrial (the merging process has found some error
+     * Tried with error; pending of retrial (the merge process has found some error
      * and the adhoc_task is queued to be retried in the future).
      * @var integer
      */
@@ -48,26 +57,27 @@ class merge_request {
      */
     const COMPLETED_WITH_SUCCESS = 6;
     /**
-     * Completed with errors (even with all the current retries the merging process
+     * Completed with errors (even with all the current retries the merge process
      * could not end with success).
      * @var integer
      */
     const COMPLETED_WITH_ERRORS = 7;
     /**
      * Reference table for merge requests.
+     * @var string
      */
     const TABLE_MERGE_REQUEST = 'tool_mergeusers_queue';
      /**
      * Reference table for merge requests. Before web service integration.
+     * @var string
      */
     const TABLE_MERGE_REQUEST_OLD = 'tool_mergeusers';
     /**
      * Reference table for users.
+     * @var string
      */
     const TABLE_USERS = 'user';
-    
     private $data;
-
     private function __construct(stdClass $data) {
         $this->data = $data;
     }
@@ -76,8 +86,7 @@ class merge_request {
         return new self($data);
     }
 
-    public function __get($name)
-    {
+    public function __get($name) {
         if (isset($this->data->${name})) {
             $value = $this->data->${name};
             if ($name == 'log') {
@@ -87,9 +96,7 @@ class merge_request {
         }
         return null;
     }
-
-    public function __set($name, $value)
-    {
+    public function __set($name, $value) {
         if (isset($this->data->${name})) {
             if ($name == 'log') {
                 $value = json_encode($value);
@@ -111,40 +118,53 @@ class merge_request {
         return $this->data;
     }
 
-    public function export_data_to_new_table(string $oldtable, 
-                                            string $newtable) {
+    public static function export_data_to_new_table(): void {
         global $DB;
-        $filter = array('status' => self::QUEUED_NOT_PROCESSED);
-        $limitfrom=0;
-        $limitnum=0; 
-        $sort = "id DESC";
-        $records = $DB->get_records($oldtable, $filter, $sort, 
-                                'id, touserid, fromuserid, success, timemodified, log', 
-                                $limitfrom, $limitnum);
+        $sort = "id ASC";
+        $records = $DB->get_recordset(self::TABLE_MERGE_REQUEST_OLD,
+                                        null,
+                                        $sort);
         if (!$records) {
-            return $records;
+            // There is no need to migrate. That's all!
+            return;
         }
+        $oldrequests = [];
+        $orderedoldrequests = [];
         foreach ($records as $item) {
-            //insert item into new table
-            if ($item->status == 1) {
-                $status = merge_request::COMPLETED_WITH_SUCCESS;
-            } else if ($item->status == 0) {
-                $status = merge_request::COMPLETED_WITH_ERRORS;
+            if (!isset($oldrequests[$item->fromuserid])) {
+                $oldrequests[$item->fromuserid] = [];
             }
-        $logs = [];
-        $logs[1] = json_decode($item->log, true);
-       
-            $idrecord = $DB->insert_record(
-                merge_request::TABLE_MERGE_REQUEST ,
-                [
-                    'removeuserid' => $item->fromuserid,  
-                    'keepuserid' => $item->touserid,
-                    'timeadded' => $timemodified,
-                    'timemodified' => time(),
-                    'status' => $status,
-                    'log' =>  json_encode($logs)
-                ],
-            );
+            if (isset($oldrequests[$item->fromuserid][$item->touserid])) {
+                 $baseitem = $oldrequests[$item->fromuserid][$item->touserid];
+            } else {
+                $baseitem = new \stdClass();
+                $baseitem->removeuserfield = 'id';
+                $baseitem->removeuservalue = $item->fromuserid;
+                $baseitem->removeuserid = $item->fromuserid;
+                $baseitem->keepuserfield = 'id';
+                $baseitem->keepuservalue = $item->touserid;
+                $baseitem->keepuserid = $item->touserid;
+                if (isset( $item->mergedbyuserid)) {
+                    $baseitem->mergedbyuserid = $item->mergedbyuserid;
+                }
+                $baseitem->timeadded = $item->timemodified;
+                $baseitem->log = [];
+                $oldrequests[$item->fromuserid][$item->touserid] = $baseitem;
+                $orderedoldrequests[$baseitem->timeadded] = $baseitem;
+            }
+            // Old logs are obtained in ASC order, so we can safely update this values.
+            $baseitem->timemodified = $item->timemodified;
+            $baseitem->timecompleted = $item->timemodified;
+            // Append logs to the list.
+            $baseitem->log[$item->timemodified] = json_decode($item->log, false);
+            //$baseitem->log[0] = "Migrated from old record with id = ".$item->id;
+            $baseitem->status = ($item->status == 1) ? self::COMPLETED_WITH_SUCCESS : self::COMPLETED_WITH_ERRORS;
+            $baseitem->retries = 0;
+        }
+        // Insert ordered and simplified old records into new format.
+        foreach ($orderedoldrequests as $newrecord) {
+            $newrecord->log = json_encode($newrecord->log);
+            $DB->insert_record(merge_request::TABLE_MERGE_REQUEST, $newrecord);
         }
     }
 }

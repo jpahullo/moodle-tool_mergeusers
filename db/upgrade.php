@@ -1,28 +1,3 @@
-<?php
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-require_once __DIR__ . '/../classes/merge_request.php';
-use \tool_mergeusers\merge_request;
-/**
- * @package tool
- * @subpackage mergeusers
- * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>, Nicola Vallinoto <n.vallinoto@liguriadigitale.it>
- * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat) - 2023 Liguria Digitale (https://www.liguriadigitale.it)
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 /**
  * Take actions on upgrading mergeusers tool. Any Moodle instance that is having this plugin already installed,
  * must produce new table schema, and all existing data in old table (tool_mergeusers) should be migrated to the new table
