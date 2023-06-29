@@ -90,6 +90,13 @@ if ($hassiteconfig) {
         get_string('uniquekeynewidtomaintain_desc', 'tool_mergeusers'),
         1));
 
+    $settings->add(new admin_setting_configtext('tool_mergeusers/maxattempts',
+        get_string('maxattempts', 'tool_mergeusers'),
+        get_string('maxattempts_desc', 'tool_mergeusers'),
+        3,
+        PARAM_INT
+    ));
+
     // Add settings
     $ADMIN->add('tools', $settings);
 }

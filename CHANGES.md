@@ -1,6 +1,10 @@
 Release notes
 =============
 
+2023062900
+
+1. 2023-06-29 #242 - Add web services to plugin.
+
 2023061900
 
 1. 2023-06-19 #245 - Add list of incremental changes on file CHANGES.md.
