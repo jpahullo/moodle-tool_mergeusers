@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -205,8 +204,10 @@ class MergeUserTool
             ),
         ));
         $event->trigger();
-        $logid = $this->logger->log($toid, $fromid, $success, $log);
-        return array($success, $log, $logid);
+        //$logid = $this->logger->log($toid, $fromid, $success, $log);
+        //return array($success, $log, $logid);
+        return array($success, $log);
+
     }
 
     /**

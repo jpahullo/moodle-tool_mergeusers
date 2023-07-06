@@ -67,6 +67,22 @@
  * 
  * @directory   
  * @file        settings.php (update)
- * @description 
+ * @description
+ *  
+ * git status before the commit
+ *         modified:   CHANGES.md
+ *         new file:   classes/external/enqueue_merge_request.php
+ *         new file:   classes/external/get_data_merge_requests.php
+ *         new file:   classes/merge_request.php
+ *         new file:   classes/task/merge_user_accounts.php
+ *         new file:   classes/task/queue_to_process_pending_merge_requests.php
+ *         modified:   db/install.xml
+ *         new file:   db/services.php
+ *         new file:   db/tasks.php
+ *         modified:   db/upgrade.php
+ *         modified:   lang/en/tool_mergeusers.php
+ *         new file:   revisited_file.php
+ *         modified:   settings.php
+ *         modified:   version.php
  * 
  */

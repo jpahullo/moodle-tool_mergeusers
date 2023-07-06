@@ -42,10 +42,8 @@ class merge_user_accounts extends \core\task\adhoc_task {
             // Merge request was removed before running this task.
             return;
         }
-        $lookatcriteriaforusers = $this->verify_users_to_keep_and_remove($mergerequest);
-        mtrace("User to keep: field = " .$record->keepuserfield. " and value = " .$record->keepuservalue. " ");
-        mtrace("User to remove: field = " .$record->removeuserfield. " and value = " .$record->removeuservalue. " ");
-        $mergerequest = $this->merge($record, $maxattempts, merge_request::TRIED_WITH_ERROR);
+        $this->verify_users_to_keep_and_remove($mergerequest);
+        $mergerequestresult = $this->merge($mergerequest, $maxattempts, merge_request::TRIED_WITH_ERROR);
         if ($mergerequestresult->status == merge_request::COMPLETED_WITH_SUCCESS) {
             /* We run the merge request AGAIN because the user may be interacting with Moodle
             * while merge request is being processed, so that NO ALL records are correctly migrated
@@ -65,9 +63,10 @@ class merge_user_accounts extends \core\task\adhoc_task {
         $retries = $record->retries + 1;
         // Update retries.
         $this->update_retries_in_table($record->id, $retries);
+        $logs = [];
         $logs = $record->log;
         $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($record->keepuserid, $record->removeuserid);
+        list($success, $log) = $mut->merge($record->keepuserid, $record->removeuserid);
         if (!$success) {
             if ($retries >= $maxattempts) {
                 $status = merge_request::COMPLETED_WITH_ERRORS;
@@ -75,8 +74,12 @@ class merge_user_accounts extends \core\task\adhoc_task {
             } else {
                 $status = $statusforerror;
             }
+        } else {
+            $status = merge_request::COMPLETED_WITH_SUCCESS;
         }
-        $logs[$retries] = $log;
+        // Append logs to the list.
+        // $baseitem->log[$item->timemodified] = json_decode($item->log, false);
+        $logs[$record->timeadded] = $log;
         $this->update_status_and_log_in_table($record->id,
                                             $status,
                                             $logs);
@@ -91,8 +94,8 @@ class merge_user_accounts extends \core\task\adhoc_task {
                                                     int $status,
                                                     array $log): void {
         global $DB;
-        if ($status = merge_request::COMPLETED_WITH_SUCCESS ||
-                    $status = merge_request::COMPLETED_WITH_ERRORS) {
+        if ($status == merge_request::COMPLETED_WITH_SUCCESS ||
+                    $status == merge_request::COMPLETED_WITH_ERRORS) {
             $update = (object)[
                 'id' => $idrecord,
                 'status' => $status,
@@ -177,7 +180,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
     /**
      * Function to find user id or fail.
      */
-    protected function find_user_id_or_fail(int $mergerequestid, 
+    protected function find_user_id_or_fail(int $mergerequestid,
                                             string $userfield, string $uservalue): int {
         global $DB;
         $users = $DB->get_records(merge_request::TABLE_USERS, [$userfield => $uservalue]);
