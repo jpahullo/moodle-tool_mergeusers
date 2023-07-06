@@ -69,6 +69,10 @@
  * @file        settings.php (update)
  * @description
  *  
+ * @directory   lib
+ * @file        mergeusertool.php (update)
+ * @description 
+ * 
  * git status before the commit
  *         modified:   CHANGES.md
  *         new file:   classes/external/enqueue_merge_request.php
@@ -84,5 +88,5 @@
  *         new file:   revisited_file.php
  *         modified:   settings.php
  *         modified:   version.php
- * 
+ *         modified:   lib/mergeusertool.php
  */
