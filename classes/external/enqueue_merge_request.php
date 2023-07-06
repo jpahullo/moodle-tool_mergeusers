@@ -68,7 +68,7 @@ class enqueue_merge_request extends \external_api {
                                             'keepuserfield' => $keepuserfield,
                                             'keepuservalue' => $keepuservalue
                                             ]);
-        global $DB;
+        global $DB, $USER;
         // Insert of the merge request into tool_mergeusers_queue Moodle table.
         $usertoremove = $DB->get_records(merge_request::TABLE_USERS,
                                         [$removeuserfield => $removeuservalue]);
@@ -118,6 +118,7 @@ class enqueue_merge_request extends \external_api {
                 'keepuserfield' => $keepuserfield,
                 'keepuservalue' => $keepuservalue,
                 'keepuserid' => $keepuserid,
+                'mergedbyuserid' => $USER->id,
                 'timeadded' => $timeadded,
                 'status' => $status,
                 'retries' => $retries

@@ -36,10 +36,10 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
 
     if ($oldversion < 2013112912) {
 
-        // Define table tool_mergeusers to be created
+        // Define table tool_mergeusers to be created.
         $table = new xmldb_table('tool_mergeusers');
 
-        // Adding fields to table tool_mergeusers
+        // Adding fields to table tool_mergeusers.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('touserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('fromuserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
@@ -47,21 +47,21 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('log', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
 
-        // Adding keys to table tool_mergeusers
+        // Adding keys to table tool_mergeusers.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
 
-        // Adding indexes to table tool_mergeusers
+        // Adding indexes to table tool_mergeusers.
         $table->add_index('mdl_toolmerg_tou_ix', XMLDB_INDEX_NOTUNIQUE, array('touserid'));
         $table->add_index('mdl_toolmerg_fru_ix', XMLDB_INDEX_NOTUNIQUE, array('fromuserid'));
         $table->add_index('mdl_toolmerg_suc_ix', XMLDB_INDEX_NOTUNIQUE, array('success'));
         $table->add_index('mdl_toolmerg_tfs_ix', XMLDB_INDEX_NOTUNIQUE, array('touserid', 'fromuserid', 'success'));
 
-        // Conditionally launch create table for tool_mergeusersr
+        // Conditionally launch create table for tool_mergeusers.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
 
-        // mergeusers savepoint reached
+        // Mergeusers savepoint reached.
         upgrade_plugin_savepoint(true, 2013112912, 'tool', 'mergeusers');
     }
 
@@ -80,7 +80,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
     }
 
-    if ($oldversion < 2023062900) {
+    if ($oldversion < 2023062901) {
         // Define table tool_mergeusers_queue to be created.
         $table = new xmldb_table('tool_mergeusers_queue');
         // Adding fields to table tool_mergeusers_queue.
@@ -91,6 +91,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         $table->add_field('keepuserfield', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
         $table->add_field('keepuservalue', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
         $table->add_field('keepuserid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('mergedbyuserid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         $table->add_field('timeadded', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         $table->add_field('status', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, null);
@@ -110,8 +111,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
             merge_request::export_data_to_new_table();
         }
         // Mergeusers savepoint reached.
-        upgrade_plugin_savepoint(true, 2023062900, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2023062901, 'tool', 'mergeusers');
     }
-    
     return true;
 }
