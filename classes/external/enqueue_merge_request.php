@@ -31,6 +31,7 @@ use external_function_parameters;
 use external_multiple_structure;
 use external_single_structure;
 use external_value;
+use Exception;
 class enqueue_merge_request extends \external_api {
     /**
      * Webservice enqueue_merge_request parameters
