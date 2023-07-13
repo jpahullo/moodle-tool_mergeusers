@@ -69,6 +69,7 @@ class get_data_merge_requests extends \external_api {
                                     string $keepuserfield,
                                     string $keepuservalue,
                                     int $keepuserid,
+                                    int $mergedbyuserid,
                                     int $id,
                                     int $status): array {
         global $DB;
@@ -80,12 +81,10 @@ class get_data_merge_requests extends \external_api {
                                             'keepuserfield' => $keepuserfield,
                                             'keepuservalue' => $keepuservalue,
                                             'keepuserid' => $keepuserid,
+                                            'mergedbyuserid' => $mergeduserid,
                                             'id' => $id,
                                             'status' => $status]);
-        $sql = "SELECT
-                    id, removeuserfield, removeuservalue, removeuserid,
-                    keepuserfield, keepuservalue, keepuserid,
-                    timeadded, timemodified, status, retries, log
+        $sql = "SELECT *
                 FROM
                    {" .merge_request::TABLE_MERGE_REQUEST. "}
                 ";
@@ -120,6 +119,11 @@ class get_data_merge_requests extends \external_api {
             $whereclauses[] = 'keepuserid ' .$insql;
             array_push($paramsquery, $keepuserid);
         }
+        if (isset($mergedbyuserid) && !empty($mergedbyuserid)) {
+            [$insql, $params] = $DB->get_in_or_equal($mergedbyuserid);
+            $whereclauses[] = 'keepuserid ' .$insql;
+            array_push($paramsquery, $mergedbyuserid);
+        }
         if (isset($id) && !empty($id)) {
             [$insql, $params] = $DB->get_in_or_equal($id);
             $whereclauses[] = 'id '.$insql;
@@ -145,6 +149,7 @@ class get_data_merge_requests extends \external_api {
                     'keepuserfield' => new external_value(PARAM_TEXT, 'Keep user field'),
                     'keepuservalue' => new external_value(PARAM_TEXT, 'Keep user value'),
                     'keepuserid' => new external_value(PARAM_INT, 'Keep user id'),
+                    'mergedbyuserid' => new external_value(PARAM_INT, 'Merged by user id'),
                     'timeadded' => new external_value(PARAM_RAW, 'Time creation'),
                     'timemodified' => new external_value(PARAM_RAW, 'Time modified'),
                     'status' => new external_value(PARAM_INT, 'Status'),
