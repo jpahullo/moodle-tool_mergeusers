@@ -204,10 +204,7 @@ class MergeUserTool
             ),
         ));
         $event->trigger();
-        //$logid = $this->logger->log($toid, $fromid, $success, $log);
-        //return array($success, $log, $logid);
         return array($success, $log);
-
     }
 
     /**
