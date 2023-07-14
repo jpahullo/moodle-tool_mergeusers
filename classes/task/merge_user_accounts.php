@@ -17,6 +17,7 @@ namespace tool_mergeusers\task;
 defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . '/../../lib/autoload.php');
 use MergeUserTool;
+use moodle_exception;
 use \tool_mergeusers\merge_request;
 /**
  * Adhoc task to merge user accounts.
