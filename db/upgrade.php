@@ -80,7 +80,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
     }
 
-    if ($oldversion < 2023062901) {
+    if ($oldversion < 2023071701) {
         // Define table tool_mergeusers_queue to be created.
         $table = new xmldb_table('tool_mergeusers_queue');
         // Adding fields to table tool_mergeusers_queue.
@@ -111,7 +111,7 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
             merge_request::export_data_to_new_table();
         }
         // Mergeusers savepoint reached.
-        upgrade_plugin_savepoint(true, 2023062901, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2023071701, 'tool', 'mergeusers');
     }
     return true;
 }
