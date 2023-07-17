@@ -71,8 +71,8 @@ class enqueue_merge_request extends \external_api {
                                             ]);
         global $DB;
         // Insert of the merge request into tool_mergeusers_queue Moodle table.
-        $removeuserid = $this->get_user($removeuserfield, $removeuservalue);
-        $keepuserid = $this->get_user($keepuserfield, $keepuservalue);
+        $removeuserid = get_user($removeuserfield, $removeuservalue);
+        $keepuserid = get_user($keepuserfield, $keepuservalue);
         $timeadded = time();
         $status = merge_request::QUEUED_NOT_PROCESSED;
         $retries = 0;
