@@ -119,7 +119,7 @@ class get_data_merge_requests extends \external_api {
         }
         if (isset($mergedbyuserid) && !empty($mergedbyuserid)) {
             [$insql, $params] = $DB->get_in_or_equal($mergedbyuserid);
-            $whereclauses[] = 'keepuserid ' .$insql;
+            $whereclauses[] = 'mergedbyuserid ' .$insql;
             array_push($paramsquery, $mergedbyuserid);
         }
         if (isset($id) && !empty($id)) {
