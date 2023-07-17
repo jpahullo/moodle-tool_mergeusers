@@ -25,6 +25,7 @@
  */
 namespace tool_mergeusers;
 use stdClass;
+use moodle_exception;
 class merge_request {
     /**
      * Missing merge request id. This id really does not exist.
@@ -200,5 +201,31 @@ class merge_request {
         $log = json_decode($this->data->log, true);
         $log[$logtime] = $newlog;
         $this->data->log = json_encode($log);
+    }
+     /**
+     * Get user given userfield and uservalue filters.
+     */
+    public static function get_user(string $userfield, string $uservalue): int {
+        global $DB;
+        $users = $DB->get_records(self::TABLE_USERS,
+                                        [$userfield => $uservalue]);
+        if (count($users) == 0) {
+            throw new moodle_exception(get_string('cannotfinduser',
+                                            'tool_mergeusers',
+                                            (object)[
+                                                'userfield' => $userfield,
+                                                'uservalue'  => $uservalue,
+                                             ]));
+        }
+        if (count($users) > 1) {
+            throw new moodle_exception(get_string('toomanyusers',
+                                            'tool_mergeusers',
+                                            (object)[
+                                                'userfield' => $userfield,
+                                                'uservalue'  => $uservalue,
+                                             ]));
+        }
+        $user = reset($users);
+        return $user->id;
     }
 }
