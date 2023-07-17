@@ -199,4 +199,4 @@ $string['cannotfinduser'] = 'Cannot find the user with {$a->userfield} {$a->user
 $string['toomanyusers'] = 'More than one user found with {$a->userfield} {$a->uservalue}.';
 $string['maxattempts'] = 'Max number of attempts of a merge request.';
 $string['maxattempts_desc'] = 'This is the maximum number of attempts that a merge request will be tried to merge. After that number of attempts without success, the request will not be processed anymore and it will be updated as ended with errors.';
-$string['failedmergerequest'] = 'Failed merge request n° {$a->id}. Number of attempts: {$a->retries}';
+$string['failedmergerequest'] = 'Failed merge request  with id {$a->id}, on the attempt number {$a->retries}.';
