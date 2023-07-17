@@ -31,7 +31,7 @@ use external_function_parameters;
 use external_multiple_structure;
 use external_single_structure;
 use external_value;
-use Exception;
+use moodle_exception;
 class enqueue_merge_request extends \external_api {
     /**
      * Webservice enqueue_merge_request parameters
@@ -69,44 +69,10 @@ class enqueue_merge_request extends \external_api {
                                             'keepuserfield' => $keepuserfield,
                                             'keepuservalue' => $keepuservalue
                                             ]);
-        global $DB, $USER;
+        global $DB;
         // Insert of the merge request into tool_mergeusers_queue Moodle table.
-        $usertoremove = $DB->get_records(merge_request::TABLE_USERS,
-                                        [$removeuserfield => $removeuservalue]);
-        if (count($usertoremove) == 0) {
-            throw new Exception(get_string('cannotfinduser',
-                                            'tool_mergeusers',
-                                            (object)['userfield' => $removeuserfield,
-                                            'uservalue'  => $removeuservalue]));
-        }
-        if (count($usertoremove) > 1) {
-            throw new Exception(get_string('toomanyusers',
-                                            'tool_mergeusers',
-                                            (object)['userfield' => $removeuserfield,
-                                            'uservalue'  => $removeuservalue]));
-
-        }
-        foreach ($usertoremove as $item) {
-            $removeuserid = $item->id;
-        }
-        // Verify user to keep.
-        $usertokeep = $DB->get_records(merge_request::TABLE_USERS,
-                                        [$keepuserfield => $keepuservalue]);
-        if (count($usertokeep) == 0) {
-            throw new Exception(get_string('cannotfinduser',
-                                            'tool_mergeusers',
-                                            (object)['userfield' => $keepuserfield,
-                                            'uservalue'  => $keepuservalue]));
-        }
-        if (count($usertokeep) > 1) {
-            throw new Exception(get_string('toomanyusers',
-                                            'tool_mergeusers',
-                                            (object)['userfield' => $keepuserfield,
-                                            'uservalue'  => $keepuservalue]));
-        }
-        foreach ($usertokeep as $item) {
-            $keepuserid = $item->id;
-        }
+        $removeuserid = $this->get_user($removeuserfield, $removeuservalue);
+        $keepuserid = $this->get_user($keepuserfield, $keepuservalue);
         $timeadded = time();
         $status = merge_request::QUEUED_NOT_PROCESSED;
         $retries = 0;
@@ -128,5 +94,28 @@ class enqueue_merge_request extends \external_api {
     }
     public static function execute_returns() {
             return new external_value(PARAM_INT, 'Identifier of the merge request');
+    }
+    private function get_user(string $userfield, string $uservalue): int {
+        global $DB;
+        $users = $DB->get_records(merge_request::TABLE_USERS,
+                                        [$userfield => $uservalue]);
+        if (count($users) == 0) {
+            throw new moodle_exception(get_string('cannotfinduser',
+                                            'tool_mergeusers',
+                                            (object)[
+                                                'userfield' => $userfield,
+                                                'uservalue'  => $uservalue,
+                                             ]));
+        }
+        if (count($users) > 1) {
+            throw new moodle_exception(get_string('toomanyusers',
+                                            'tool_mergeusers',
+                                            (object)[
+                                                'userfield' => $removeuserfield,
+                                                'uservalue'  => $removeuservalue,
+                                             ]));
+        }
+        $user = reset($users);
+        return $user->id;
     }
 }

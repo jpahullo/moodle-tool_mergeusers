@@ -44,6 +44,7 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
                                                         $sort = '',
                                                         $fields = 'id');
         $numberofpendingrequest  = 0;
+        mtrace("Generating adhoc tasks for these merge requests:");
         foreach ($mergerequestsnotyetscheduled as $mergerequest) {
             // Add to adhoc_task - Create the instance.
             $mytask = new \tool_mergeusers\task\merge_user_accounts();
@@ -54,9 +55,9 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
             $this->update_status_table($mergerequest->id,
                                         merge_request::QUEUED_TO_BE_PROCESSED);
             $numberofpendingrequest = $numberofpendingrequest + 1;
-            mtrace("Adhoc task: merge request n. " .$mergerequest->id. " queued.");
+            mtrace($mergerequest->id);
         }
-        mtrace('There are ' .$numberofpendingrequest. ' pending requests to schedule.');
+        mtrace('Number of queued merge requests to be processed immediately:' . $numberofpendingrequest);
     }
     /**
      * Function for updating the status of the record to be executed.
