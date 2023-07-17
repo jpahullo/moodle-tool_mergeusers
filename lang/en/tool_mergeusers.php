@@ -104,11 +104,11 @@ $string['excluded_exceptions_desc'] = 'Experience on this subject suggests
     Therefore, for applying default plugin behaviour, you need to choose \'{$a}\'
     to exclude all those tables from the merging process (recommended).<br>
     If you prefer, you can exclude any of those tables and include them in the
-    merging process (not recommended).'
+    merging process (not recommended).';
 
 // New strings.
 
-// Progress bar.
+// Progress bar
 $string['choose_users'] = 'Choose users to merge';
 $string['review_users'] = 'Confirm users to merge';
 $string['results'] = 'Merging results and log';
