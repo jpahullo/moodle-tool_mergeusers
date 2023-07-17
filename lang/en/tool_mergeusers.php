@@ -108,7 +108,7 @@ $string['excluded_exceptions_desc'] = 'Experience on this subject suggests
 
 // New strings.
 
-// Progress bar
+// Progress bar.
 $string['choose_users'] = 'Choose users to merge';
 $string['review_users'] = 'Confirm users to merge';
 $string['results'] = 'Merging results and log';
