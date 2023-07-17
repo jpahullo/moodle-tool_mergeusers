@@ -212,3 +212,4 @@ $string['toomanyusers'] = 'More than one user found with {$a->userfield} {$a->us
 $string['maxattempts'] = 'Max number of attempts of a merge request.';
 $string['maxattempts_desc'] = 'This is the maximum number of attempts that a merge request will be tried to merge. After that number of attempts without success, the request will not be processed anymore and it will be updated as ended with errors.';
 $string['failedmergerequest'] = 'Failed merge request  with id {$a->id}, on the attempt number {$a->retries}.';
+$string['maxattemptsreached'] = 'Reached the number of maximum attempts.';

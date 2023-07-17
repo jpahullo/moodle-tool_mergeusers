@@ -46,7 +46,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
         // From stdClass to merge_request class.
         $mergerequest = merge_request::from($mergerequest);
         if ($mergerequest->retries > $maxattempts) {
-            $log_attempts = array("Reached the number of maximum attempts.");
+            $log_attempts = get_string('maxattemptsreached', 'tool_mergeusers');
             $mergerequest->append_log($log_attempts, time());
             $this->update_status_and_log($mergerequest->id,
                                         merge_request::COMPLETED_WITH_ERRORS,
@@ -68,7 +68,12 @@ class merge_user_accounts extends \core\task\adhoc_task {
         if ($mergerequestresult->status != merge_request::COMPLETED_WITH_ERRORS &&
             $mergerequestresult->status != merge_request::COMPLETED_WITH_SUCCESS) {
             // Throwing exception will ensure this adhoc task is re-queued until $maxretries is reached.
-            throw new moodle_exception(get_string('failedmergerequest', 'tool_mergeusers'));
+            throw new moodle_exception(get_string('failedmergerequest', 
+                                                'tool_mergeusers'),
+                                                (object)[
+                                                    'retries' => $mergerequest->retries,
+                                                    'id'  => $mergerequestresult->id,
+                                                ]);
         }
     }
     /**
@@ -94,7 +99,7 @@ class merge_user_accounts extends \core\task\adhoc_task {
         }
         $mergerequest->append_log($log, time());
         if ($mergerequest->retries > $maxattempts) {
-            $log_attempts = "Reached the number of maximum attempts";
+            $log_attempts = get_string('maxattemptsreached', 'tool_mergeusers');
             $mergerequest->append_log($log_attempts, time());
             $status = merge_request::COMPLETED_WITH_ERRORS;
         } 

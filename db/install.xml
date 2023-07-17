@@ -13,7 +13,7 @@
         <FIELD NAME="keepuserfield" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="User that will remain with data of both users."/>
         <FIELD NAME="keepuservalue" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="User that will remain with data of both users."/>
         <FIELD NAME="keepuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User that will remain with data of both users."/>
-        <FIELD NAME="mergedbyuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="mergedbyuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User making the merge request."/>
         <FIELD NAME="timeadded" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time stamp when the merging request was added to the queue."/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Time stamp when the merging request status has beeen updated."/>
         <FIELD NAME="status" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false" COMMENT="Was the action concluded ok?"/>
