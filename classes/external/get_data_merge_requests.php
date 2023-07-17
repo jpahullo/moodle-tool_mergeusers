@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 namespace tool_mergeusers\external;
-defined('MOODLE_INTERNAL') || die();
 use \tool_mergeusers\merge_request;
 use external_function_parameters;
 use external_multiple_structure;
@@ -49,6 +48,8 @@ class get_data_merge_requests extends \external_api {
                     PARAM_RAW, 'Keep user value',  VALUE_DEFAULT, ''),
                 'keepuserid' => new external_value(
                     PARAM_INT, 'Identifier of the keep user id',  VALUE_DEFAULT, 0),
+                'mergedbyuserid' => new external_value(
+                    PARAM_INT, 'Identifier of the user making the merge request.',  VALUE_DEFAULT, 0),
                 'id' => new external_value(
                     PARAM_INT, 'Identifier of the merge request',  VALUE_DEFAULT, 0),
                 'status' => new external_value(
@@ -57,11 +58,8 @@ class get_data_merge_requests extends \external_api {
     }
     /**
      * Return data of the custom queue of the merge request
-     *
      * @param $mergeusers id of the merge users request
-     *
      * Return array with data of the custom queue of the merge request
-     *
      */
     public static function execute(string $removeuserfield,
                                     string $removeuservalue,

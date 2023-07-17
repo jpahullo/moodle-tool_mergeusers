@@ -79,6 +79,9 @@ class merge_request {
      * @var string
      */
     const TABLE_USERS = 'user';
+    /** 
+     * @var object merge request database record. 
+     */
     private $data;
     /**
      * Private constructor for the singleton.
@@ -86,7 +89,6 @@ class merge_request {
     private function __construct(stdClass $data) {
         $this->data = $data;
     }
-
     /**
      * Singleton method.
      * @return stdClass singleton instance.
@@ -94,7 +96,6 @@ class merge_request {
     public static function from(stdClass $data) {
         return new self($data);
     }
-
     /**
      * Accessor to properties from the current config as attributes of a standard object.
      * @param string $name name of attribute;
@@ -102,15 +103,14 @@ class merge_request {
      */
     public function __get($name) {
         if (isset($this->data->{$name})) {
-                $value = $this->data->{$name};
-            if ($name == 'log') {
-                $value = json_decode($value, true);
-            }
+            $value = $this->data->{$name};
+                if ($name == 'log') {
+                    $value = json_decode($value, true);
+                } 
             return $value;
         }
         return null;
     }
-
     public function __set($name, $value) {
         if (isset($this->data->{$name})) {
             if ($name == 'log') {
@@ -119,21 +119,6 @@ class merge_request {
             $this->data->{$name} = $value;
         }
     }
-
-    /**
-     * Convert log to the new format.
-     * @param log field;
-     * @return
-     */
-    public function convert_log_to_new_format() {
-        if (!isset($this->data->log) || empty($this->data->log)) {
-            return;
-        }
-        $logs = [];
-        $logs[1] = json_decode($this->data->log, true);
-        $this->data->log = json_encode($logs);
-    }
-
     /**
      * Get funtcion.
      * @return data
@@ -141,7 +126,6 @@ class merge_request {
     public function get_record(): \stdClass {
         return $this->data;
     }
-
     /**
      * Export data to new merge users table.
      */
@@ -184,9 +168,8 @@ class merge_request {
             $baseitem->timecompleted = $item->timemodified;
             // Append logs to the list.
             $baseitem->log[$item->timemodified] = json_decode($item->log, false);
-            // $baseitem->log[0] = "Migrated from old record with id = ".$item->id;.
             $baseitem->status = ($item->status == 1) ? self::COMPLETED_WITH_SUCCESS : self::COMPLETED_WITH_ERRORS;
-            $baseitem->retries = 0;
+            $baseitem->retries = count($baseitem->log);
         }
         // Insert ordered and simplified old records into new format.
         foreach ($orderedoldrequests as $newrecord) {
@@ -202,8 +185,8 @@ class merge_request {
         $log[$logtime] = $newlog;
         $this->data->log = json_encode($log);
     }
-     /**
-     * Get user given userfield and uservalue filters.
+    /**
+     * Get user id given userfield and uservalue filters.
      */
     public static function get_user(string $userfield, string $uservalue): int {
         global $DB;
