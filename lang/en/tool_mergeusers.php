@@ -1,5 +1,18 @@
 <?php
-
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
  * Define default English language strings for report
  * @author Forrest Gaston
@@ -7,11 +20,11 @@
  * @author Shane Elliott, Pukunui Technology
  * @author Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
  * @author John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @author Nicola Vallinoto, Liguria Digitale
  * @package tool_mergeusers
  * @link http://moodle.org/mod/forum/discuss.php?d=103425
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 $string['pluginname'] = 'Merge user accounts';
 $string['header'] = 'Merge two users into a single account';
 $string['header_help'] =
@@ -52,7 +65,7 @@ second one. The first user id (fromid) will 'lose' all its data to be 'migrated'
 into the second one (toid). The user 'toid' will include data from both users.";
 $string['cligathering:stopping'] = 'To stop merging, Ctrl+C or type -1 either on fromid or toid fields.';
 $string['cligathering:fromid'] = 'Source user id (fromid):';
-$string['cligathering:toid'] =   'Target user id   (toid):';
+$string['cligathering:toid'] = 'Target user id (toid):';
 $string['viewlog'] = 'See merging logs';
 $string['loglist'] = 'All these records are merging actions done, showing if they went ok:';
 $string['newuseridonlog'] = 'User kept';
@@ -68,8 +81,7 @@ $string['errortransactionsonly'] = 'Error: transactions are required, but your d
     Please, review plugin settings to set up them accordingly.';
 $string['eventusermergedsuccess'] = 'Merging success';
 $string['eventusermergedfailure'] = 'Merge failed';
-
-// Settings page
+// Settings page.
 $string['transactions_setting'] = 'Only transactions allowed';
 $string['transactions_setting_desc'] = 'If enabled, merge users will not work
     at all on databases that do NOT support transactions (recommended).
@@ -94,14 +106,14 @@ $string['excluded_exceptions_desc'] = 'Experience on this subject suggests
     If you prefer, you can exclude any of those tables and include them in the
     merging process (not recommended).';
 
-//New strings
+// New strings.
 
-// Progress bar
+// Progress bar.
 $string['choose_users'] = 'Choose users to merge';
 $string['review_users'] = 'Confirm users to merge';
 $string['results'] = 'Merging results and log';
 
-// Form Strings
+// Form Strings.
 $string['form_header'] = 'Find users to merge';
 $string['form_description'] = '<p>You may search for users here if you don\'t
     know the user\'s username/id number. Otherwise you may expand the form to
@@ -121,21 +133,21 @@ $string['mergeusers_confirm'] = 'After confirming the merge process will start.
     Are you sure you want to continue?';
 $string['clear_selection'] = 'Clear current user selection';
 
-// Merge users select table
+// Merge users select table.
 $string['olduser'] = 'User to remove';
 $string['newuser'] = 'User to keep';
 $string['saveselection_submit'] = 'Save selection';
 $string['userselecttable_legend'] = '<b>Select users to merge</b>';
 
-// Merge users review table
+// Merge users review table.
 $string['userreviewtable_legend'] = '<b>Review users to merge</b>';
 
-// Error string
+// Error string.
 $string['error_return'] = 'Return to search form';
 $string['no_saveselection'] = 'You did not select either an old or new user.';
 $string['invalid_option'] = 'Invalid form option';
 
-// Settings page
+// Settings page.
 $string['suspenduser_setting'] = 'Suspend old user';
 $string['suspenduser_setting_desc'] = 'If enabled, it suspends the old user
     automatically upon a succesful merging process, preventing the user
@@ -153,7 +165,7 @@ $string['transactions_setting_desc'] = 'If enabled, merge users will not work
     in your Moodle installation, you can be quiet on running this plugin
     enabling or disabling this option.';
 
-// quiz attempts strings
+// Quiz attempts strings.
 $string['quizattemptsaction'] = 'How to resolve quiz attempts';
 $string['quizattemptsaction_desc'] = 'When merging quiz attempts there may exist three cases:
     <ol>
@@ -184,13 +196,20 @@ $string['qa_chosen_action'] = 'Active option for quiz attempts: {$a}.';
 $string['qa_grades'] = 'Grades recalculated for quizzes: {$a}.';
 
 $string['uniquekeynewidtomaintain'] = 'Keep new user\'s data';
-$string['uniquekeynewidtomaintain_desc'] = 'In case of conflict, 
-    like when the user.id related column is a unique key, this plugin will keep 
-    data from new user (by default). This also means that data from old user is 
-    deleted to keep the consistence. Otherwise, if you uncheck this option, 
+$string['uniquekeynewidtomaintain_desc'] = 'In case of conflict,
+    like when the user.id related column is a unique key, this plugin will keep
+    data from new user (by default). This also means that data from old user is
+    deleted to keep the consistence. Otherwise, if you uncheck this option,
     data from old user will be kept.';
 
 $string['starttime'] = 'Started merging at {$a}';
 $string['finishtime'] = 'Finished merging at {$a}';
 $string['timetaken'] = 'Merge took {$a} seconds';
 $string['privacy:metadata'] = 'The Merge User Accounts plugin does not store any personal data.';
+$string['queue_to_process_pending_merge_requests'] = 'Get queue of the pending merge requests and launch adhoc task for each single request';
+$string['cannotfinduser'] = 'Cannot find the user with {$a->userfield} {$a->uservalue}.';
+$string['toomanyusers'] = 'More than one user found with {$a->userfield} {$a->uservalue}.';
+$string['maxattempts'] = 'Max number of attempts of a merge request.';
+$string['maxattempts_desc'] = 'This is the maximum number of attempts that a merge request will be tried to merge. After that number of attempts without success, the request will not be processed anymore and it will be updated as ended with errors.';
+$string['failedmergerequest'] = 'Failed merge request  with id {$a->id}, on the attempt number {$a->retries}.';
+$string['maxattemptsreached'] = 'Reached the number of maximum attempts.';
