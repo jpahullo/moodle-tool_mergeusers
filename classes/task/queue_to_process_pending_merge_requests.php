@@ -57,7 +57,7 @@ class queue_to_process_pending_merge_requests extends \core\task\scheduled_task 
             $numberofpendingrequest = $numberofpendingrequest + 1;
             mtrace($mergerequest->id);
         }
-        mtrace('Number of queued merge requests to be processed immediately:' . $numberofpendingrequest);
+        mtrace('Number of queued merge requests to be processed immediately: ' . $numberofpendingrequest);
     }
     /**
      * Function for updating the status of the record to be executed.
