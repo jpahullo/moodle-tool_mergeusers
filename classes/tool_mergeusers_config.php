@@ -72,6 +72,11 @@ class tool_mergeusers_config {
             $localconfig = include dirname(__DIR__) . '/config/config.local.php';
             $config = array_replace_recursive($config, $localconfig);
         }
+        $outerLocalConfigFile = dirname(__DIR__) . '/../mergeusers.config.local.php';
+        if (file_exists($outerLocalConfigFile)) {
+            $outerLocalConfig = include $outerLocalConfigFile;
+            $config = array_replace_recursive($config, $outerLocalConfig);
+        }
         $this->config = $config;
     }
 
