@@ -166,7 +166,12 @@ if (!empty($option)) {
         $user_select_table = new UserSelectTable($search_users, $renderer);
 
         echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $user_select_table);
+    } else if (!empty($data->profilegroup['searchprofile'])) {
+        // Search by custom user profile fields.
+        $search_users = $mus->search_users($data->profilegroup['searchprofile'], $data->profilegroup['profilefieldid']);
+        $user_select_table = new UserSelectTable($search_users, $renderer);
 
+        echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $user_select_table);
         // only run this step if there are both a new and old userids
     } else if (!empty($data->oldusergroup['olduserid']) && !empty($data->newusergroup['newuserid'])) {
         //get and verify the userids from the selection form usig the verify_user function (second field is column)

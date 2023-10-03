@@ -91,5 +91,13 @@ if ($hassiteconfig) {
         1));
 
     // Add settings
+    // Search by Profile fields.
+    $profilefieldsoptions = tool_mergeusers_build_profilefields_options();
+    $settings->add(new admin_setting_configmultiselect('tool_mergeusers/profilefields',
+         get_string('profilefields', 'tool_mergeusers'),
+         get_string('profilefields_desc', 'tool_mergeusers', $profilefieldsoptions->defaultvalue),
+         array($profilefieldsoptions->defaultkey), // Default value: none.
+         $profilefieldsoptions->options));
+    // Add settings.
     $ADMIN->add('tools', $settings);
 }

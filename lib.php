@@ -81,3 +81,25 @@ function tool_mergeusers_build_quiz_options() {
 
     return $result;
 }
+
+function tool_mergeusers_build_profilefields_options() {
+    global $CFG;
+    require_once($CFG->dirroot.'/user/filters/profilefield.php');
+    $userprofile = new \user_filter_profilefield('profile', get_string('profilefields', 'admin'), false);
+    $profiefields = $userprofile->get_profile_fields();
+
+    $none = get_string('none');
+    $options = array(-1 => $none);
+    if (array_diff_key($profiefields, array(0 => 'any field'))) {
+
+        foreach ($profiefields as $fieldid => $fieldname) {
+            $options[$fieldid] = $fieldname;
+        }
+    }
+    $result = new \stdClass();
+    $result->defaultkey = -1;
+    $result->defaultvalue = $none;
+    $result->options = $options;
+
+    return $result;
+}
