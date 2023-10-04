@@ -166,30 +166,25 @@ class MergeUserSearch{
      *          1 => Message for invalid user to display/log
      *      )
      */
-    public function verify_user($uinfo, $column){
+    public function verify_user($uinfo, $column) {
         global $DB;
         $message = '';
-        try {
-            $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
-        } catch (Exception $e) {
-            $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
-            $user = null;
-            if (is_numeric($column)) {
-                // Search by custom user profile field.
-                $results = $this->search_users($uinfo, $column);
-                if (!empty($results)) {
-                       $user = array_shift($results);
-                }
-            } else {
-                  // Search by field of user table.
-                try {
-                     $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
-                } catch (Exception $e) {
-                       $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
-                       $user = null;
-                }
+        $user = null;
+        if (is_numeric($column)) {
+            // Search by custom user profile field.
+            $results = $this->search_users($uinfo, $column);
+            if (!empty($results)) {
+                   $user = array_shift($results);
+            }
+        } else {
+              // Search by field of user table.
+            try {
+                 $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
+            } catch (Exception $e) {
+                   $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
+                   $user = null;
+            }
         }
-
         return array($user, $message);
     }
 

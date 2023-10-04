@@ -86,13 +86,13 @@ function tool_mergeusers_build_profilefields_options() {
     global $CFG;
     require_once($CFG->dirroot.'/user/filters/profilefield.php');
     $userprofile = new \user_filter_profilefield('profile', get_string('profilefields', 'admin'), false);
-    $profiefields = $userprofile->get_profile_fields();
+    $profilefields = $userprofile->get_profile_fields();
 
     $none = get_string('none');
     $options = array(-1 => $none);
-    if (array_diff_key($profiefields, array(0 => 'any field'))) {
+    if (array_diff_key($profilefields, array(0 => get_string('anyfield', 'filters')))) {
 
-        foreach ($profiefields as $fieldid => $fieldname) {
+        foreach ($profilefields as $fieldid => $fieldname) {
             $options[$fieldid] = $fieldname;
         }
     }
