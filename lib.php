@@ -89,8 +89,8 @@ function tool_mergeusers_build_profilefields_options() {
     $profilefields = $userprofile->get_profile_fields();
 
     $none = get_string('none');
-    $options = array(-1 => $none);
-    if (array_diff_key($profilefields, array(0 => get_string('anyfield', 'filters')))) {
+    $options = [-1 => $none];
+    if (array_diff_key($profilefields, [0 => get_string('anyfield', 'filters')])) {
 
         foreach ($profilefields as $fieldid => $fieldname) {
             $options[$fieldid] = $fieldname;

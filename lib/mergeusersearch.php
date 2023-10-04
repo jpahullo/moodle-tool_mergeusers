@@ -106,44 +106,43 @@ class MergeUserSearch{
                 $sql = 'SELECT * FROM {user} WHERE idnumber LIKE :idnumber';
 
                 break;
-            default: 
-            if (is_numeric($searchfield)) {
-                // search by profile field.
-                // Default is to search on all custom profile fields.
-                $params = array(
-                   'data' => '%' . $input . '%',
-                );
+            default:
+                if (is_numeric($searchfield)) {
+                    // Search by profile field.
+                    $params = [
+                        'data' => '%' . $input . '%',
+                    ];
 
-                $sql = ' SELECT usr.* FROM {user} usr';
-                $sql .= ' LEFT JOIN {user_info_data} uid ON usr.id=uid.userid ';
-                $sql .= ' WHERE uid.data LIKE :data ';
-                if (intval($searchfield) > 0) {// Search on a specific field.
-                    $params['fieldid'] = intval($searchfield);
-                    $sql .= ' AND  uid.fieldid=:fieldid';
+                    $sql = ' SELECT usr.* FROM {user} usr';
+                    $sql .= ' LEFT JOIN {user_info_data} uid ON usr.id=uid.userid ';
+                    $sql .= ' WHERE uid.data LIKE :data ';
+                    if (intval($searchfield) > 0) {// Search on a specific field.
+                        $params['fieldid'] = intval($searchfield);
+                        $sql .= ' AND  uid.fieldid=:fieldid';
+                    }
+                } else {
+                    // search on all fields by default
+
+                    $params = array(
+                        'userid'     =>  $input,
+                        'username'   => '%' . $input . '%',
+                        'firstname'  => '%' . $input . '%',
+                        'lastname'   => '%' . $input . '%',
+                        'email'      => '%' . $input . '%',
+                        'idnumber'      => '%' . $input . '%'
+                    );
+
+                    $sql =
+                        'SELECT *
+                        FROM {user}
+                        WHERE
+                            id = :userid OR
+                            username LIKE :username OR
+                            firstname LIKE :firstname OR
+                            lastname LIKE :lastname OR
+                            email LIKE :email OR
+                            idnumber LIKE :idnumber';
                 }
-            } else {
-              // search on all fields by default
-
-                $params = array(
-                    'userid'     =>  $input,
-                    'username'   => '%' . $input . '%',
-                    'firstname'  => '%' . $input . '%',
-                    'lastname'   => '%' . $input . '%',
-                    'email'      => '%' . $input . '%',
-                    'idnumber'      => '%' . $input . '%'
-                );
-
-                $sql =
-                   'SELECT *
-                    FROM {user}
-                    WHERE
-                        id = :userid OR
-                        username LIKE :username OR
-                        firstname LIKE :firstname OR
-                        lastname LIKE :lastname OR
-                        email LIKE :email OR
-                        idnumber LIKE :idnumber';
-            }
                 break;
         }
 
