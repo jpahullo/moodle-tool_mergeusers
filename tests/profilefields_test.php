@@ -14,15 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_mergeusers;
+
 /**
  * Version information
- *
+ * Inspired by enrolments_test.php and user/tests/profilelib_test.php
  * @package    tool
  * @subpackage mergeusers
+ * @covers \MergeUserSearch
  * @author     Johnny Tsheke
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class profilefields_test extends advanced_testcase {
+class profilefields_test extends \advanced_testcase {
     /**
      * Setup the test.
      */
@@ -35,116 +38,110 @@ class profilefields_test extends advanced_testcase {
     }
 
     /**
-     * search user by profile field
+     * Enrol two users on one unique course each and one shared course.
+     * Search each user by a profile field value then merge them.
      *
-     * @return tool_mergeusers
+     * @group tool_mergeusers
      * @group tool_mergeusers_profilefields
      */
     public function test_searchbyprofilefields() {
         global $DB;
-        $user_keep = $this->getDataGenerator()->create_user();
+        $userone = $this->getDataGenerator()->create_user();
 
          // Add custom field of normal text type.
-         $field1 = $this->getDataGenerator()->create_custom_profile_field(array(
+         $fieldid = $this->getDataGenerator()->create_custom_profile_field([
             'shortname' => 'frogname', 'name' => 'Name of frog',
-            'datatype' => 'text'))->id;
-         // Check both are returned using normal option.
-        $result = profile_get_custom_fields();
-        $this->assertArrayHasKey($field1, $result);
-        $this->assertEquals('frogname', $result[$field1]->shortname);
-        //add user1 profile data
-        $profile1 = new \stdClass();
-        $profile1->userid = $user_keep->id;
-        $profile1->fieldid = $field1;
-        $profile1->data = 'frogvalue1';
-        $DB->insert_record('user_info_data',$profile1);
-        $mut = new MergeUserTool();
+            'datatype' => 'text', ])->id;
+         // Check that profile field was created.
+        $results = profile_get_custom_fields();
+        $this->assertArrayHasKey($fieldid, $results);
+        $this->assertEquals('frogname', $results[$fieldid]->shortname);
+        // Add userone profile data.
+        $uidone = new \stdClass();
+        $uidone->userid = $userone->id;
+        $uidone->fieldid = $fieldid;
+        $uidone->data = 'frogvalueone';
+        $DB->insert_record('user_info_data', $uidone);
+
         // Search tool for searching for users and verifying them.
-        $mus = new MergeUserSearch();
-        $searchusers = $mus->search_users('frogvalue1', $field1);
+        $mus = new \MergeUserSearch();
+        $searchusers = $mus->search_users('frogvalueone', $fieldid);
         $this->assertCount(1, $searchusers);
-        // Create the second user
-        $user_remove = $this->getDataGenerator()->create_user();
-        //add user2 profile data
-        $profile2 = new \stdClass();
-        $profile2->userid = $user_remove->id;
-        $profile2->fieldid = $field1;
-        $profile2->data = 'frogvalue2';
-        $DB->insert_record('user_info_data',$profile2);
-        $searchusers = $mus->search_users('frogvalue2', $field1);
+
+        // Create the another user.
+        $usertwo = $this->getDataGenerator()->create_user();
+
+        // Add usertwo profile data.
+        $uidtwo = new \stdClass();
+        $uidtwo->userid = $usertwo->id;
+        $uidtwo->fieldid = $fieldid;
+        $uidtwo->data = 'frogvaluetwo';
+        $DB->insert_record('user_info_data', $uidtwo);
+        $searchusers = $mus->search_users('frogvaluetwo', $fieldid);
         $this->assertCount(1, $searchusers);
-        
-        // Found all user
-        $searchusers = $mus->search_users('frogvalue', $field1);
+
+        // Check that search by profile field finds all users.
+        $searchusers = $mus->search_users('frogvalue', $fieldid);
         $this->assertCount(2, $searchusers);
 
-        // Test user to remove is not suspended
-        $this->assertEquals(0, $user_remove->suspended);
-
-        // Merge test
-      
-        $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($user_keep->id, $user_remove->id);
-
-        // Check $user_remove is suspended.
-        $user_remove = $DB->get_record('user', array('id' => $user_remove->id));
-        $this->assertEquals(1, $user_remove->suspended);
-    }
-    /**
-     * Enrol two users on one unique course each and one shared course
-     * then merge them.
-     * @group tool_mergeusers
-     * @group tool_mergeusers_profilefields
-     */
-    public function test_mergeenrolments() {
-        global $DB;
-
-        // Setup two users to merge.
-        $user_remove = $this->getDataGenerator()->create_user();
-        $user_keep = $this->getDataGenerator()->create_user();
+        // Check that userone and usertwo are not suspended.
+        $this->assertEquals(0, $userone->suspended);
+        $this->assertEquals(0, $usertwo->suspended);
 
         // Create three courses.
         $course1 = $this->getDataGenerator()->create_course();
         $course2 = $this->getDataGenerator()->create_course();
         $course3 = $this->getDataGenerator()->create_course();
 
-        $maninstance1 = $DB->get_record('enrol', array('courseid'=>$course1->id, 'enrol'=>'manual'), '*', MUST_EXIST);
-        $maninstance2 = $DB->get_record('enrol', array('courseid'=>$course2->id, 'enrol'=>'manual'), '*', MUST_EXIST);
-        $maninstance3 = $DB->get_record('enrol', array('courseid'=>$course3->id, 'enrol'=>'manual'), '*', MUST_EXIST);
+        $maninstance1 = $DB->get_record('enrol', ['courseid' => $course1->id, 'enrol' => 'manual'], '*', MUST_EXIST);
+        $maninstance2 = $DB->get_record('enrol', ['courseid' => $course2->id, 'enrol' => 'manual'], '*', MUST_EXIST);
+        $maninstance3 = $DB->get_record('enrol', ['courseid' => $course3->id, 'enrol' => 'manual'], '*', MUST_EXIST);
 
         $manual = enrol_get_plugin('manual');
 
-        $studentrole = $DB->get_record('role', array('shortname'=>'student'));
+        $studentrole = $DB->get_record('role', ['shortname' => 'student']);
 
-        // Enrol $user_remove on course 1 + 2 and $user_keep on course 2 + 3.
-        $manual->enrol_user($maninstance1, $user_remove->id, $studentrole->id);
-        $manual->enrol_user($maninstance2, $user_remove->id, $studentrole->id);
-        $manual->enrol_user($maninstance2, $user_keep->id, $studentrole->id);
-        $manual->enrol_user($maninstance3, $user_keep->id, $studentrole->id);
+        // Enrol $user2 on course 1 + 2 and $user1 on course 2 + 3.
+        $manual->enrol_user($maninstance1, $usertwo->id, $studentrole->id);
+        $manual->enrol_user($maninstance2, $usertwo->id, $studentrole->id);
+        $manual->enrol_user($maninstance2, $userone->id, $studentrole->id);
+        $manual->enrol_user($maninstance3, $userone->id, $studentrole->id);
 
-        // Check initial state of enrolments for $user_remove.
-        $courses = enrol_get_all_users_courses($user_remove->id);
+        // Check initial state of enrolments for $usertwo.
+        $courses = enrol_get_all_users_courses($usertwo->id);
         ksort($courses);
         $this->assertCount(2, $courses);
-        $this->assertEquals(array($course1->id, $course2->id), array_keys($courses));
+        $this->assertEquals([$course1->id, $course2->id], array_keys($courses));
 
-        // Check initial state of enrolments for $user_keep.
-        $courses = enrol_get_all_users_courses($user_keep->id);
+        // Check initial state of enrolments for $userone.
+        $courses = enrol_get_all_users_courses($userone->id);
         ksort($courses);
         $this->assertCount(2, $courses);
-        $this->assertEquals(array($course2->id, $course3->id), array_keys($courses));
+        $this->assertEquals([$course2->id, $course3->id], array_keys($courses));
 
-        $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($user_keep->id, $user_remove->id);
+        // Search users by profile field and merge userwon into userone.
+        $userkeep = $mus->search_users('frogvalueone', $fieldid)[$userone->id];
+        $userremove = $mus->search_users('frogvaluetwo', $fieldid)[$usertwo->id];
+        $mut = new \MergeUserTool();
+        list($success, $log, $logid) = $mut->merge($userkeep->id, $userremove->id);
 
-        // Check $user_remove is suspended.
-        $user_remove = $DB->get_record('user', array('id' => $user_remove->id));
-        $this->assertEquals(1, $user_remove->suspended);
+        // Check userone still not suspended but usertwo is now suspended.
+        $userone = $DB->get_record('user', ['id' => $userone->id]);
+        $this->assertEquals(0, $userone->suspended);
 
-        // Check $user_keep is now enrolled on all three courses.
-        $courses = enrol_get_all_users_courses($user_keep->id);
+        $usertwo = $DB->get_record('user', ['id' => $usertwo->id]);
+        $this->assertEquals(1, $usertwo->suspended);
+
+        // Check userone is now enrolled on all three courses.
+        $courses = enrol_get_all_users_courses($userone->id);
         ksort($courses);
         $this->assertCount(3, $courses);
-        $this->assertEquals(array($course1->id, $course2->id, $course3->id), array_keys($courses));
+        $this->assertEquals([$course1->id, $course2->id, $course3->id], array_keys($courses));
+
+        // Check usertwo is no longer enrolled on any course.
+        $courses = enrol_get_all_users_courses($usertwo->id);
+        $this->assertCount(0, $courses);
+
     }
+
 }
