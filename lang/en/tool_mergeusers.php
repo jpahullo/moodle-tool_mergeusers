@@ -194,3 +194,9 @@ $string['starttime'] = 'Started merging at {$a}';
 $string['finishtime'] = 'Finished merging at {$a}';
 $string['timetaken'] = 'Merge took {$a} seconds';
 $string['privacy:metadata'] = 'The Merge User Accounts plugin does not store any personal data.';
+
+// Profile fields.
+$string['profilefields'] = 'Custom User profile fields';
+$string['profilefields_desc'] = 'Select custom user profile fields allowed for users search
+    <br/> Selecting "none" removes the option for searching by user profile field.
+    <br/> "Any"  allow search by any allowed profile field.';

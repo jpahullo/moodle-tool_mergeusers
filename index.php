@@ -162,9 +162,16 @@ if (!empty($option)) {
     // If there is a search argument use this instead of advanced form
     if (!empty($data->searchgroup['searcharg'])) {
 
-        $search_users = $mus->search_users($data->searchgroup['searcharg'], $data->searchgroup['searchfield']);
+        $selectedfield = trim($data->searchgroup['searchfield']);
+        $pattern = '/^profile_field_([1-9][0-9]*)/';
+        if (preg_match($pattern, $selectedfield, $matches)) {
+            // Profile field.
+            $profilefieldid = $matches[1];
+            $search_users = $mus->search_users($data->searchgroup['searcharg'], $profilefieldid);
+        } else {
+            $search_users = $mus->search_users($data->searchgroup['searcharg'], $data->searchgroup['searchfield']);
+        }
         $user_select_table = new UserSelectTable($search_users, $renderer);
-
         echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $user_select_table);
 
         // only run this step if there are both a new and old userids

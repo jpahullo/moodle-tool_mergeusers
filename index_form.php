@@ -28,7 +28,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once($CFG->libdir.'/formslib.php'); /// forms library
+ require_once(__DIR__ . '/../../../config.php');
+ require_once($CFG->libdir.'/formslib.php'); // Forms library.
+ require_once($CFG->dirroot.'/user/filters/profilefield.php'); // For profile fields.
 
 /**
  * Define form snippet for getting the userids of the two users to merge
@@ -62,6 +64,7 @@ class mergeuserform extends moodleform {
             'email'     => get_string('email'),
         );
 
+        $searchfields = $searchfields + $this->get_custom_user_profile_fields();
         $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));
 
         // Add elements
@@ -91,5 +94,41 @@ class mergeuserform extends moodleform {
         $mform->setAdvanced('newusergroup');
 
         $this->add_action_buttons(false, get_string('search'));
+    }
+
+    /*
+    * @retrun associative array of allowed profile field.
+    * keys of the array are of the form: profile_field_<fieldid>. ex: profile_field_3
+    */
+    private function get_custom_user_profile_fields() {
+        $returnval = [];
+        $advanced = true;
+        $userprofile = new user_filter_profilefield('profile', get_string('profilefields', 'admin'), $advanced);
+        $profilefields = $userprofile->get_profile_fields();
+        $allowedprofilefields = get_config('tool_mergeusers', 'profilefields');
+
+        if (!empty($allowedprofilefields) || is_numeric($allowedprofilefields)) {
+            $allowedprofilefieldsarray = explode(',', $allowedprofilefields);
+            sort($allowedprofilefieldsarray);
+            foreach ($allowedprofilefieldsarray as $pfvalue) {
+                if ($pfvalue < 0) {
+                    // Search by profile is not allowed.
+                    $returnval = [];
+                    break;
+                } else if ($pfvalue == 0) {// Case of 'any field'.
+                    $returnval = [];
+                    foreach ($profilefields as $fieldid => $fieldname) {
+                        $returnval["profile_field_$fieldid"] = $fieldname;
+                    }
+                    break;
+                } else { // Selected fields.
+                    $returnval["profile_field_$pfvalue"] = $profilefields[$pfvalue];
+                }
+            }
+
+        }
+
+        return ($returnval);
+
     }
 }
