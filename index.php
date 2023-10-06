@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -33,7 +34,7 @@ global $CFG;
 global $PAGE;
 global $SESSION;
 
-// Report all PHP errors.
+// Report all PHP errors
 error_reporting(E_ALL);
 ini_set('display_errors', 'On');
 
@@ -50,7 +51,7 @@ require_capability('tool/mergeusers:mergeusers', context_system::instance());
 
 admin_externalpage_setup('tool_mergeusers_merge');
 
-// Get possible posted params.
+// Get possible posted params
 $option = optional_param('option', null, PARAM_TEXT);
 if (!$option) {
     if (optional_param('clearselection', false, PARAM_TEXT)) {
@@ -60,30 +61,30 @@ if (!$option) {
     }
 }
 
-// Define the form.
+// Define the form
 $mergeuserform = new mergeuserform();
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 
 $data = $mergeuserform->get_data();
 
-// May abort execution if database not supported, for security.
+//may abort execution if database not supported, for security
 $mut = new MergeUserTool();
-// Search tool for searching for users and verifying them.
+// Search tool for searching for users and verifying them
 $mus = new MergeUserSearch();
 
 // If there was a custom option submitted (by custom form) then use that option
-// instead of main form's data.
+// instead of main form's data
 if (!empty($option)) {
     switch ($option) {
-        // One or two users are selected: save them into session.
+        // one or two users are selected: save them into session.
         case 'saveselection':
-            // Get and verify the userids from the selection form usig the verify_user function (second field is column).
+            //get and verify the userids from the selection form usig the verify_user function (second field is column)
             list($olduser, $oumessage) = $mus->verify_user(optional_param('olduser', null, PARAM_INT), 'id');
             list($newuser, $numessage) = $mus->verify_user(optional_param('newuser', null, PARAM_INT), 'id');
 
             if ($olduser === null && $newuser === null) {
                 $renderer->mu_error(get_string('no_saveselection', 'tool_mergeusers'));
-                exit(); // End execution for error.
+                exit(); // end execution for error
             }
 
             if (empty($SESSION->mut)) {
@@ -91,13 +92,13 @@ if (!empty($option)) {
             }
 
             // Store saved selection in session for display on index page, requires logic to not overwrite existing session
-            // data, unless a "new" old, or "new" new is specified.
-            // If session old user already has a user and we have a "new" old user, replace the sesson's old user.
+            //   data, unless a "new" old, or "new" new is specified
+            // If session old user already has a user and we have a "new" old user, replace the sesson's old user
             if (empty($SESSION->mut->olduser) || !empty($olduser)) {
                 $SESSION->mut->olduser = $olduser;
             }
 
-            // If session new user already has a user and we have a "new" new user, replace the sesson's new user.
+            // If session new user already has a user and we have a "new" new user, replace the sesson's new user
             if (empty($SESSION->mut->newuser) || !empty($newuser)) {
                 $SESSION->mut->newuser = $newuser;
             }
@@ -156,24 +157,26 @@ if (!empty($option)) {
             $renderer->mu_error(get_string('invalid_option', 'tool_mergeusers'));
             break;
     }
-    // Any submitted data?
+// Any submitted data?
 } else if ($data) {
     // If there is a search argument use this instead of advanced form
     if (!empty($data->searchgroup['searcharg'])) {
 
-        $searchusers = $mus->search_users($data->searchgroup['searcharg'], $data->searchgroup['searchfield']);
-        $userselecttable = new UserSelectTable($searchusers, $renderer);
+        $selectedfield = trim($data->searchgroup['searchfield']);
+        $pattern = '/^profile_field_([1-9][0-9]*)/';
+        if (preg_match($pattern, $selectedfield, $matches)) {
+            // Profile field.
+            $profilefieldid = $matches[1];
+            $search_users = $mus->search_users($data->searchgroup['searcharg'], $profilefieldid);
+        } else {
+            $search_users = $mus->search_users($data->searchgroup['searcharg'], $data->searchgroup['searchfield']);
+        }
+        $user_select_table = new UserSelectTable($search_users, $renderer);
+        echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $user_select_table);
 
-        echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $userselecttable);
-    } else if (!empty($data->profilegroup['searchprofile'])) {
-        // Search by custom user profile fields.
-        $searchusers = $mus->search_users($data->profilegroup['searchprofile'], $data->profilegroup['profilefieldid']);
-        $userselecttable = new UserSelectTable($searchusers, $renderer);
-
-        echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $userselecttable);
         // only run this step if there are both a new and old userids
     } else if (!empty($data->oldusergroup['olduserid']) && !empty($data->newusergroup['newuserid'])) {
-        // Get and verify the userids from the selection form usig the verify_user function (second field is column).
+        //get and verify the userids from the selection form usig the verify_user function (second field is column)
         list($olduser, $oumessage) = $mus->verify_user($data->oldusergroup['olduserid'], $data->oldusergroup['olduseridtype']);
         list($newuser, $numessage) = $mus->verify_user($data->newusergroup['newuserid'], $data->newusergroup['newuseridtype']);
 

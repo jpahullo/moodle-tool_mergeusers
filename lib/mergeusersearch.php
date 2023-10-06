@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -31,19 +32,19 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-require_once(__DIR__ . '/../../../../config.php');
+require_once dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php';
 
 global $CFG;
 
-require_once($CFG->dirroot . '/lib/clilib.php');
-require_once(__DIR__ . '/autoload.php');
+require_once $CFG->dirroot . '/lib/clilib.php';
+require_once __DIR__ . '/autoload.php';
 
 /**
  * A class to perform user search and lookup (verification)
  *
  * @author John Hoopes <hoopes@wisc.edu>
  */
-class MergeUserSearch {
+class MergeUserSearch{
 
 
     /**
@@ -53,10 +54,10 @@ class MergeUserSearch {
      * @param string $searchfield The field to search on.  empty string means all fields
      * @return array $results the results of the search
      */
-    public function search_users($input, $searchfield) {
+    public function search_users($input, $searchfield){
         global $DB;
 
-        switch($searchfield) {
+        switch($searchfield){
             case 'id': // search on id field
 
                 $params = array(
@@ -107,11 +108,10 @@ class MergeUserSearch {
                 break;
             default:
                 if (is_numeric($searchfield)) {
-                    // search by profile field.
-                    // Default is to search on all custom profile fields.
-                    $params = array(
-                       'data' => '%' . $input . '%',
-                    );
+                    // Search by profile field.
+                    $params = [
+                        'data' => '%' . $input . '%',
+                    ];
 
                     $sql = ' SELECT usr.* FROM {user} usr';
                     $sql .= ' LEFT JOIN {user_info_data} uid ON usr.id=uid.userid ';
@@ -121,22 +121,21 @@ class MergeUserSearch {
                         $sql .= ' AND  uid.fieldid=:fieldid';
                     }
                 } else {
-
                     // search on all fields by default
 
                     $params = array(
-                       'userid' => $input,
-                       'username' => '%' . $input . '%',
-                       'firstname' => '%' . $input . '%',
-                       'lastname' => '%' . $input . '%',
-                       'email' => '%' . $input . '%',
-                       'idnumber' => '%' . $input . '%'
+                        'userid'     =>  $input,
+                        'username'   => '%' . $input . '%',
+                        'firstname'  => '%' . $input . '%',
+                        'lastname'   => '%' . $input . '%',
+                        'email'      => '%' . $input . '%',
+                        'idnumber'      => '%' . $input . '%'
                     );
 
                     $sql =
                         'SELECT *
-                         FROM {user}
-                         WHERE
+                        FROM {user}
+                        WHERE
                             id = :userid OR
                             username LIKE :username OR
                             firstname LIKE :firstname OR
@@ -144,7 +143,6 @@ class MergeUserSearch {
                             email LIKE :email OR
                             idnumber LIKE :idnumber';
                 }
-
                 break;
         }
 

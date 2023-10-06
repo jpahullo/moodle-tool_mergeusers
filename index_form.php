@@ -28,9 +28,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir.'/formslib.php'); // Forms library.
-require_once($CFG->dirroot.'/user/filters/profilefield.php'); // For profile fields.
+ require_once(__DIR__ . '/../../../config.php');
+ require_once($CFG->libdir.'/formslib.php'); // Forms library.
+ require_once($CFG->dirroot.'/user/filters/profilefield.php'); // For profile fields.
+
 /**
  * Define form snippet for getting the userids of the two users to merge
  */
@@ -50,19 +51,20 @@ class mergeuserform extends moodleform {
         $idstype = array(
             'username' => get_string('username'),
             'idnumber' => get_string('idnumber'),
-            'id' => 'Id',
+            'id'       => 'Id',
         );
 
         $searchfields = array(
             'idnumber' => get_string('idnumber'),
-            '' => get_string('all'),
-            'id' => 'Id',
-            'username' => get_string('username'),
+            ''          => get_string('all'),
+            'id'        => 'Id',
+            'username'  => get_string('username'),
             'firstname' => get_string('firstname'),
-            'lastname' => get_string('lastname'),
-            'email' => get_string('email'),
+            'lastname'  => get_string('lastname'),
+            'email'     => get_string('email'),
         );
 
+        $searchfields = $searchfields + $this->get_custom_user_profile_fields();
         $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));
 
         // Add elements
@@ -73,51 +75,10 @@ class mergeuserform extends moodleform {
         $mform->setType('searchgroup[searcharg]', PARAM_TEXT);
         $mform->addHelpButton('searchgroup', 'searchuser', 'tool_mergeusers');
 
-        // Search by profile fields
-        $advanced = true;
-        $userprofile = new user_filter_profilefield('profile', get_string('profilefields', 'admin'), $advanced);
-        $profilefields = $userprofile->get_profile_fields();
-        $allowedprofilefields = get_config('tool_mergeusers', 'profilefields');
-
-        $profilefieldarray = array();
-        $idstypeprofile = array();
-        if (!empty($allowedprofilefields)) {
-            $allowedprofilefieldsarray = explode(',', $allowedprofilefields);
-            foreach ($allowedprofilefieldsarray as $pfvalue) {
-                if ($pfvalue < 0) {
-                    // Search by profile is not allowed.
-                    $profilefieldarray = array();
-                    $idstypeprofile = array();
-                    break;
-                } else if ($pfvalue == 0) {// Case of 'any field'.
-                    $profilefieldarray = array();
-                    $idstypeprofile = array();
-                    for ($i = 1; $i < count($profilefields); $i++) {
-                        $profilefieldarray[$i] = $profilefields[$i];
-                        $idstypeprofile[$i] = get_string('profile').': '.$profilefields[$i];
-                    }
-                    break;
-                } else {
-                    $profilefieldarray[$pfvalue] = $profilefields[$pfvalue];
-                    $idstypeprofile[$pfvalue] = get_string('profile').': '.$profilefields[$pfvalue];
-                }
-            }
-
-        }
-        if (!empty($profilefieldarray)) {
-            $searchprofile = array();
-            $searchprofile[] = $mform->createElement('text', 'searchprofile');
-            $searchprofile[] = $mform->createElement('select', 'profilefieldid', '', $profilefieldarray, '');
-            $mform->addGroup($searchprofile, 'profilegroup', get_string('searchprofile', 'tool_mergeusers'));
-            $mform->setType('profilegroup[searchprofile]', PARAM_TEXT);
-            $mform->addHelpButton('profilegroup', 'searchprofile', 'tool_mergeusers');
-            $mform->setAdvanced('profilegroup');
-        }
         $mform->addElement('static', 'mergeusersadvanced', get_string('mergeusersadvanced', 'tool_mergeusers'));
         $mform->addHelpButton('mergeusersadvanced', 'mergeusersadvanced', 'tool_mergeusers');
         $mform->setAdvanced('mergeusersadvanced');
 
-        $idstype = $idstype + $idstypeprofile;
         $olduser = array();
         $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
         $olduser[] = $mform->createElement('select', 'olduseridtype', '', $idstype, '');
@@ -133,5 +94,41 @@ class mergeuserform extends moodleform {
         $mform->setAdvanced('newusergroup');
 
         $this->add_action_buttons(false, get_string('search'));
+    }
+
+    /*
+    * @retrun associative array of allowed profile field.
+    * keys of the array are of the form: profile_field_<fieldid>. ex: profile_field_3
+    */
+    private function get_custom_user_profile_fields() {
+        $returnval = [];
+        $advanced = true;
+        $userprofile = new user_filter_profilefield('profile', get_string('profilefields', 'admin'), $advanced);
+        $profilefields = $userprofile->get_profile_fields();
+        $allowedprofilefields = get_config('tool_mergeusers', 'profilefields');
+
+        if (!empty($allowedprofilefields) || is_numeric($allowedprofilefields)) {
+            $allowedprofilefieldsarray = explode(',', $allowedprofilefields);
+            sort($allowedprofilefieldsarray);
+            foreach ($allowedprofilefieldsarray as $pfvalue) {
+                if ($pfvalue < 0) {
+                    // Search by profile is not allowed.
+                    $returnval = [];
+                    break;
+                } else if ($pfvalue == 0) {// Case of 'any field'.
+                    $returnval = [];
+                    foreach ($profilefields as $fieldid => $fieldname) {
+                        $returnval["profile_field_$fieldid"] = $fieldname;
+                    }
+                    break;
+                } else { // Selected fields.
+                    $returnval["profile_field_$pfvalue"] = $profilefields[$pfvalue];
+                }
+            }
+
+        }
+
+        return ($returnval);
+
     }
 }
