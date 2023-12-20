@@ -22,11 +22,11 @@
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_mergeusers_enrolments_testcase extends advanced_testcase {
+class enrolments_test extends advanced_testcase {
     /**
      * Setup the test.
      */
-    public function setUp() {
+    public function setUp(): void {
         global $CFG;
         require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         $this->resetAfterTest(true);

@@ -303,6 +303,7 @@ class MergeUserTool
             }
 
             $this->updateGrades($toid, $fromid);
+            $this->reaggregateCompletions($toid);
         } catch (Exception $e) {
             $errorMessages[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
                     html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
@@ -484,7 +485,7 @@ class MergeUserTool
         global $DB, $CFG;
         require_once($CFG->libdir.'/gradelib.php');
 
-        $sql = "SELECT DISTINCT gi.iteminstance, gi.itemmodule, gi.courseid
+        $sql = "SELECT DISTINCT gi.id, gi.iteminstance, gi.itemmodule, gi.courseid
                 FROM {grade_grades} gg
                 INNER JOIN {grade_items} gi on gg.itemid = gi.id
                 WHERE itemtype = 'mod' AND (gg.userid = :toid OR gg.userid = :fromid)";
@@ -504,5 +505,15 @@ class MergeUserTool
 
             grade_update_mod_grades($activity, $toid);
         }
+    }
+
+    private function reaggregateCompletions($toid) {
+        global $DB;
+
+        $now = time();
+        $DB->execute(
+                'UPDATE {course_completions} set reaggregate = :now where userid = :toid and (timecompleted is null or timecompleted = 0)',
+                ['now' => $now, 'toid' => $toid]
+        );
     }
 }

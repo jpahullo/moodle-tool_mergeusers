@@ -31,11 +31,11 @@ require_once($CFG->dirroot . '/mod/assign/tests/base_test.php');
 /**
  * Class assign_test
  */
-class tool_mergeusers_assign_testcase extends mod_assign_base_testcase {
+class assign_test extends \mod_assign\base_test {
     /**
      *
      */
-    public function setUp() {
+    public function setUp(): void {
         global $CFG;
         require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         parent::setUp();
