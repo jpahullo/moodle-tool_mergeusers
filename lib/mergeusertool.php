@@ -368,6 +368,12 @@ class MergeUserTool
 
         foreach ($tableNames as $tableName) {
 
+            // Edividual issue #3 - skip tables that contain a dash,
+            // because this will make the SQL syntax break later.
+            if (strpos($tableName, "-") !== false) {
+                continue;
+            }
+
             if (!trim($tableName)) {
                 // This section should never be executed due to the way Moodle returns its resultsets.
                 // Skipping due to blank table name.
