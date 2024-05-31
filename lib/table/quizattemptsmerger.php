@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-use mod_quiz\grade_calculator;
 use mod_quiz\quiz_settings;
 
 defined('MOODLE_INTERNAL') || die();
@@ -145,7 +143,7 @@ class QuizAttemptsMerger extends GenericTableMerger
 
         $tableName = $CFG->prefix . $data['tableName'];
 
-        // we want to find all quiz attempts made from both users if any.
+        // We want to find all quiz attempts made from both users if any.
         $sql = "
             SELECT *
             FROM
@@ -157,7 +155,7 @@ class QuizAttemptsMerger extends GenericTableMerger
 
         $allAttempts = $DB->get_records_sql($sql, array($data['fromid'], $data['toid']));
 
-        // when there are attempts, check what we have to do with them.
+        // When there are attempts, check what we have to do with them.
         if ($allAttempts) {
 
             $toid = $data['toid'];
@@ -166,25 +164,25 @@ class QuizAttemptsMerger extends GenericTableMerger
                 ' WHERE id = ',
             );
 
-            // list of quiz ids necessary to recalculate.
+            // List of quiz ids necessary to recalculate.
             $quizzes = array();
-            // list of attempts organized by quiz id
+            // List of attempts organized by quiz id.
             $attemptsByQuiz = array();
-            // list of users that have attempts per quiz
+            // List of users that have attempts per quiz.
             $userids = array();
 
-            // organize all attempts by quiz and userid
+            // Organize all attempts by quiz and userid.
             foreach ($allAttempts as $attempt) {
                 $attemptsByQuiz[$attempt->quiz][] = $attempt;
                 $userids[$attempt->quiz][$attempt->userid] = $attempt->userid;
             }
 
-            // processing attempts quiz by quiz
+            // Processing attempts quiz by quiz.
             foreach ($attemptsByQuiz as $quiz => $attempts) {
 
-                // do nothing when there is only the target user.
+                // Do nothing when there is only the target user.
                 if (count($userids[$quiz]) === 1 && isset($userids[$quiz][$toid])) {
-                    // all attempts are for the target user only; do nothing.
+                    // All attempts are for the target user only; do nothing.
                     continue;
                 }
 
@@ -204,11 +202,11 @@ class QuizAttemptsMerger extends GenericTableMerger
                 // the $max value to their attempt column.
                 //
                 //
-                // total number of attempts from both users.
+                // Total number of attempts from both users.
                 $max = count($attempts);
-                // update the list of quiz ids to be recalculated its grade.
+                // Update the list of quiz ids to be recalculated its grade.
                 $quizzes[$quiz] = $quiz;
-                // number of attempt when renumbering
+                // Number of attempt when renumbering
                 $nattempt = 1;
 
                 // Renumber all attempts and updating userid when necessary.
@@ -230,11 +228,10 @@ class QuizAttemptsMerger extends GenericTableMerger
                     }
 
                     $nattempt++;
-                    unset($sets); // free mem
+                    unset($sets); // Free mem.
                 }
 
-                // Remove the offset of $max from their attempt column to make
-                // them start by 1 as expected.
+                // Remove the offset of $max from their attempt column to make them start by 1 as expected.
                 $updateAll = "UPDATE " . $tableName .
                     " SET attempt = attempt - $max " .
                     " WHERE quiz = $quiz AND userid = $toid";
@@ -247,7 +244,7 @@ class QuizAttemptsMerger extends GenericTableMerger
                 }
             }
 
-            // recalculate grades for updated quizzes.
+            // Recalculate grades for updated quizzes.
             $this->updateAllQuizzes($data, $quizzes, $actionLog);
         }
     }
@@ -276,7 +273,7 @@ class QuizAttemptsMerger extends GenericTableMerger
     protected function updateAllQuizzes($data, $ids, &$actionLog)
     {
         if (empty($ids)) {
-            // if no ids... do nothing.
+            // If no ids... do nothing.
             return;
         }
 
@@ -302,8 +299,8 @@ class QuizAttemptsMerger extends GenericTableMerger
         if ($quizzes) {
             $actionLog[] = get_string('qa_grades', 'tool_mergeusers', implode(', ', array_keys($quizzes)));
             foreach ($quizzes as $quiz) {
-                // https://moodle.org/mod/forum/discuss.php?d=258979
-                // recalculate grades for affected quizzes.
+                // See https://moodle.org/mod/forum/discuss.php?d=258979.
+                // Recalculate grades for affected quizzes.
                 $quizobj = quiz_settings::create($quiz->id);
                 $quizobj->get_grade_calculator()->recompute_all_final_grades();
             }
