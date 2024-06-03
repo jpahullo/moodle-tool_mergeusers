@@ -28,10 +28,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.0', '8.1']
-        moodle-branch: ['MOODLE_402_STABLE', 'master']
+        php: ['8.0', '8.1', '8.2']
+        moodle-branch: ['MOODLE_402_STABLE', 'MOODLE_403_STABLE', 'MOODLE_404_STABLE']
         database: ['pgsql', 'mariadb']
         extensions: ["mbstring, pgsql, mysqli"]
+        # Whenever necessary:
+        # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-including-new-combinations
+        exclude:
+          - moodle-branch: 'MOODLE_404_STABLE'
+            php: '8.0'
+        include:
+          - moodle-branch: 'MOODLE_404_STABLE'
+            php: '8.3'
+            extensions: "mbstring, pgsql, mysqli"
+            database: 'pgsql'
+          - moodle-branch: 'master'
+            php: '8.3'
+            extensions: "mbstring, pgsql, mysqli"
+            database: 'mariadb'
 
     steps:
       - name: Check out repository code
