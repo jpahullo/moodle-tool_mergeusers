@@ -1,6 +1,11 @@
 Release notes
 =============
 
+2024060300
+
+1. 2024-06-03 #268 - CI: verify it is working from M4.1 to M4.4 and master. Solves #263 too.
+2. 2024-06-03 #268 - Fixed PHPDoc issues and revisited output from merger when running from CLI.
+
 2023061900
 
 1. 2023-06-19 #245 - Add list of incremental changes on file CHANGES.md.
