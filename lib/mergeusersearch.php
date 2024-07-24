@@ -60,10 +60,16 @@ class MergeUserSearch{
         switch($searchfield){
             case 'id': // search on id field
 
-                $params = array(
-                    'userid' => $input,
-                );
-                $sql = 'SELECT * FROM {user} WHERE id = :userid';
+                if (!ctype_digit($input)) {
+                    // PostgreSQL errors comparing an int column with a string.
+                    $params = [];
+                    $sql = 'SELECT * FROM {user} WHERE id IS NULL';
+                } else {
+                    $params = array(
+                        'userid' => $input,
+                    );
+                    $sql = 'SELECT * FROM {user} WHERE id = :userid';
+                }
 
                 break;
             case 'username': // search on username
@@ -107,9 +113,15 @@ class MergeUserSearch{
 
                 break;
             default: // search on all fields by default
+                if (!ctype_digit($input)) {
+                    // PostgreSQL errors comparing an int column with a string.
+                    $whereid = 'id IS NULL';
+                } else {
+                    $params['userid'] = $input;
+                    $whereid = 'id = :userid';
+                }
 
                 $params = array(
-                    'userid'     =>  $input,
                     'username'   => '%' . $input . '%',
                     'firstname'  => '%' . $input . '%',
                     'lastname'   => '%' . $input . '%',
@@ -118,15 +130,15 @@ class MergeUserSearch{
                 );
 
                 $sql =
-                   'SELECT *
+                   "SELECT *
                     FROM {user}
                     WHERE
-                        (id = :userid OR
+                        ($whereid OR
                         username LIKE :username OR
                         firstname LIKE :firstname OR
                         lastname LIKE :lastname OR
                         email LIKE :email OR
-                        idnumber LIKE :idnumber)';
+                        idnumber LIKE :idnumber)";
 
                 break;
         }
