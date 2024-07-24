@@ -33,6 +33,23 @@ require_once(__DIR__ . '/../lib/mergeusersearch.php');
  */
 final class search_users_test extends \advanced_testcase {
     /**
+     * Test search criteria works with PostgreSQL because this will generate an
+     * error when comparing and integer column (mdl_user.id) with a string.
+     * @dataProvider search_criteria
+     */
+    public function test_pgsqlsearch($searchfield, $input, $count): void {
+        global $DB;
+
+        // Skip tests if not using PostgreSQL.
+        if ($DB->get_dbfamily() != 'postgres') {
+            $this->markTestSkipped('PostgreSQL-only test');
+        }
+
+        $mus = new \MergeUserSearch();
+        $this->assertIsArray($mus->search_users($input, $searchfield));
+    }
+
+    /**
      * Test deleted users are not returned with any search criteria.
      * @dataProvider search_criteria
      */
@@ -70,7 +87,12 @@ final class search_users_test extends \advanced_testcase {
         return [
             'id' => [
                 'searchfield' => 'id',
-                'input' => null,
+                'input' => '',
+                'count' => 0,
+            ],
+            'id2' => [
+                'searchfield' => 'id',
+                'input' => 'abc',
                 'count' => 0,
             ],
             'username' => [
