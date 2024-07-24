@@ -121,16 +121,17 @@ class MergeUserSearch{
                    'SELECT *
                     FROM {user}
                     WHERE
-                        id = :userid OR
+                        (id = :userid OR
                         username LIKE :username OR
                         firstname LIKE :firstname OR
                         lastname LIKE :lastname OR
                         email LIKE :email OR
-                        idnumber LIKE :idnumber';
+                        idnumber LIKE :idnumber)';
 
                 break;
         }
 
+        $sql .= ' AND deleted = 0';
         $ordering = ' ORDER BY lastname, firstname';
 
         $results = $DB->get_records_sql($sql . $ordering, $params);
