@@ -33,23 +33,6 @@ require_once(__DIR__ . '/../lib/mergeusersearch.php');
  */
 final class search_users_test extends \advanced_testcase {
     /**
-     * Test search criteria works with PostgreSQL because this will generate an
-     * error when comparing and integer column (mdl_user.id) with a string.
-     * @dataProvider search_criteria
-     */
-    public function test_pgsqlsearch($searchfield, $input, $count): void {
-        global $DB;
-
-        // Skip tests if not using PostgreSQL.
-        if ($DB->get_dbfamily() != 'postgres') {
-            $this->markTestSkipped('PostgreSQL-only test');
-        }
-
-        $mus = new \MergeUserSearch();
-        $this->assertIsArray($mus->search_users($input, $searchfield));
-    }
-
-    /**
      * Test deleted users are not returned with any search criteria.
      * @dataProvider search_criteria
      */
@@ -68,8 +51,8 @@ final class search_users_test extends \advanced_testcase {
             'idnumber' => 'ID001',
         ]);
 
-        if ($searchfield === 'id') {
-            $input = $deleteduser->id;
+        if (($searchfield === 'id') && ($input === 'id')) {
+            $input = "{$deleteduser->id}";
         } else if ($searchfield === 'email') {
             $input = md5($deleteduser->username);
         }
@@ -87,12 +70,27 @@ final class search_users_test extends \advanced_testcase {
         return [
             'id' => [
                 'searchfield' => 'id',
+                'input' => 'id', // Special case, to be swapped with real ID.
+                'count' => 0,
+            ],
+            'id_abc' => [
+                'searchfield' => 'id',
+                'input' => 'abc',
+                'count' => 0,
+            ],
+            'id_empty' => [
+                'searchfield' => 'id',
                 'input' => '',
                 'count' => 0,
             ],
-            'id2' => [
+            'id_int' => [
                 'searchfield' => 'id',
-                'input' => 'abc',
+                'input' => 1,
+                'count' => 1, // Guest.
+            ],
+            'id_null' => [
+                'searchfield' => 'id',
+                'input' => null,
                 'count' => 0,
             ],
             'username' => [
@@ -103,6 +101,16 @@ final class search_users_test extends \advanced_testcase {
             'firstname' => [
                 'searchfield' => 'firstname',
                 'input' => 'Student',
+                'count' => 1,
+            ],
+            'firstname_partial' => [
+                'searchfield' => 'firstname',
+                'input' => 'Stu',
+                'count' => 1,
+            ],
+            'firstname_case_insensitive' => [
+                'searchfield' => 'firstname',
+                'input' => 'STUDENT',
                 'count' => 1,
             ],
             'lastname' => [
@@ -123,6 +131,16 @@ final class search_users_test extends \advanced_testcase {
             'all' => [
                 'searchfield' => 'all',
                 'input' => 'student1',
+                'count' => 1,
+            ],
+            'all_partial' => [
+                'searchfield' => 'all',
+                'input' => 'stu',
+                'count' => 1,
+            ],
+            'all_case_insensitive' => [
+                'searchfield' => 'all',
+                'input' => 'STUDENT1',
                 'count' => 1,
             ],
         ];
