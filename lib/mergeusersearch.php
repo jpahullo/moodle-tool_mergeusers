@@ -60,94 +60,60 @@ class MergeUserSearch{
         switch($searchfield){
             case 'id': // search on id field
 
-                if (!ctype_digit($input)) {
-                    // PostgreSQL errors comparing an int column with a string.
-                    $params = [];
-                    $sql = 'SELECT * FROM {user} WHERE id IS NULL';
+                $where = 'id = :userid';
+
+                if (is_string($input) && !ctype_digit($input)) {
+                    // PostgreSQL will not compare a string with an int column.
+                    $params = ['userid' => null];
                 } else {
-                    $params = array(
-                        'userid' => $input,
-                    );
-                    $sql = 'SELECT * FROM {user} WHERE id = :userid';
+                    $params = ['userid' => $input];
                 }
 
                 break;
+
             case 'username': // search on username
-
-                $params = array(
-                    'username' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE username LIKE :username';
-
-                break;
             case 'firstname': // search on firstname
-
-                $params = array(
-                    'firstname' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE firstname LIKE :firstname';
-
-                break;
             case 'lastname': // search on lastname
-
-                $params = array(
-                    'lastname' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE lastname LIKE :lastname';
-
-                break;
             case 'email': // search on email
-
-                $params = array(
-                    'email' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE email LIKE :email';
-
-                break;
             case 'idnumber': // search on idnumber
 
-                $params = array(
-                    'idnumber' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE idnumber LIKE :idnumber';
+                $where = $DB->sql_like($searchfield, ":$searchfield", false, false);
+                $params = [$searchfield => '%' . $input . '%'];
 
                 break;
+
             default: // search on all fields by default
-                if (!ctype_digit($input)) {
-                    // PostgreSQL errors comparing an int column with a string.
-                    $whereid = 'id IS NULL';
+
+                if (is_string($input) && !ctype_digit($input)) {
+                    // PostgreSQL will not compare a string with an int column.
+                    $params = ['userid' => null];
                 } else {
-                    $params['userid'] = $input;
-                    $whereid = 'id = :userid';
+                    $params = ['userid' => $input];
                 }
 
-                $params = array(
-                    'username'   => '%' . $input . '%',
-                    'firstname'  => '%' . $input . '%',
-                    'lastname'   => '%' . $input . '%',
-                    'email'      => '%' . $input . '%',
-                    'idnumber'      => '%' . $input . '%'
-                );
+                $where = '(' . 'id = :userid OR ' .
+                         $DB->sql_like('username', ':username', false, false)
+                         . ' OR ' .
+                         $DB->sql_like('firstname', ':firstname', false, false)
+                         . ' OR ' .
+                         $DB->sql_like('lastname', ':lastname', false, false)
+                         . ' OR ' .
+                         $DB->sql_like('email', ':email', false, false)
+                         . ' OR ' .
+                         $DB->sql_like('idnumber', ':idnumber', false, false)
+                         . ')';
 
-                $sql =
-                   "SELECT *
-                    FROM {user}
-                    WHERE
-                        ($whereid OR
-                        username LIKE :username OR
-                        firstname LIKE :firstname OR
-                        lastname LIKE :lastname OR
-                        email LIKE :email OR
-                        idnumber LIKE :idnumber)";
+                $params['username'] = '%' . $input . '%';
+                $params['firstname'] = '%' . $input . '%';
+                $params['lastname'] = '%' . $input . '%';
+                $params['email'] = '%' . $input . '%';
+                $params['idnumber'] = '%' . $input . '%';
 
                 break;
         }
 
-        $sql .= ' AND deleted = 0';
-        $ordering = ' ORDER BY lastname, firstname';
-
-        $results = $DB->get_records_sql($sql . $ordering, $params);
-        return $results;
+        $where .= ' AND deleted = 0';
+        return $DB->get_records_select('user', $where, $params, 'lastname, firstname');
     }
 
     /**
