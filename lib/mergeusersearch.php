@@ -60,81 +60,51 @@ class MergeUserSearch{
         switch($searchfield){
             case 'id': // search on id field
 
-                $params = array(
-                    'userid' => $input,
-                );
-                $sql = 'SELECT * FROM {user} WHERE id = :userid';
+                // sql_cast_to_char() prevents PostgreSQL error when comparing
+                // id column when $input is not an integer.
+                $where = $DB->sql_cast_to_char('id') . ' = :userid';
+                $params = ['userid' => $input];
 
                 break;
+
             case 'username': // search on username
-
-                $params = array(
-                    'username' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE username LIKE :username';
-
-                break;
             case 'firstname': // search on firstname
-
-                $params = array(
-                    'firstname' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE firstname LIKE :firstname';
-
-                break;
             case 'lastname': // search on lastname
-
-                $params = array(
-                    'lastname' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE lastname LIKE :lastname';
-
-                break;
             case 'email': // search on email
-
-                $params = array(
-                    'email' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE email LIKE :email';
-
-                break;
             case 'idnumber': // search on idnumber
 
-                $params = array(
-                    'idnumber' => '%' . $input . '%',
-                );
-                $sql = 'SELECT * FROM {user} WHERE idnumber LIKE :idnumber';
+                $where = $DB->sql_like($searchfield, ":$searchfield", false, false);
+                $params = [$searchfield => '%' . $input . '%'];
 
                 break;
+
             default: // search on all fields by default
 
-                $params = array(
-                    'userid'     =>  $input,
-                    'username'   => '%' . $input . '%',
-                    'firstname'  => '%' . $input . '%',
-                    'lastname'   => '%' . $input . '%',
-                    'email'      => '%' . $input . '%',
-                    'idnumber'      => '%' . $input . '%'
-                );
+                $where = '(' .
+                         $DB->sql_cast_to_char('id') . ' = :userid OR ' .
+                         $DB->sql_like('username', ':username', false, false)
+                         . ' OR ' .
+                         $DB->sql_like('firstname', ':firstname', false, false)
+                         . ' OR ' .
+                         $DB->sql_like('lastname', ':lastname', false, false)
+                         . ' OR ' .
+                         $DB->sql_like('email', ':email', false, false)
+                         . ' OR ' .
+                         $DB->sql_like('idnumber', ':idnumber', false, false)
+                         . ')';
 
-                $sql =
-                   'SELECT *
-                    FROM {user}
-                    WHERE
-                        id = :userid OR
-                        username LIKE :username OR
-                        firstname LIKE :firstname OR
-                        lastname LIKE :lastname OR
-                        email LIKE :email OR
-                        idnumber LIKE :idnumber';
+                $params['userid'] = $input;
+                $params['username'] = '%' . $input . '%';
+                $params['firstname'] = '%' . $input . '%';
+                $params['lastname'] = '%' . $input . '%';
+                $params['email'] = '%' . $input . '%';
+                $params['idnumber'] = '%' . $input . '%';
 
                 break;
         }
 
-        $ordering = ' ORDER BY lastname, firstname';
-
-        $results = $DB->get_records_sql($sql . $ordering, $params);
-        return $results;
+        $where .= ' AND deleted = 0';
+        return $DB->get_records_select('user', $where, $params, 'lastname, firstname');
     }
 
     /**
