@@ -60,14 +60,10 @@ class MergeUserSearch{
         switch($searchfield){
             case 'id': // search on id field
 
-                $where = 'id = :userid';
-
-                if (is_string($input) && !ctype_digit($input)) {
-                    // PostgreSQL will not compare a string with an int column.
-                    $params = ['userid' => null];
-                } else {
-                    $params = ['userid' => $input];
-                }
+                // sql_cast_to_char() prevents PostgreSQL error when comparing
+                // id column when $input is not an integer.
+                $where = $DB->sql_cast_to_char('id') . ' = :userid';
+                $params = ['userid' => $input];
 
                 break;
 
@@ -84,14 +80,8 @@ class MergeUserSearch{
 
             default: // search on all fields by default
 
-                if (is_string($input) && !ctype_digit($input)) {
-                    // PostgreSQL will not compare a string with an int column.
-                    $params = ['userid' => null];
-                } else {
-                    $params = ['userid' => $input];
-                }
-
-                $where = '(' . 'id = :userid OR ' .
+                $where = '(' .
+                         $DB->sql_cast_to_char('id') . ' = :userid OR ' .
                          $DB->sql_like('username', ':username', false, false)
                          . ' OR ' .
                          $DB->sql_like('firstname', ':firstname', false, false)
@@ -103,6 +93,7 @@ class MergeUserSearch{
                          $DB->sql_like('idnumber', ':idnumber', false, false)
                          . ')';
 
+                $params['userid'] = $input;
                 $params['username'] = '%' . $input . '%';
                 $params['firstname'] = '%' . $input . '%';
                 $params['lastname'] = '%' . $input . '%';
