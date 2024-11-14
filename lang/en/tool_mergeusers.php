@@ -82,6 +82,8 @@ $string['errortransactionsonly'] = 'Error: transactions are required, but your d
     Please, review plugin settings to set up them accordingly.';
 $string['eventusermergedsuccess'] = 'Merging success';
 $string['eventusermergedfailure'] = 'Merge failed';
+$string['userfieldmergeto'] = 'Data from this user was successfully merged into {$a->newusername}';
+$string['userfieldmergefrom'] = 'Data from {$a->oldusername} has been merged into this user. See more {$a->logurl}';
 
 // Settings page.
 $string['transactions_setting'] = 'Only transactions allowed';
