@@ -26,8 +26,8 @@ require_once(__DIR__ . '/../db/dbassignsubmission.php');
 
 class AssignSubmissionTableMerger extends GenericTableMerger {
 
-    private db_assign_submission $findassignsubmissions;
-    private AssignSubmissionDuplicatedDataMerger $duplicateddatamerger;
+    private $findassignsubmissions;
+    private $duplicateddatamerger;
 
     public function __construct() {
         parent::__construct(new AssignSubmissionDuplicatedDataMerger());
