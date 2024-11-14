@@ -30,7 +30,8 @@
  * @return boolean true when success, false on error.
  */
 function xmldb_tool_mergeusers_upgrade ($oldversion) {
-    global $DB;
+    global $CFG, $DB;
+    require_once $CFG->dirroot . '/admin/tool/mergeusers/lib.php';
 
     $dbman = $DB->get_manager();
 
@@ -78,6 +79,14 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
 
         // Mergeusers savepoint reached.
         upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
+    }
+
+    if ($oldversion < 2024111400) {
+        // Try to create custom fields
+        tool_mergeusers_create_user_profile_fields();
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2024111400, 'tool', 'mergeusers');
     }
 
     return true;

@@ -142,6 +142,8 @@ This plugin also manages the 'merging_success' event is trigered, what includes:
 2. Changing the old user's profile picture by the given on pix/suspended.jpg. It is a simple
    white image with the text "suspended user", which could help to teachers and
    managers to rapidly detect them.
+3. Add merge date in user profile field (merge_date), after the merge process was successful.
+4. Add merge info in user profile field (merge_info) on which user was merged into the other one.
 
 
 Correct way of testing this plugin
