@@ -81,3 +81,77 @@ function tool_mergeusers_build_quiz_options() {
 
     return $result;
 }
+
+/**
+ * Create user profile fields for user metadata once users have been merged.
+ * @return void
+ */
+function tool_mergeusers_create_user_profile_fields(): void {
+    global $CFG, $DB;
+
+    require_once $CFG->dirroot . '/user/profile/lib.php';
+    require_once $CFG->dirroot . '/user/profile/definelib.php';
+
+    // Create user profile field category
+    $category_name = 'Merge User Info';
+    $category = $DB->get_record('user_info_category', ['name' => $category_name]);
+
+    if (empty($category)) {
+        $category = (object)[
+            'name' => $category_name,
+        ];
+        profile_save_category($category);
+    }
+
+
+    // Skip if category is not found
+    if (!isset($category->id)) {
+        return;
+    }
+
+    $fields = [
+        'merge_date' => [
+            'name' => 'Merge Date',
+            'shortname' => 'merge_date',
+            'datatype' => 'datetime',
+            'description' => '',
+            'descriptionformat' => FORMAT_HTML,
+            'categoryid' => $category->id,
+            'required' => false,
+            'locked' => false,
+            'visible' => false,
+            'forceunique' => false,
+            'signup' => false,
+            'defaultdata' => 0,
+            'defaultdataformat' => '0',
+            'param1' => '2024',
+            'param2' => '2024',
+        ],
+        'merge_info' => [
+            'name' => 'Merge Info',
+            'shortname' => 'merge_info',
+            'datatype' => 'text',
+            'description' => '',
+            'descriptionformat' => FORMAT_HTML,
+            'categoryid' => $category->id,
+            'required' => false,
+            'locked' => false,
+            'visible' => false,
+            'forceunique' => false,
+            'signup' => false,
+            'defaultdata' => '',
+            'defaultdataformat' => '0',
+            'param1' => '30',
+            'param2' => '2048',
+            'param3' => '0',
+        ],
+    ];
+
+    // Create custom fields if they do not exist
+    foreach ($fields as $field_info) {
+        $record = (object)$field_info;
+
+        $define_field = new profile_define_base();
+        $define_field->define_save($record);
+    }
+}

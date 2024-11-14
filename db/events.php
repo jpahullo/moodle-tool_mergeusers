@@ -38,4 +38,9 @@ $observers = array(
         'callback'      => '\tool_mergeusers\local\observer\keptuser::make_kept_user_as_not_suspended',
         'internal'      => 1
     ),
+    array(
+        'eventname'     => 'tool_mergeusers\event\user_merged_success',
+        'callback'      => '\tool_mergeusers\local\observer\user_profile_field_info::add_merge_date_info',
+        'internal'      => 1
+    )
 );
