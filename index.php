@@ -63,6 +63,7 @@ if (!$option) {
 
 // Define the form
 $mergeuserform = new mergeuserform();
+/** @var tool_mergeusers_renderer $renderer */
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 
 $data = $mergeuserform->get_data();
