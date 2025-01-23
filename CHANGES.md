@@ -1,6 +1,17 @@
 Release notes
 =============
 
+2025012200
+
+1. 2025-01-22 #295 - CliGathering: remove deprecation warnings from Iterator implementation.
+2. 2025-01-22 #292 - Bump plugin version and requires Moodle 4.5 onwards.
+   1. CI passes on green, as before, for PHP 8.1, 8.2 and 8.3 only for core MOODLE_405_STABLE.
+   2. version.php updated.
+   3. Improve type detection on IDE. 
+   4. Uses new trait on the assign_test class.
+3. 2025-01-17 #291 - Make web administration work on merge users.
+   1. Removed lines requiring "lib/outputcomponents.php" from two files. 
+
 2024060300
 
 1. 2024-06-03 #268 - CI: verify it is working from M4.1 to M4.4 and master. Solves #263 too.
