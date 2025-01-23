@@ -1,6 +1,11 @@
 Release notes
 =============
 
+2025012300
+
+1. 2025-01-23 #299 - make lang file compatible with AMOS to be translatable.
+2. 2025-01-23 #299 - add $plugin->release property as releasing new plugin version warns it.
+
 2025012200
 
 1. 2025-01-22 #295 - CliGathering: remove deprecation warnings from Iterator implementation.
