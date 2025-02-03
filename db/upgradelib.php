@@ -25,6 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+use tool_mergeusers\local\profile_fields;
 /**
  * Create user profile fields for user metadata once users have been merged.
  *
