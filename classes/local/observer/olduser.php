@@ -55,7 +55,7 @@ class olduser {
 
         // 2. update profile picture
         // get source, common image
-        $fullpath = dirname(dirname(__DIR__))."/pix/suspended.jpg";
+        $fullpath = dirname(dirname(dirname(__DIR__))) . "/pix/suspended.jpg";
         if (!file_exists($fullpath)) {
             return; //do nothing; aborting, given that the image does not exist
         }
