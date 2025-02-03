@@ -15,16 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package tool
- * @subpackage mergeusers
+ * @package tool_mergeusers
  * @author Sam Møller <smo@moxis.dk>
  * @copyright 2019 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Provides the necessary steps to get properly installed from scratch.
+ *
+ * @return void
+ */
 function xmldb_tool_mergeusers_install(): void {
-    global $CFG;
-    require_once $CFG->dirroot . '/admin/tool/mergeusers/lib.php';
+    require_once(__DIR__ . '/upgradelib.php');
 
     tool_mergeusers_create_user_profile_fields();
 }
