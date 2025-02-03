@@ -119,7 +119,7 @@ class user_profile_field_info_test extends advanced_testcase {
 
         $event = $this->get_user_merged_success_event($old_user, $new_user, $log);
 
-        \tool_mergeusers\local\observer\user_profile_field_info::add_merge_date_info($event);
+        \tool_mergeusers\local\observer\update_user_profiles_on_merging_success::update($event);
 
         $old_user_fields = $this->get_profile_fields_with_shortnames(
             $category->id,
