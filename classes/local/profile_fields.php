@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_mergeusers\local;
+
 /**
  * Value for the "shotname"s of the custom profile fields used by this plugin.
  *

@@ -27,6 +27,7 @@
 namespace tool_mergeusers\local\observer;
 
 use tool_mergeusers\event\user_merged_success;
+use tool_mergeusers\local\profile_fields;
 
 // @codeCoverageIgnoreStart
 defined('MOODLE_INTERNAL') || die();
@@ -40,7 +41,7 @@ require_once $CFG->dirroot . '/user/profile/lib.php';
  * Observer class to update information on custom profile fields on both
  * related users on a given merge user operation.
  */
-class user_profile_field_info {
+class update_user_profiles_on_merging_success {
 
     /**
      * Processes the successful merge user operation, updating custom profile fields
@@ -49,63 +50,54 @@ class user_profile_field_info {
      * @param user_merged_success $event
      * @return void
      */
-    public static function add_merge_date_info(user_merged_success $event): void {
+    public static function update(user_merged_success $event): void {
         global $DB;
         try {
 
             $olduserid = $event->get_old_user_id();
             $newuserid = $event->get_new_user_id();
             $logid = $event->get_log_id();
-            $olduser = [
-                'id' => $olduserid,
-                'username' => $DB->get_field('user', 'username', ['id' => $olduserid]),
-            ];
-            $newuser = [
-                'id' => $newuserid,
-                'username' => $DB->get_field('user', 'username', ['id' => $newuserid]),
-            ];
-
-            self::add_merge_info(
-                $olduserid,
-                $logid,
-                get_string(
-                    'userfieldmergeto',
-                    'tool_mergeusers',
-                    $newuser,
-                ),
-                time(), // TODO: add time from event.
-            );
-
-            self::add_merge_info(
-                $newuserid,
-                get_string(
-                    'userfieldmergefrom',
-                    'tool_mergeusers',
-                    $olduser,
-                ),
-                time(), // TODO: add time from event.
-            );
+            self::update_old_user($olduserid, $newuserid, $logid, $event->timecreated);
+            self::update_new_user($newuserid, $olduserid, $logid, $event->timecreated);
 
         } catch (\Exception $e) {}
     }
 
     /**
-     * Updates the profile fields from the given user, with the related detail.
+     * Updates custom profile fields for the old user.
      *
-     * @param int $userid
-     * @param string $detail
-     * @param int|null $time
+     * @param int $olduserid
+     * @param int $newuserid
+     * @param int $logid
+     * @param int $timecreated
      * @return void
      */
-    private static function add_merge_info(int $userid, int $logid, string $detail, ?int $time = null): void {
+    private static function update_old_user(int $olduserid, int $newuserid, int $logid, int $timecreated): void {
         $fields = [
-            'mergeusers_detail' => $detail,
+            profile_fields::MERGE_DATE => $timecreated,
+            profile_fields::MERGE_LOG_ID => $logid,
+            profile_fields::MERGE_NEW_USER_ID => $newuserid,
+            profile_fields::MERGE_OLD_USER_ID => null,
         ];
+        profile_save_custom_fields($olduserid, $fields);
+    }
 
-        if ($time !== null) {
-            $fields['mergeusers_date'] = $time;
-        }
-
-        profile_save_custom_fields($userid, $fields);
+    /**
+     * Updates custom profile fields for the new user.
+     *
+     * @param int $newuserid
+     * @param int $olduserid
+     * @param int $logid
+     * @param int $timecreated
+     * @return void
+     */
+    private static function update_new_user(int $newuserid, int $olduserid, int $logid, int $timecreated): void {
+        $fields = [
+            profile_fields::MERGE_DATE => $timecreated,
+            profile_fields::MERGE_LOG_ID => $logid,
+            profile_fields::MERGE_NEW_USER_ID => null,
+            profile_fields::MERGE_OLD_USER_ID => $olduserid,
+        ];
+        profile_save_custom_fields($newuserid, $fields);
     }
 }

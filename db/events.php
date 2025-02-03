@@ -40,7 +40,7 @@ $observers = array(
     ),
     array(
         'eventname'     => 'tool_mergeusers\event\user_merged_success',
-        'callback'      => '\tool_mergeusers\local\observer\user_profile_field_info::add_merge_date_info',
+        'callback'      => tool_mergeusers\local\observer\update_user_profiles_on_merging_success::class . '::update',
         'internal'      => 1
     )
 );
