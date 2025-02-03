@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+use tool_mergeusers\local\observer\update_user_profiles_on_merging_success;
 
 /**
  * @package tool
@@ -119,7 +120,7 @@ class user_profile_field_info_test extends advanced_testcase {
 
         $event = $this->get_user_merged_success_event($old_user, $new_user, $log);
 
-        \tool_mergeusers\local\observer\update_user_profiles_on_merging_success::update($event);
+        update_user_profiles_on_merging_success::update($event);
 
         $old_user_fields = $this->get_profile_fields_with_shortnames(
             $category->id,
