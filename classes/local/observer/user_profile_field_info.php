@@ -15,10 +15,12 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package tool
- * @subpackage mergeusers
+ * Observer to catch successful merge user operations and update
+ * custom profile fields initialized also by this plugin.
+ *
+ * @package tool_mergeusers
  * @author Sam Møller <smo@moxis.dk>
- * @copyright 2019 Servei de Recursos Educatius (http://www.sre.urv.cat)
+ * @copyright 2019 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,83 +36,76 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once $CFG->dirroot . '/user/profile/lib.php';
 
+/**
+ * Observer class to update information on custom profile fields on both
+ * related users on a given merge user operation.
+ */
 class user_profile_field_info {
+
+    /**
+     * Processes the successful merge user operation, updating custom profile fields
+     * from both related users.
+     *
+     * @param user_merged_success $event
+     * @return void
+     */
     public static function add_merge_date_info(user_merged_success $event): void {
+        global $DB;
         try {
-            $old_user_id = $event->get_old_user_id();
-            $new_user_id = $event->get_new_user_id();
 
-            $users = self::get_users_by_ids([$old_user_id, $new_user_id]);
-
-            $info = [
-                'newuserid' => $new_user_id,
-                'newusername' => $users[$new_user_id]->username,
-                'olduserid' => $old_user_id,
-                'oldusername' => $users[$old_user_id]->username,
-                'logurl' => self::get_log_url($event->get_log_id())->out(false)
+            $olduserid = $event->get_old_user_id();
+            $newuserid = $event->get_new_user_id();
+            $logid = $event->get_log_id();
+            $olduser = [
+                'id' => $olduserid,
+                'username' => $DB->get_field('user', 'username', ['id' => $olduserid]),
+            ];
+            $newuser = [
+                'id' => $newuserid,
+                'username' => $DB->get_field('user', 'username', ['id' => $newuserid]),
             ];
 
             self::add_merge_info(
-                $old_user_id,
+                $olduserid,
+                $logid,
                 get_string(
                     'userfieldmergeto',
                     'tool_mergeusers',
-                    $info
+                    $newuser,
                 ),
-                time()
+                time(), // TODO: add time from event.
             );
 
-            self::clear_merge_info($new_user_id);
+            self::add_merge_info(
+                $newuserid,
+                get_string(
+                    'userfieldmergefrom',
+                    'tool_mergeusers',
+                    $olduser,
+                ),
+                time(), // TODO: add time from event.
+            );
 
-        } catch (\Exception $e) {
-            // Do nothing
-        }
+        } catch (\Exception $e) {}
     }
 
-    private static function get_users_by_ids(array $ids): array {
-        global $DB;
-
-        if (empty($ids)) {
-            return [];
-        }
-
-        [$in_sql, $params] = $DB->get_in_or_equal($ids);
-
-        return $DB->get_records_select(
-            'user',
-            "id $in_sql",
-            $params,
-            'id, username',
-            'id, username'
-        );
-    }
-
-    private static function add_merge_info(int $user_id, string $info, ?int $time = null): void {
+    /**
+     * Updates the profile fields from the given user, with the related detail.
+     *
+     * @param int $userid
+     * @param string $detail
+     * @param int|null $time
+     * @return void
+     */
+    private static function add_merge_info(int $userid, int $logid, string $detail, ?int $time = null): void {
         $fields = [
-            'merge_info' => $info
+            'mergeusers_detail' => $detail,
         ];
 
         if ($time !== null) {
-            $fields['merge_date'] = $time;
+            $fields['mergeusers_date'] = $time;
         }
 
-        profile_save_custom_fields($user_id, $fields);
-    }
-
-    private static function clear_merge_info(int $user_id): void {
-        $fields = [
-            'merge_info' => '',
-            'merge_date' => null
-        ];
-        profile_save_custom_fields($user_id, $fields);
-    }
-
-    private static function get_log_url(
-        int $log_id
-    ): \moodle_url {
-        return new \moodle_url(
-            '/admin/tool/mergeusers/log.php',
-            ['id' => $log_id]
-        );
+        profile_save_custom_fields($userid, $fields);
     }
 }
