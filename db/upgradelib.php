@@ -74,7 +74,7 @@ function tool_mergeusers_create_user_profile_fields(): void {
             'param2' => '2125',
         ],
         profile_fields::MERGE_LOG_ID => [
-            'name' => 'Merge date',
+            'name' => 'Merge log',
             'shortname' => profile_fields::MERGE_LOG_ID,
             'datatype' => 'text',
             'description' => 'Log id for this merge.',
@@ -94,7 +94,7 @@ function tool_mergeusers_create_user_profile_fields(): void {
             'param5' => '_blank',
         ],
         profile_fields::MERGE_OLD_USER_ID => [
-            'name' => 'Merge date',
+            'name' => 'Merge old user',
             'shortname' => profile_fields::MERGE_OLD_USER_ID,
             'datatype' => 'text',
             'description' => 'Old user id.',
@@ -114,7 +114,7 @@ function tool_mergeusers_create_user_profile_fields(): void {
             'param5' => '_blank',
         ],
         profile_fields::MERGE_NEW_USER_ID => [
-            'name' => 'Merge date',
+            'name' => 'Merge new user',
             'shortname' => profile_fields::MERGE_NEW_USER_ID,
             'datatype' => 'text',
             'description' => 'New user id.',
