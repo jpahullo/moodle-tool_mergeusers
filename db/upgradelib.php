@@ -94,7 +94,7 @@ function tool_mergeusers_create_user_profile_fields(): void {
             'param5' => '_blank',
         ],
         profile_fields::MERGE_OLD_USER_ID => [
-            'name' => 'Merge old user',
+            'name' => 'Merged old user',
             'shortname' => profile_fields::MERGE_OLD_USER_ID,
             'datatype' => 'text',
             'description' => 'Old user id.',
@@ -114,7 +114,7 @@ function tool_mergeusers_create_user_profile_fields(): void {
             'param5' => '_blank',
         ],
         profile_fields::MERGE_NEW_USER_ID => [
-            'name' => 'Merge new user',
+            'name' => 'Merged new user',
             'shortname' => profile_fields::MERGE_NEW_USER_ID,
             'datatype' => 'text',
             'description' => 'New user id.',
