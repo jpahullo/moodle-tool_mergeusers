@@ -5,10 +5,10 @@ Release notes
 
 1. 2025-02-05 - bump version and update CHANGES.md
 2. 2025-02-05 #283 - new feature: use custom profile fields to identify merged old and new users (to both users). Partly contributed thanks to @sampraxis and @ClausSchmidtPraxis on 2024-11-14. PHPUnit test ensures the behaviour is the expected.
-3. 2025-02-04 #304 - fix: set up again suspended image to merged source user.
-4. 2025-02-04 #253 - fix: CRLF condification passed to LF.
-5. 2025-01-23 #299 - fix: fix file content to get them properly uploaded into AMOS.
-6. 2024-11-14 #283 - new feature: use custom profile fields to identify merged source and target users, thanks to @sampraxis and @ClausSchmidtPraxis.
+3. 2025-02-05 #294 - fix: pass tests on mod_assign again. Thanks to @leonstr.
+4. 2025-02-04 #304 - fix: set up again suspended image to merged source user.
+5. 2025-02-04 #253 - fix: CRLF codification passed to LF.
+6. 2025-01-23 #299 - fix: fix file content to get them properly uploaded into AMOS.
 
 2024060300
 
@@ -19,6 +19,9 @@ Release notes
 
 1. 2023-06-19 #245 - Add list of incremental changes on file CHANGES.md.
 2. 2023-06-19 #247 - Fix proper support for Moodle 4.2, thanks to Matthias Opitz.
+=======
+
+>>>>>>> 4b6ea63 ( #286 - append fix PHPUnit assign test on CHANGES.md)
 
 2023040402
 
