@@ -27,11 +27,11 @@ defined('MOODLE_INTERNAL') || die;
 
 use tool_mergeusers\local\profile_fields;
 /**
- * Create user profile fields for user metadata once users have been merged.
+ * Create or update user profile fields for user metadata once users have been merged.
  *
  * @return void
  */
-function tool_mergeusers_create_user_profile_fields(): void {
+function tool_mergeusers_define_user_profile_fields(): void {
     global $CFG, $DB;
 
     require_once $CFG->dirroot . '/user/profile/lib.php';
@@ -109,7 +109,7 @@ function tool_mergeusers_create_user_profile_fields(): void {
             'param1' => '30',
             'param2' => '2024',
             'param3' => '0',
-            'param4' => $CFG->wwwroot . '/user/view.php?$$',
+            'param4' => $CFG->wwwroot . '/user/profile.php?id=$$',
             'param5' => '_blank',
         ],
         profile_fields::MERGE_NEW_USER_ID => [
@@ -129,7 +129,7 @@ function tool_mergeusers_create_user_profile_fields(): void {
             'param1' => '30',
             'param2' => '2024',
             'param3' => '0',
-            'param4' => $CFG->wwwroot . '/user/view.php?$$',
+            'param4' => $CFG->wwwroot . '/user/profile.php?id=$$',
             'param5' => '_blank',
         ],
     ];
@@ -137,6 +137,12 @@ function tool_mergeusers_create_user_profile_fields(): void {
     // Create custom fields if they do not exist.
     foreach ($fields as $field_info) {
         $record = (object)$field_info;
+
+        // Check if it already exists to update it.
+        $fieldid = $DB->get_field('user_info_field', 'id', ['shortname' => $record->shortname]);
+        if (!empty($fieldid)) {
+            $record->id = $fieldid;
+        }
 
         $define_field = new profile_define_base();
         $define_field->define_save($record);
