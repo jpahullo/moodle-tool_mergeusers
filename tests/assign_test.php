@@ -50,7 +50,7 @@ class assign_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_assign
      */
-    public function test_mergenonconflictingassigngrades() {
+    public function test_merge_non_conflicting_assign_grades() {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();

@@ -1,6 +1,10 @@
 Release notes
 =============
 
+2025020501
+
+1. 2025-02-05 - bump version, update CHANGES.md, and kept support only for M4.1.
+
 2025020500
 
 1. 2025-02-05 - bump version and update CHANGES.md
