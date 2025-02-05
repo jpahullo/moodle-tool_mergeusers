@@ -16,31 +16,18 @@
 
 /**
  * @package tool_mergeusers
- * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @author Sam Møller <smo@moxis.dk>
  * @copyright 2019 Servei de Recursos Educatius (http://www.sre.urv.cat)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_mergeusers\local\observer;
+/**
+ * Provides the necessary steps to get properly installed from scratch.
+ *
+ * @return void
+ */
+function xmldb_tool_mergeusers_install(): void {
+    require_once(__DIR__ . '/upgradelib.php');
 
-use tool_mergeusers\event\user_merged_success;
-
-class keptuser {
-
-    /**
-     * Ensure kept user is not suspended.
-     *
-     * @param user_merged_success $event Event data.
-     */
-    public static function make_kept_user_as_not_suspended(user_merged_success $event): void {
-        global $DB;
-
-        $userid = $event->other['usersinvolved']['toid'];
-
-        $userkept = new \stdClass();
-        $userkept->id = $userid;
-        $userkept->suspended = 0;
-        $userkept->timemodified = time();
-        $DB->update_record('user', $userkept);
-    }
+    tool_mergeusers_create_user_profile_fields();
 }
