@@ -1,6 +1,10 @@
 Release notes
 =============
 
+2025020504
+
+1. 2025-02-05 - bump version to make a new plugin version available for M4.2 to M4.4.
+
 2025020503
 
 1. 2025-02-05 - fix: URL on old and new user profile fields definition.

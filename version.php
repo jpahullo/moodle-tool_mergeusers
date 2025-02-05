@@ -31,8 +31,8 @@
 defined('MOODLE_INTERNAL') || die;
 
 
-$plugin->version   = 2025020503;
-$plugin->release = '2025020503 (Happy 2025)';
+$plugin->version   = 2025020504;
+$plugin->release = '2025020504 (Happy 2025)';
 $plugin->requires  = 2023042400; // Moodle 4.2, 24 April 2023, https://moodledev.io/general/releases#moodle-42
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;
