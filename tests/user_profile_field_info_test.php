@@ -13,8 +13,12 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-use tool_mergeusers\local\observer\update_user_profiles_on_merging_success;
+use tool_mergeusers\event\user_merged_success;
+use tool_mergeusers\local\profile_fields;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../db/upgradelib.php');
 /**
  * @package tool
  * @subpackage mergeusers
@@ -24,6 +28,7 @@ use tool_mergeusers\local\observer\update_user_profiles_on_merging_success;
  */
 
 class user_profile_field_info_test extends advanced_testcase {
+
     protected function setUp(): void {
         global $CFG;
 
@@ -33,10 +38,9 @@ class user_profile_field_info_test extends advanced_testcase {
     }
 
     /**
-     * Find existing user profile category.
-     * Remove it if it exists.
-     * Create by calling the function.
-     * Check if it exists.
+     * Forces recreation of user profile fields to ensure they are generated as expected.
+     * @group tool_mergeusers
+     * @group user_profile_fields
      */
     public function test_create_user_profile_category(): void {
         global $DB;
@@ -57,12 +61,14 @@ class user_profile_field_info_test extends advanced_testcase {
     }
 
     /**
-     * Get the merge user profile category.
-     * Remove all fields in the category.
-     * Call the function to create the fields.
-     * Check if the fields exist.
+     * Invoke the function on upgrading and installing to be sure that custom profile fields
+     * are present after its execution.
+     *
+     * @throws dml_exception
+     * @group tool_mergeusers
+     * @group user_profile_fields
      */
-    public function test_create_user_profile_fields(): void {
+    public function test_user_profile_fields_are_created(): void {
         global $DB;
 
         $category = $this->get_merge_users_profile_category();
@@ -72,87 +78,52 @@ class user_profile_field_info_test extends advanced_testcase {
 
         tool_mergeusers_create_user_profile_fields();
 
-        $records = $DB->get_recordset('user_info_field', ['categoryid' => $category->id]);
-        $fields = [];
+        $records = $DB->get_records('user_info_field', ['categoryid' => $category->id]);
 
-        foreach ($records as $record) {
-            $fields[$record->shortname] = $record;
-        }
-
-        $records->close();
-
-        self::assertArrayHasKey('merge_date', $fields);
-        self::assertArrayHasKey('merge_info', $fields);
+        $this->assert_profile_fields_are_generated($records);
     }
 
     /**
-     * Emit user_merged_success event.
-     * Call the function to add merge date and info (add_merge_date_info).
-     * Check if the fields have been updated on old user and new user.
+     * Emulate two users are successfully merged and check that all profile fields are updated.
+     *
+     * @throws dml_exception
+     * @throws coding_exception
+     * @group tool_mergeusers
+     * @group user_profile_fields
      */
-    public function test_event_observer_add_merge_date_and_info(): void {
-        global $DB;
-
-        $category = $this->get_merge_users_profile_category();
-        [$in_sql, $field_params] = $DB->get_in_or_equal(['merge_date', 'merge_info']);
-        $field_params[] = $category->id;
-
-        $field_exists = $DB->record_exists_select(
-            'user_info_field',
-            "shortname $in_sql AND categoryid = ?",
-            $field_params
-        );
-
-        self::assertTrue($field_exists);
-
+    public function test_profile_fields_are_updated_on_merge_success(): void {
         $generator = self::getDataGenerator();
 
-        $old_user = $generator->create_user();
-        $new_user = $generator->create_user();
+        $olduser = $generator->create_user();
+        $newuser = $generator->create_user();
+        $logid = 1;
+        $mergedate = time();
         $log = (object)[
-            'id' => 1,
-            'touserid' => $new_user->id,
-            'fromuserid' => $old_user->id,
+            'id' => $logid,
+            'touserid' => $newuser->id,
+            'fromuserid' => $olduser->id,
             'mergedbyuserid' => 2,
-            'timemodified' => time(),
+            'timemodified' => $mergedate,
             'log' => '',
         ];
 
-        $event = $this->get_user_merged_success_event($old_user, $new_user, $log);
+        $this->trigger_user_merged_success_event($olduser, $newuser, $log);
 
-        update_user_profiles_on_merging_success::update($event);
+        $this->assert_profile_fields_are_set_on_user($olduser->id, $newuser->id, $logid, $mergedate, true);
+        $this->assert_profile_fields_are_set_on_user($newuser->id, $olduser->id, $logid, $mergedate, false);
 
-        $old_user_fields = $this->get_profile_fields_with_shortnames(
-            $category->id,
-            $old_user->id
-        );
-
-        self::assertGreaterThan(
-            0,
-            $old_user_fields['merge_date']->data
-        );
-        self::assertStringContainsString(
-            $new_user->username,
-            $old_user_fields['merge_info']->data
-        );
-
-        $new_user_fields = $this->get_profile_fields_with_shortnames(
-            $category->id,
-            $new_user->id
-        );
-
-        self::assertEmpty(
-            $new_user_fields['merge_date']->data
-        );
-        self::assertEmpty(
-            $new_user_fields['merge_info']->data
-        );
     }
 
+    /**
+     * Gets the profile field category related to merge users.
+     *
+     * @return stdClass
+     * @throws dml_exception
+     */
     private function get_merge_users_profile_category(): object {
         global $DB;
 
-        $record = ['name' => 'Merge User Info'];
+        $record = ['name' => profile_fields::MERGE_CATEGORY_FOR_FIELDS];
         $category = $DB->get_record('user_info_category', $record);
 
         if (empty($category)) {
@@ -163,33 +134,17 @@ class user_profile_field_info_test extends advanced_testcase {
     }
 
     /**
-     * @param int $profile_category_id
-     * @param int $user_id
-     * @return profile_field_base[]
+     * Triggers a successful merge event.
+     *
+     * @throws coding_exception
+     * @throws dml_exception
      */
-    private function get_profile_fields_with_shortnames(int $profile_category_id, int $user_id): array {
-        $category_fields = profile_get_user_fields_with_data_by_category($user_id);
-        $items = [];
-
-        if (!isset($category_fields[$profile_category_id])) {
-            return $items;
-        }
-
-        foreach ($category_fields as $fields) {
-            foreach ($fields as $field) {
-                $items[$field->get_shortname()] = $field;
-            }
-        }
-
-        return $items;
-    }
-
-    private function get_user_merged_success_event(
+    private function trigger_user_merged_success_event(
         object $old_user,
         object $new_user,
         object $log
-    ): \tool_mergeusers\event\user_merged_success {
-        return \tool_mergeusers\event\user_merged_success::create([
+    ): void {
+        user_merged_success::create([
             'context' => \context_system::instance(),
             'other' => [
                 'usersinvolved' => [
@@ -199,6 +154,68 @@ class user_profile_field_info_test extends advanced_testcase {
                 'logid' => $log->id,
                 'log' => $log,
             ],
-        ]);
+        ])->trigger();
+    }
+
+    /**
+     * Evaluates if the custom profile fields are all the necessary for this plugin.
+     *
+     * @param array $records list of records related to the merge users category fields.
+     * @return void
+     */
+    private function assert_profile_fields_are_generated(array $records): void {
+        $fields = [];
+
+        foreach ($records as $record) {
+            $fields[$record->shortname] = $record;
+        }
+
+        self::assertCount(4, $fields);
+
+        foreach (profile_fields::MERGE_FIELD_SHORTNAMES as $shortname) {
+            self::assertArrayHasKey($shortname, $fields);
+        }
+    }
+
+    /**
+     * Checks whether the user profile fields are properly updated.
+     *
+     * @param int $userid merged user id to check.
+     * @param int $otheruserid user id of the other user being merged.
+     * @param int $logid log id of the merge.
+     * @param int $mergedate date when the merge was done.
+     * @param bool $isolduser true when the $userid is the old user; false when it is the new one.
+     * @return void
+     * @throws dml_exception
+     */
+    private function assert_profile_fields_are_set_on_user(int $userid, int $otheruserid, int $logid, int $mergedate, bool $isolduser) {
+        $allfieldsbycategory = profile_get_user_fields_with_data_by_category($userid);
+        $mergeuserscategoryid = $this->get_merge_users_profile_category()->id;
+        $mergeuserfields = [];
+
+        if (isset($allfieldsbycategory[$mergeuserscategoryid])) {
+            foreach ($allfieldsbycategory[$mergeuserscategoryid] as $field) {
+                $mergeuserfields[$field->get_shortname()] = $field->data;
+            }
+        }
+
+        // Testing common profile fields are present.
+        self::assertArrayHasKey(profile_fields::MERGE_DATE, $mergeuserfields);
+        self::assertEquals($mergedate, $mergeuserfields[profile_fields::MERGE_DATE]);
+        self::assertArrayHasKey(profile_fields::MERGE_LOG_ID, $mergeuserfields);
+        self::assertEquals($logid, $mergeuserfields[profile_fields::MERGE_LOG_ID]);
+
+        // Testing profile fields depending on old or new user.
+        if ($isolduser) {
+            self::assertArrayHasKey(profile_fields::MERGE_OLD_USER_ID, $mergeuserfields);
+            self::assertEquals('', $mergeuserfields[profile_fields::MERGE_OLD_USER_ID]);
+            self::assertArrayHasKey(profile_fields::MERGE_NEW_USER_ID, $mergeuserfields);
+            self::assertEquals($otheruserid, $mergeuserfields[profile_fields::MERGE_NEW_USER_ID]);
+        } else {
+            self::assertArrayHasKey(profile_fields::MERGE_OLD_USER_ID, $mergeuserfields);
+            self::assertEquals($otheruserid, $mergeuserfields[profile_fields::MERGE_OLD_USER_ID]);
+            self::assertArrayHasKey(profile_fields::MERGE_NEW_USER_ID, $mergeuserfields);
+            self::assertEquals('', $mergeuserfields[profile_fields::MERGE_NEW_USER_ID]);
+        }
     }
 }

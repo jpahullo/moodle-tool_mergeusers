@@ -33,4 +33,13 @@ class profile_fields {
     public const MERGE_OLD_USER_ID = 'mergeusers_olduserid';
     /** @var string User that keeps data from both merged users. */
     public const MERGE_NEW_USER_ID = 'mergeusers_newuserid';
+    /** @var string[] List of custom profile shortnames */
+    public const MERGE_FIELD_SHORTNAMES = [
+        self::MERGE_DATE,
+        self::MERGE_LOG_ID,
+        self::MERGE_OLD_USER_ID,
+        self::MERGE_NEW_USER_ID,
+    ];
+    /** @var string Name of the fields category for specific tool_mergeusers profile fields. */
+    public const MERGE_CATEGORY_FOR_FIELDS = 'Merge users: Detail';
 }
