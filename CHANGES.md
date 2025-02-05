@@ -1,6 +1,14 @@
 Release notes
 =============
 
+2025020502
+
+1. 2025-02-05 #295 - fix: remove deprecation warning on CLIGathering, related to Iterator. Thanks to @CatSema. 
+
+2025020501
+
+1. 2025-02-05 - bump version, update CHANGES.md, and kept support only for M4.1.
+
 2025020500
 
 1. 2025-02-05 - bump version and update CHANGES.md
@@ -19,9 +27,6 @@ Release notes
 
 1. 2023-06-19 #245 - Add list of incremental changes on file CHANGES.md.
 2. 2023-06-19 #247 - Fix proper support for Moodle 4.2, thanks to Matthias Opitz.
-=======
-
->>>>>>> 4b6ea63 ( #286 - append fix PHPUnit assign test on CHANGES.md)
 
 2023040402
 
