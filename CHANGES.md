@@ -1,6 +1,13 @@
 Release notes
 =============
 
+2025020301
+
+1. 2025-02-04 - fix: set up again suspended image to merged source user.
+2. 2025-02-04 #253 - fix: CRLF condification passed to LF.
+3. 2025-02-04 #283 - new feature: final version for custom profile fields to help identify merged source and target users.
+4. 2024-11-14 #283 - new feature: use custom profile fields to identify merged source and target users, thanks to @sampraxis and @ClausSchmidtPraxis.
+
 2024060300
 
 1. 2024-06-03 #268 - CI: verify it is working from M4.1 to M4.4 and master. Solves #263 too.
@@ -52,4 +59,4 @@ Maintained by:
 * [Jordi Pujol-Ahulló](https://recursoseducatius.urv.cat).
 * [Nicolas Dunand](https://moodle.org/plugins/browse.php?list=contributor&id=141933).
 
-[See all Github contributors](https://github.com/ndunand/moodle-tool_mergeusers/graphs/contributors)
+[See all Github contributors](https://github.com/jpahullo/moodle-tool_mergeusers/graphs/contributors)
