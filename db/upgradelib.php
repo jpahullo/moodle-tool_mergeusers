@@ -38,12 +38,11 @@ function tool_mergeusers_create_user_profile_fields(): void {
     require_once $CFG->dirroot . '/user/profile/definelib.php';
 
     // Create user profile field category.
-    $categoryname = 'Merge users: Detail';
-    $category = $DB->get_record('user_info_category', ['name' => $categoryname]);
+    $category = $DB->get_record('user_info_category', ['name' => profile_fields::MERGE_CATEGORY_FOR_FIELDS]);
 
     if (empty($category)) {
         $category = (object)[
-            'name' => $categoryname,
+            'name' => profile_fields::MERGE_CATEGORY_FOR_FIELDS,
         ];
         profile_save_category($category);
     }
