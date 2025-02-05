@@ -1,12 +1,14 @@
 Release notes
 =============
 
-2025020301
+2025020500
 
-1. 2025-02-04 - fix: set up again suspended image to merged source user.
-2. 2025-02-04 #253 - fix: CRLF condification passed to LF.
-3. 2025-02-04 #283 - new feature: final version for custom profile fields to help identify merged source and target users.
-4. 2024-11-14 #283 - new feature: use custom profile fields to identify merged source and target users, thanks to @sampraxis and @ClausSchmidtPraxis.
+1. 2025-02-05 - bump version and update CHANGES.md
+2. 2025-02-04 - fix: set up again suspended image to merged source user.
+3. 2025-02-04 #253 - fix: CRLF condification passed to LF.
+4. 2025-02-04 #283 - new feature: final version for custom profile fields to help identify merged source and target users.
+5. 2025-01-23 #299 - fix: fix file content to get them properly uploaded into AMOS.
+6. 2024-11-14 #283 - new feature: use custom profile fields to identify merged source and target users, thanks to @sampraxis and @ClausSchmidtPraxis.
 
 2025012300
 
@@ -72,12 +74,7 @@ Contributors
 
 Maintained by:
 
-<<<<<<< HEAD
-* [Jordi Pujol-Ahulló](https://recursoseducatius.urv.cat).
-* [Nicolas Dunand](https://moodle.org/plugins/browse.php?list=contributor&id=141933).
-=======
 * [Jordi Pujol-Ahulló](https://www.urv.cat).
-* Nicolas Dunand.
->>>>>>> 35a8248 ( #286 - update CHANGES.md)
+* [Nicolas Dunand](https://moodle.org/plugins/browse.php?list=contributor&id=141933).
 
 [See all Github contributors](https://github.com/jpahullo/moodle-tool_mergeusers/graphs/contributors)
