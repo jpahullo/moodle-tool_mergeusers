@@ -52,7 +52,7 @@ class user_profile_field_info_test extends advanced_testcase {
             $DB->delete_records('user_info_category', ['id' => $category->id]);
         }
 
-        tool_mergeusers_create_user_profile_fields();
+        tool_mergeusers_define_user_profile_fields();
 
         $category = $DB->get_record('user_info_category', ['name' => $category->name]);
 
@@ -76,7 +76,7 @@ class user_profile_field_info_test extends advanced_testcase {
         // Remove all fields in the category.
         $DB->delete_records('user_info_field', ['categoryid' => $category->id]);
 
-        tool_mergeusers_create_user_profile_fields();
+        tool_mergeusers_define_user_profile_fields();
 
         $records = $DB->get_records('user_info_field', ['categoryid' => $category->id]);
 

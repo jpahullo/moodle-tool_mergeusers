@@ -29,5 +29,5 @@
 function xmldb_tool_mergeusers_install(): void {
     require_once(__DIR__ . '/upgradelib.php');
 
-    tool_mergeusers_create_user_profile_fields();
+    tool_mergeusers_define_user_profile_fields();
 }

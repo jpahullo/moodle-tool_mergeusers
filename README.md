@@ -247,6 +247,6 @@ Contributors
 Maintained by:
 
 * [Jordi Pujol-Ahulló](https://www.urv.cat).
-* Nicolas Dunand.
+* [Nicolas Dunand](https://moodle.org/plugins/browse.php?list=contributor&id=141933).
 
 [See all Github contributors](https://github.com/jpahullo/moodle-tool_mergeusers/graphs/contributors)
