@@ -42,10 +42,6 @@ jobs:
             php: '8.3'
             extensions: "mbstring, pgsql, mysqli"
             database: 'pgsql'
-          - moodle-branch: 'master'
-            php: '8.3'
-            extensions: "mbstring, pgsql, mysqli"
-            database: 'mariadb'
 
     steps:
       - name: Check out repository code
