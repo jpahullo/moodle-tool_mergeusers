@@ -1,6 +1,10 @@
 Release notes
 =============
 
+2025020502
+
+1. 2025-02-05 #295 - fix: remove deprecation warning on CLIGathering, related to Iterator. Thanks to @CatSema. 
+
 2025020501
 
 1. 2025-02-05 - bump version, update CHANGES.md, and kept support only for M4.1.
