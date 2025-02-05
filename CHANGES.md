@@ -1,6 +1,11 @@
 Release notes
 =============
 
+2025020503
+
+1. 2025-02-05 - fix: URL on old and new user profile fields definition.
+2. 2025-02-05 - improvement: CLI script now shows better log of merging operations.
+
 2025020502
 
 1. 2025-02-05 #295 - fix: remove deprecation warning on CLIGathering, related to Iterator. Thanks to @CatSema. 
