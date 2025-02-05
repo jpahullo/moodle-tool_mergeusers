@@ -83,10 +83,18 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
 
     if ($oldversion < 2025020300) {
         // Try to create custom fields.
-        tool_mergeusers_create_user_profile_fields();
+        tool_mergeusers_define_user_profile_fields();
 
         // Savepoint reached.
         upgrade_plugin_savepoint(true, 2025020300, 'tool', 'mergeusers');
+    }
+
+    if ($oldversion < 2025020503) {
+        // Force update custom fields.
+        tool_mergeusers_define_user_profile_fields();
+
+        // Savepoint reached.
+        upgrade_plugin_savepoint(true, 2025020503, 'tool', 'mergeusers');
     }
 
     return true;
