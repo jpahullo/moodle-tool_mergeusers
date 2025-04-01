@@ -56,7 +56,6 @@ jobs:
                                          --data-urlencode "changelogurl=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commits/${TAGNAME}" \
                                          --data-urlencode "altdownloadurl=${ZIPURL}")
           echo "::set-output name=response::${RESPONSE}"
-
       - name: Evaluate the response
         id: evaluate-response
         env:
