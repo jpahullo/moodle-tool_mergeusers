@@ -81,20 +81,28 @@ function xmldb_tool_mergeusers_upgrade ($oldversion) {
         upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
     }
 
-    if ($oldversion < 2025020300) {
-        // Try to create custom fields.
-        tool_mergeusers_define_user_profile_fields();
+    if ($oldversion < 2025040100) {
+        // Copy existing customfields shortnames to new setting, if the fields exist.
+        global $CFG;
+        require_once($CFG->dirroot . '/user/profile/lib.php');
+
+        $tocheck = [
+            'mergeusers_date' => 'date_field_shortname',
+            'mergeusers_logid' => 'log_id_field_shortname',
+            'mergeusers_olduserid' => 'new_userid_field_shortname',
+            'mergeusers_newuserid' => 'old_userid_field_shortname',
+        ];
+
+        $existingfieldshortnames = array_column(profile_get_custom_fields(), 'shortname');
+
+        foreach ($tocheck as $fieldshortname => $newconfig) {
+            if (in_array($fieldshortname, $existingfieldshortnames)) {
+                set_config($newconfig, $fieldshortname, 'tool_mergeusers');
+            }
+        }
 
         // Savepoint reached.
-        upgrade_plugin_savepoint(true, 2025020300, 'tool', 'mergeusers');
-    }
-
-    if ($oldversion < 2025020503) {
-        // Force update custom fields.
-        tool_mergeusers_define_user_profile_fields();
-
-        // Savepoint reached.
-        upgrade_plugin_savepoint(true, 2025020503, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2025040100, 'tool', 'mergeusers');
     }
 
     return true;

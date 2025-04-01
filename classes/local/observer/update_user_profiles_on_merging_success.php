@@ -73,13 +73,7 @@ class update_user_profiles_on_merging_success {
      * @return void
      */
     private static function update_old_user(int $olduserid, int $newuserid, int $logid, int $timecreated): void {
-        $fields = [
-            profile_fields::MERGE_DATE => $timecreated,
-            profile_fields::MERGE_LOG_ID => $logid,
-            profile_fields::MERGE_NEW_USER_ID => $newuserid,
-            profile_fields::MERGE_OLD_USER_ID => null,
-        ];
-        profile_save_custom_fields($olduserid, $fields);
+        profile_fields::update_old_user($olduserid, $newuserid, $logid, $timecreated);
     }
 
     /**
@@ -92,12 +86,6 @@ class update_user_profiles_on_merging_success {
      * @return void
      */
     private static function update_new_user(int $newuserid, int $olduserid, int $logid, int $timecreated): void {
-        $fields = [
-            profile_fields::MERGE_DATE => $timecreated,
-            profile_fields::MERGE_LOG_ID => $logid,
-            profile_fields::MERGE_NEW_USER_ID => null,
-            profile_fields::MERGE_OLD_USER_ID => $olduserid,
-        ];
-        profile_save_custom_fields($newuserid, $fields);
+        profile_fields::update_new_user($newuserid, $olduserid, $logid, $timecreated);
     }
 }

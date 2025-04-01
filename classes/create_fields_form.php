@@ -14,25 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_mergeusers;
+
+use moodleform;
+
 /**
- * Version information
+ * Create recommended user profile fields form.
  *
  * @package    tool
  * @subpackage mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
- * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @author     Matthew Hilton <matthewhilton@catalyst-au.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die;
-
-$plugin->version   = 2025040100;
-$plugin->release = '2025040100 (Happy 2025)';
-$plugin->requires  = 2022112800; // Moodle 4.1, 28 November 2022, https://moodledev.io/general/releases#moodle-41-lts
-$plugin->component = 'tool_mergeusers';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [401, 401];
+class create_fields_form extends moodleform {
+    public function definition() {
+        $mform = $this->_form;
+        $mform->addElement('text', 'profilefield_category', get_string('profilefieldcategory', 'tool_mergeusers'));
+        $mform->setType('profilefield_category', 'text');
+        $mform->addRule('profilefield_category', get_string('error'), 'required');
+        $mform->addElement('submit', 'submit', get_string('createrecommendedfields', 'tool_mergeusers'));
+    }
+}

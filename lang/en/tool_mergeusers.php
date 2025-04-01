@@ -110,3 +110,21 @@ $string['userreviewtable_legend'] = '<b>Review users to merge</b>';
 $string['userselecttable_legend'] = '<b>Select users to merge</b>';
 $string['viewlog'] = 'See merging logs';
 $string['wronglogid'] = 'The log you are asking for does not exist.';
+$string['userfields'] =  'User profile fields';
+$string['userfields_desc'] =  'Optional user profile fields that if linked will have merge user data stored in them. {$a}.';
+$string['datefieldshortname'] = 'Date field shortname';
+$string['datefieldshortname_desc'] = 'Shortname of profile field to store date user was last merged in.';
+$string['logidfieldshortname'] = 'Log ID field shortname';
+$string['logidfieldshortname_desc'] = 'Shortname of profile field to store the log id from the last merge in.';
+$string['newuseridfieldshortname'] = 'New user ID field shortname';
+$string['newuseridfieldshortname_desc'] = 'Shortname of profile field to store the new userid from the last merge in.';
+$string['olduseridfieldshortname'] = 'Old user ID field shortname';
+$string['olduseridfieldshortname_desc'] = 'Shortname of profile field to store the old userid from the last merge in.';
+$string['userfields_createrecommended'] = 'Click here to access tool to easily create these fields.';
+$string['createrecommendedfields_explanation'] = 'This will create the recommended profile fields in the category below using the following shortnames {$a}.
+If these fields already exist, they will be updated.
+Afterwards, the plugin will be configured to use these fields as the fields to store merge data in. You can change these at any time from the merge users plugin settings.
+';
+$string['profilefieldcategory'] = 'Profile field category';
+$string['createrecommendedfields'] = 'Create recommended fields';
+$string['fieldscreatedsuccessfully'] = 'Fields created/updated successfully';

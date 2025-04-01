@@ -28,6 +28,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_recompletion\admin_setting_configstrtotime;
+use mod_customcert\admin_setting_link;
+
 defined('MOODLE_INTERNAL') || die;
 
 if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
@@ -45,6 +48,9 @@ if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
             new admin_externalpage('tool_mergeusers_viewlog', get_string('viewlog', 'tool_mergeusers'),
                 $CFG->wwwroot . '/' . $CFG->admin . '/tool/mergeusers/view.php',
                 'tool/mergeusers:mergeusers'));
+        $ADMIN->add('tool_mergeusers',
+            new admin_externalpage('tool_mergeusers_createrecommendedfields', get_string('createrecommendedfields', 'tool_mergeusers'),
+                $CFG->wwwroot . '/' . $CFG->admin . '/tool/mergeusers/createrecommendedfields.php'));
     }
 }
 
@@ -89,6 +95,44 @@ if ($hassiteconfig) {
         get_string('uniquekeynewidtomaintain', 'tool_mergeusers'),
         get_string('uniquekeynewidtomaintain_desc', 'tool_mergeusers'),
         1));
+
+    // User profile fields.
+    $settings->add(new admin_setting_heading('tool_mergeusers/profilefields',
+        get_string('userfields', 'tool_mergeusers'),
+        get_string('userfields_desc', 'tool_mergeusers',
+            html_writer::link(
+                new moodle_url('/admin/tool/mergeusers/createrecommendedfields.php'),
+                get_string('userfields_createrecommended', 'tool_mergeusers'))
+            )
+        ));
+    
+    $settings->add(new admin_setting_configtext('tool_mergeusers/date_field_shortname',
+        get_string('datefieldshortname', 'tool_mergeusers'),
+        get_string('datefieldshortname_desc', 'tool_mergeusers'),
+        '',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext('tool_mergeusers/log_id_field_shortname',
+        get_string('logidfieldshortname', 'tool_mergeusers'),
+        get_string('logidfieldshortname_desc', 'tool_mergeusers'),
+        '',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext('tool_mergeusers/new_userid_field_shortname',
+        get_string('newuseridfieldshortname', 'tool_mergeusers'),
+        get_string('newuseridfieldshortname_desc', 'tool_mergeusers'),
+        '',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext('tool_mergeusers/old_userid_field_shortname',
+        get_string('olduseridfieldshortname', 'tool_mergeusers'),
+        get_string('olduseridfieldshortname_desc', 'tool_mergeusers'),
+        '',
+        PARAM_TEXT
+    ));
 
     // Add settings
     $ADMIN->add('tools', $settings);

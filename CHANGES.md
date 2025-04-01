@@ -1,6 +1,9 @@
 Release notes
 =============
 
+2025040100
+1. Profile fields to store merge data are now optional. If you had already upgraded and had these fields created automatically, they will remain configured. Otherwise, by default they are not configured.
+
 2025020503
 
 1. 2025-02-05 - fix: URL on old and new user profile fields definition.
