@@ -1,11 +1,13 @@
 Release notes
 =============
 
-2025081200
+2025081201
 
 1. 2025-08-12 - fix: #329: set renumber quiz attempts as the default setting.
 2. 2025-08-12 - fix: #331: prevents web browser alert from leaving form page on the summary page.
 3. 2025-08-12 - improvement: #311: use Catalyst CI. Thanks to @matthewhilton.
+4. 2025-08-12 - improvement: #306: remove user profile fields; use profile page hook to show merging detail. 
+   Thanks to @matthewhilton.
 
 2025081100
 

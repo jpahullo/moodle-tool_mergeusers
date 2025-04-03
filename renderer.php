@@ -341,4 +341,36 @@ class tool_mergeusers_renderer extends plugin_renderer_base
 
         return $output;
     }
+
+    /**
+     * Gathers detail data for merge detail display.
+     *
+     * @param int $userid
+     * @param int $timemodified the time the merge occurred
+     * @param int $logid id of log
+     * @return array Containing profile link, formatted timestamp and log link.
+     */
+    private function get_merge_detail_data(int $userid, int $timemodified, int $logid): array {
+        $profileuser = core_user::get_user($userid);
+        $time = userdate($timemodified);
+        $profilelink = !empty($profileuser) ? html_writer::link(new moodle_url('/user/profile.php', ['id' => $userid]),
+            fullname($profileuser)) : get_string('unknownprofile', 'tool_mergeusers', $userid);
+        $loglink = html_writer::link(new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]),
+            get_string('openlog', 'tool_mergeusers'));
+        return ['profilelink' => $profilelink, 'time' => $time, 'loglink' => $loglink];
+    }
+
+    /**
+     * Builds merge detail HTML.
+     * @param object|null $mergetome last merge record into this account
+     * @param object|null $mergefromme last merge record from this account (into another account).
+     * @return string HTML to display
+     */
+    public function get_merge_detail(?object $mergetome, ?object $mergefromme): string {
+        $tohtml = $mergetome ? get_string('tomedetail', 'tool_mergeusers',
+            $this->get_merge_detail_data($mergetome->fromuserid, $mergetome->timemodified, $mergetome->id)) : '';
+        $fromhtml = $mergefromme ? get_string('frommedetail', 'tool_mergeusers',
+            $this->get_merge_detail_data($mergefromme->touserid, $mergefromme->timemodified, $mergefromme->id)) : '';
+        return implode('<br/>', array_filter([$tohtml, $fromhtml]));
+    }
 }

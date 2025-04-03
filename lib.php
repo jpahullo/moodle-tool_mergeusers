@@ -21,6 +21,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mergeusers\logger;
+
 defined('MOODLE_INTERNAL') || die;
 
 /**
@@ -86,4 +88,33 @@ function tool_mergeusers_build_quiz_options() {
     $result->options = $quizOptions;
 
     return $result;
+}
+
+/**
+ * Profile callback to add merging data to a users profile.
+ *
+ * @param tree $tree Tree object
+ * @param stdClass $user user object
+ * @param bool $iscurrentuser
+ * @param null|stdClass $course Course object
+ */
+function tool_mergeusers_myprofile_navigation($tree, $user, $iscurrentuser, $course) {
+    global $PAGE;
+
+    if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
+        $renderer = $PAGE->get_renderer('tool_mergeusers');
+        $logger = new logger();
+
+        // Find last merge to/from this profile.
+        $lastmergetome = current($logger->get(['touserid' => $user->id], 0, 1)) ?: null;
+        $lastmergefromme = current($logger->get(['fromuserid' => $user->id], 0, 1)) ?: null;
+
+        // Display last merge.
+        $category = new core_user\output\myprofile\category('tool_mergeusers_info', get_string('pluginname', 'tool_mergeusers'));
+        $tree->add_category($category);
+        $node = new core_user\output\myprofile\node('tool_mergeusers_info', 'olduser',
+            get_string('lastmerge', 'tool_mergeusers'), null, null,
+            $renderer->get_merge_detail($lastmergetome, $lastmergefromme));
+        $category->add_node($node);
+    }
 }
