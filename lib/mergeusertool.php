@@ -30,6 +30,9 @@
  * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+use tool_mergeusers\logger;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php';
@@ -89,7 +92,7 @@ class MergeUserTool {
     protected $userFieldNames;
 
     /**
-     * @var tool_mergeusers_logger logger for merging users.
+     * @var logger logger for merging users.
      */
     protected $logger;
 
@@ -115,14 +118,14 @@ class MergeUserTool {
     protected $debugdb;
 
     /**
-     * Initializes
+     * Initializes the tool to merge users.
      *
      * @param tool_mergeusers_config $config local configuration.
-     * @param tool_mergeusers_logger $logger logger facility to save results of mergings.
+     * @param logger $logger logger facility to save results of mergings.
      * @throws moodle_exception when the merger for a given table is not an instance of TableMerger
      */
-    public function __construct(tool_mergeusers_config $config = null, tool_mergeusers_logger $logger = null) {
-        $this->logger = (is_null($logger)) ? new tool_mergeusers_logger() : $logger;
+    public function __construct(tool_mergeusers_config $config = null, logger $logger = null) {
+        $this->logger = (is_null($logger)) ? new logger() : $logger;
         $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
 
         $this->checkTransactionSupport();

@@ -23,6 +23,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mergeusers\logger;
+
 require('../../../config.php');
 
 global $CFG, $PAGE;
@@ -39,7 +41,7 @@ require_capability('tool/mergeusers:mergeusers', context_system::instance());
 
 admin_externalpage_setup('tool_mergeusers_viewlog');
 
-$logger = new tool_mergeusers_logger();
+$logger = new logger();
 
 $export = optional_param('export', 0, PARAM_BOOL);
 
