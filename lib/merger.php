@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mergeusers\logger;
+
 defined('MOODLE_INTERNAL') || die;
 
 global $CFG;
@@ -40,7 +42,7 @@ class Merger {
      */
     public function __construct(MergeUserTool $mut) {
         $this->mut = $mut;
-        $this->logger = new tool_mergeusers_logger();
+        $this->logger = new logger();
 
         // To catch Ctrl+C interruptions, we need this stuff.
         declare(ticks = 1);
