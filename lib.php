@@ -101,7 +101,7 @@ function tool_mergeusers_build_quiz_options() {
 function tool_mergeusers_myprofile_navigation($tree, $user, $iscurrentuser, $course) {
     global $PAGE;
 
-    if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
+    if (has_capability('tool/mergeusers:viewlog', context_system::instance())) {
         $renderer = $PAGE->get_renderer('tool_mergeusers');
         $logger = new logger();
 

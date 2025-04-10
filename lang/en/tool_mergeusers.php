@@ -64,6 +64,7 @@ $string['mergeusersadvanced_help'] = 'Here you can enter the below fields if you
 $string['mergeusers_confirm'] = 'After confirming the merge process will start. <br /><strong>This will not be reversible!</strong> Are you sure you want to continue?';
 $string['mergeusers:mergeusers'] = 'Merge user accounts';
 $string['mergeusers:view'] = 'Merge User Accounts';
+$string['mergeusers:viewlog'] = 'View merging logs';
 $string['merging'] = 'Merged';
 $string['newuser'] = 'User to keep';
 $string['newuserid'] = 'User ID to be kept';
