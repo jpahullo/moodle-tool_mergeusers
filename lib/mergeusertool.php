@@ -157,8 +157,11 @@ class MergeUserTool
                     cli_error('Error: ' . __METHOD__ . ':: ' . get_string('notablemergerclass', 'tool_mergeusers',
                                     $class));
                 } else {
-                    print_error('notablemergerclass', 'tool_mergeusers',
-                            new moodle_url('/admin/tool/mergeusers/index.php'), $class);
+                    throw new moodle_exception(
+                        'notablemergerclass',
+                        'tool_mergeusers',
+                        (new moodle_url('/admin/tool/mergeusers/index.php'))->out(),
+                        $class);
                 }
             }
             // Append any additional table to skip.
@@ -415,8 +418,11 @@ class MergeUserTool
                 cli_error('Error: ' . __METHOD__ . ':: ' . get_string('errortransactionsonly', 'tool_mergeusers',
                                 $CFG->dbtype));
             } else {
-                print_error('errortransactionsonly', 'tool_mergeusers',
-                        new moodle_url('/admin/tool/mergeusers/index.php'), $CFG->dbtype);
+                throw new moodle_exception(
+                    'errortransactionsonly',
+                    'tool_mergeusers',
+                    (new moodle_url('/admin/tool/mergeusers/index.php'))->out(),
+                    $CFG->dbtype);
             }
         }
 
