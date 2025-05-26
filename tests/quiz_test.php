@@ -25,6 +25,24 @@ use mod_quiz\quiz_settings;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quiz_test extends advanced_testcase {
+    /** @var object test course 1. */
+    private $course1;
+
+    /** @var object test course 2. */
+    private $course2;
+
+    /** @var object test user. */
+    private $user_remove;
+
+    /** @var object test user. */
+    private $user_keep;
+
+    /** @var object test quiz 1 */
+    private $quiz1;
+
+    /** @var object test quiz 2 */
+    private $quiz2;
+
     /**
      * Configure the test.
      * Create two courses with a quiz in each.
