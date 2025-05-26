@@ -63,6 +63,11 @@ class tool_mergeusers_config {
     private $config;
 
     /**
+     * @var bool if true, do the full merge but rollback the transaction at the last opportunity.
+     */
+    public $alwaysRollback;
+
+    /**
      * Private constructor for the singleton.
      */
     private function __construct() {
