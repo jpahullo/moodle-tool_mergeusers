@@ -41,7 +41,7 @@ require_once __DIR__ . '/autoload.php';
 require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
 
 /**
- *
+ * Main tool to merge users.
  *
  * Lifecycle:
  * <ol>
@@ -53,8 +53,7 @@ require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
  *
  * @author Jordi Pujol-Ahulló
  */
-class MergeUserTool
-{
+class MergeUserTool {
     /**
      * @var array associative array showing the user-related fields per database table,
      * without the $CFG->prefix on each.
@@ -117,12 +116,12 @@ class MergeUserTool
 
     /**
      * Initializes
-     * @global object $CFG
+     *
      * @param tool_mergeusers_config $config local configuration.
      * @param tool_mergeusers_logger $logger logger facility to save results of mergings.
+     * @throws moodle_exception when the merger for a given table is not an instance of TableMerger
      */
-    public function __construct(tool_mergeusers_config $config = null, tool_mergeusers_logger $logger = null)
-    {
+    public function __construct(tool_mergeusers_config $config = null, tool_mergeusers_logger $logger = null) {
         $this->logger = (is_null($logger)) ? new tool_mergeusers_logger() : $logger;
         $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
 
@@ -157,8 +156,12 @@ class MergeUserTool
                     cli_error('Error: ' . __METHOD__ . ':: ' . get_string('notablemergerclass', 'tool_mergeusers',
                                     $class));
                 } else {
-                    throw new moodle_exception('notablemergerclass', 'tool_mergeusers',
-                        new moodle_url('/admin/tool/mergeusers/index.php'), $class);
+                    throw new moodle_exception(
+                        'notablemergerclass',
+                        'tool_mergeusers',
+                        new moodle_url('/admin/tool/mergeusers/index.php'),
+                        $class,
+                    );
                 }
             }
             // Append any additional table to skip.
@@ -404,10 +407,12 @@ class MergeUserTool
      * this method aborts the execution. Otherwise, this method will return
      * true or false whether the current database supports transactions or not,
      * respectively.
+     *
      * @return bool true if database transactions are supported. false otherwise.
+     * @throws moodle_exception when the current db instance does not support transactions
+     * and the plugin settings prevents merging users under this case.
      */
-    public function checkTransactionSupport()
-    {
+    public function checkTransactionSupport() {
         global $CFG;
 
         $transactionsSupported = tool_mergeusers_transactionssupported();
@@ -418,8 +423,12 @@ class MergeUserTool
                 cli_error('Error: ' . __METHOD__ . ':: ' . get_string('errortransactionsonly', 'tool_mergeusers',
                                 $CFG->dbtype));
             } else {
-                throw new moodle_exception('errortransactionsonly', 'tool_mergeusers',
-                        new moodle_url('/admin/tool/mergeusers/index.php'), $CFG->dbtype);
+                throw new moodle_exception(
+                    'errortransactionsonly',
+                    'tool_mergeusers',
+                    new moodle_url('/admin/tool/mergeusers/index.php'),
+                    $CFG->dbtype,
+                );
             }
         }
 

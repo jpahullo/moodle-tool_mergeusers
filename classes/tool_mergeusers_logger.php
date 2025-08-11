@@ -33,14 +33,15 @@ require_once $CFG->dirroot .'/lib/clilib.php';
  * General log table cannot be used for log.info field length restrictions.
  */
 class tool_mergeusers_logger {
-
     /**
      * Adds a merging action log into tool log.
+     *
      * @param int $touserid user.id where all data from $fromuserid will be merged into.
      * @param int $fromuserid user.id moving all data into $touserid.
      * @param bool $success true if merging action was ok; false otherwise.
      * @param array $log list of actions performed for a successful merging;
      * or a problem description if merging failed.
+     * @throws moodle_exception when log record cannot be inserted.
      */
     public function log($touserid, $fromuserid, $success, $log) {
         global $DB, $USER;
@@ -61,7 +62,11 @@ class tool_mergeusers_logger {
             if (CLI_SCRIPT) {
                 cli_error($msg);
             } else {
-                throw new moodle_exception($msg, 'tool_mergeusers', new moodle_url('/admin/tool/mergeusers/index.php'));
+                throw new moodle_exception(
+                    $msg,
+                    'tool_mergeusers',
+                    new moodle_url('/admin/tool/mergeusers/index.php'),
+                );
             }
         }
     }
