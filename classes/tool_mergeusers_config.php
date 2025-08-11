@@ -52,20 +52,15 @@
  * both. See the README.txt for more details on special cases.
  */
 class tool_mergeusers_config {
-    /**
-     * @var tool_mergeusers_config singleton instance.
-     */
+    /** @var tool_mergeusers_config singleton instance. */
     private static $instance = null;
 
-    /**
-     * @var array settings
-     */
-    private $config;
-
-    /**
-     * @var bool if true, do the full merge but rollback the transaction at the last opportunity.
-     */
-    public $alwaysRollback;
+    /** @var array settings */
+    private array $config;
+    /** @var bool if true, do the full merge but rollback the transaction at the last opportunity. */
+    public bool $alwaysRollback;
+    /** @var bool true to debug db operations; false otherwise. */
+    public bool $debugdb;
 
     /**
      * Private constructor for the singleton.
