@@ -1,6 +1,11 @@
 Release notes
 =============
 
+2025081100
+
+1. 2025-08-11 - fix: replaced print_error() functions for moodle_exception. Thanks to @ManaElmountasir.
+2. 2025-02-11 - bump version and update CHANGES.md
+
 2025020505
 
 1. 2025-02-05 - bump version to make a new plugin version available for M4.5.
