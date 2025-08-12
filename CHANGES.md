@@ -3,7 +3,7 @@ Release notes
 
 2025081100
 
-1. 2025-08-11 - fix: #315: replaced print_error() functions for moodle_exception. Thanks to @ManaElmountasir.
+1. 2025-08-11 - fix: #315: replaced print_error() functions for moodle_exception. Thanks to @ManaElmountasir and @minhduchoang195.
 2. 2025-02-11 - bump version and update CHANGES.md
 3. 2025-08-11 - fix: #326: remove deprecation warnings on CLI script and tests. Thanks to @matthewhilton.
 
