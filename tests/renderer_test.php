@@ -45,10 +45,14 @@ class renderer_test extends advanced_testcase {
         $dummylog = (object) [
             'fromuserid' => -5,
             'timemodified' => 0,
+            'success' => '1',
             'id' => 0
         ];
+        $dummyuser = (object) [
+            'id' => 0,
+        ];
         $unknownprofilelang = get_string('unknownprofile', 'tool_mergeusers', -5);
-        $displaytext = $this->get_renderer()->get_merge_detail($dummylog, null);
+        $displaytext = $this->get_renderer()->get_merge_detail($dummyuser, $dummylog, null);
         $this->assertStringContainsString($unknownprofilelang, $displaytext);
     }
 
@@ -61,12 +65,17 @@ class renderer_test extends advanced_testcase {
         $dummylog = (object) [
             'fromuserid' => $user->id,
             'timemodified' => 0,
-            'id' => 0
+            'success' => '1',
+            'id' => 0,
+        ];
+        $dummyuser = (object) [
+            'id' => 0,
+            'suspended' => '1',
         ];
 
         // Should contain their fullname.
         $fullname = fullname($user);
-        $displaytext = $this->get_renderer()->get_merge_detail($dummylog, null);
+        $displaytext = $this->get_renderer()->get_merge_detail($dummyuser, $dummylog, null);
         $this->assertStringContainsString($fullname, $displaytext);
     }
 }
