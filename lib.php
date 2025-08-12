@@ -129,6 +129,6 @@ function tool_mergeusers_myprofile_navigation(
     $tree->add_category($category);
     $node = new core_user\output\myprofile\node('tool_mergeusers_info', 'olduser',
         get_string('lastmerge', 'tool_mergeusers'), null, null,
-        $renderer->get_merge_detail($lastmergetome, $lastmergefromme));
+        $renderer->get_merge_detail($user, $lastmergetome, $lastmergefromme));
     $category->add_node($node);
 }

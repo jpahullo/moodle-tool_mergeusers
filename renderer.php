@@ -349,28 +349,59 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * @param int $timemodified the time the merge occurred
      * @param int $logid id of log
      * @return array Containing profile link, formatted timestamp and log link.
+     * @throws coding_exception
      */
-    private function get_merge_detail_data(int $userid, int $timemodified, int $logid): array {
+    private function get_merge_detail_data(int $userid, int $timemodified, int $logid, bool $success): array {
         $profileuser = core_user::get_user($userid);
         $time = userdate($timemodified);
         $profilelink = !empty($profileuser) ? html_writer::link(new moodle_url('/user/profile.php', ['id' => $userid]),
             fullname($profileuser)) : get_string('unknownprofile', 'tool_mergeusers', $userid);
         $loglink = html_writer::link(new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]),
             get_string('openlog', 'tool_mergeusers'));
-        return ['profilelink' => $profilelink, 'time' => $time, 'loglink' => $loglink];
+        $successstring = ($success) ? 'success' : 'error';
+        return [
+            'profilelink' => $profilelink,
+            'time' => $time,
+            'loglink' => $loglink,
+            'success' => strtolower(get_string($successstring)),
+        ];
     }
 
     /**
      * Builds merge detail HTML.
+     *
+     * @param stdClass $user User object.
      * @param object|null $mergetome last merge record into this account
      * @param object|null $mergefromme last merge record from this account (into another account).
      * @return string HTML to display
+     * @throws coding_exception
+     * @throws dml_exception
      */
-    public function get_merge_detail(?object $mergetome, ?object $mergefromme): string {
+    public function get_merge_detail(stdClass $user, ?object $mergetome, ?object $mergefromme): string {
         $tohtml = $mergetome ? get_string('tomedetail', 'tool_mergeusers',
-            $this->get_merge_detail_data($mergetome->fromuserid, $mergetome->timemodified, $mergetome->id)) : '';
+            $this->get_merge_detail_data($mergetome->fromuserid, $mergetome->timemodified, $mergetome->id, (bool)(int)$mergetome->success)) : '';
         $fromhtml = $mergefromme ? get_string('frommedetail', 'tool_mergeusers',
-            $this->get_merge_detail_data($mergefromme->touserid, $mergefromme->timemodified, $mergefromme->id)) : '';
-        return implode('<br/>', array_filter([$tohtml, $fromhtml]));
+            $this->get_merge_detail_data($mergefromme->touserid, $mergefromme->timemodified, $mergefromme->id, (bool)(int)$mergefromme->success)) : '';
+        $output = implode('<br/>', array_filter([$tohtml, $fromhtml]));
+
+        if (empty($output)) {
+            return $output;
+        }
+
+        if (!has_capability('moodle/user:delete', context_system::instance())) {
+            return $output;
+        }
+
+        $suspended = $user->suspended == 1;
+        $lastmergetootheruser = isset($mergefromme->timemodified) && (int)$mergefromme->success;
+        $lastmergetootheruser = $lastmergetootheruser ||
+            (   isset($mergetome->timemodified) &&
+                isset($mergefromme->timemodified) &&
+                (int)$mergetome->success &&
+                $mergefromme->timemodified > $mergetome->timemodified
+            );
+        $deletablestring = ($suspended && $lastmergetootheruser) ? 'deletableuser' : 'nondeletableuser';
+
+        return $output . '<br/><br/>' . get_string($deletablestring, 'tool_mergeusers');
     }
 }
