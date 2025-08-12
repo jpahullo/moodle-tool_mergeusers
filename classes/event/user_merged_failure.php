@@ -25,7 +25,6 @@
  */
 
 namespace tool_mergeusers\event;
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Class user_merged_failure called when merging user accounts has gone wrong.
@@ -43,7 +42,7 @@ class user_merged_failure extends user_merged {
 
     public function get_description() {
         return "The user {$this->userid} tried to merge all user-related data records
-            from '{$this->other['usersinvolved']['fromid']}' into '{$this->other['usersinvolved']['toid']}' but faild";
+            from '{$this->other['usersinvolved']['fromid']}' into '{$this->other['usersinvolved']['toid']}' but failed";
     }
 
 }

@@ -25,7 +25,6 @@
  */
 
 namespace tool_mergeusers\event;
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Class user_merged_success called when merging user accounts has gone right.

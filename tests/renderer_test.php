@@ -51,8 +51,9 @@ class renderer_test extends advanced_testcase {
         $dummyuser = (object) [
             'id' => 0,
         ];
+        $lastmerge = new in_memory_last_merge($dummyuser->id, false, $dummylog, null);
         $unknownprofilelang = get_string('unknownprofile', 'tool_mergeusers', -5);
-        $displaytext = $this->get_renderer()->get_merge_detail($dummyuser, $dummylog, null);
+        $displaytext = $this->get_renderer()->get_merge_detail($dummyuser, $lastmerge);
         $this->assertStringContainsString($unknownprofilelang, $displaytext);
     }
 
@@ -62,6 +63,7 @@ class renderer_test extends advanced_testcase {
     public function test_get_merge_detail_existing_user() {
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user();
+
         $dummylog = (object) [
             'fromuserid' => $user->id,
             'timemodified' => 0,
@@ -72,10 +74,36 @@ class renderer_test extends advanced_testcase {
             'id' => 0,
             'suspended' => '1',
         ];
+        $lastmerge = new in_memory_last_merge($dummyuser->id, true, $dummylog, null);
 
         // Should contain their fullname.
         $fullname = fullname($user);
-        $displaytext = $this->get_renderer()->get_merge_detail($dummyuser, $dummylog, null);
+        $displaytext = $this->get_renderer()->get_merge_detail($dummyuser, $lastmerge);
         $this->assertStringContainsString($fullname, $displaytext);
+    }
+}
+
+class in_memory_last_merge extends \tool_mergeusers\local\last_merge {
+    private int $userid;
+    private bool $suspended;
+    private mixed $tome;
+    private mixed $fromme;
+    public function __construct(int $userid, bool $suspended, mixed $tome, mixed $fromme) {
+        $this->userid = $userid;
+        $this->suspended = $suspended;
+        $this->tome = $tome;
+        $this->fromme = $fromme;
+    }
+
+    public function fromme(): null|\stdClass {
+        return $this->fromme;
+    }
+
+    public function tome(): null|\stdClass {
+        return $this->tome;
+    }
+
+    public function is_this_user_deletable(): bool {
+        return true;
     }
 }

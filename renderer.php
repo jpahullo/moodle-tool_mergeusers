@@ -20,6 +20,9 @@
  * @author John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
  */
+
+use tool_mergeusers\local\last_merge;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once __DIR__ . '/select_form.php';
@@ -377,30 +380,28 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * @throws coding_exception
      * @throws dml_exception
      */
-    public function get_merge_detail(stdClass $user, ?object $mergetome, ?object $mergefromme): string {
-        $tohtml = $mergetome ? get_string('tomedetail', 'tool_mergeusers',
-            $this->get_merge_detail_data($mergetome->fromuserid, $mergetome->timemodified, $mergetome->id, (bool)(int)$mergetome->success)) : '';
-        $fromhtml = $mergefromme ? get_string('frommedetail', 'tool_mergeusers',
-            $this->get_merge_detail_data($mergefromme->touserid, $mergefromme->timemodified, $mergefromme->id, (bool)(int)$mergefromme->success)) : '';
+    public function get_merge_detail(stdClass $user, last_merge $lastmerge): string {
+        $tome = $lastmerge->tome();
+        $fromme = $lastmerge->fromme();
+        $tohtml = $tome ? get_string('tomedetail', 'tool_mergeusers',
+            $this->get_merge_detail_data($tome->fromuserid, $tome->timemodified, $tome->id, (bool)(int)$tome->success)) : '';
+        $fromhtml = $fromme ? get_string('frommedetail', 'tool_mergeusers',
+            $this->get_merge_detail_data($fromme->touserid, $fromme->timemodified, $fromme->id, (bool)(int)$fromme->success)) : '';
         $output = implode('<br/>', array_filter([$tohtml, $fromhtml]));
 
+        // Ok, there is no merge related to this user.
         if (empty($output)) {
             return get_string('none');
         }
+        // Go on, this user was involved in some merge.
 
         if (!has_capability('moodle/user:delete', context_system::instance())) {
             return $output;
         }
 
-        $suspended = $user->suspended == 1;
-        $lastmergetootheruser = isset($mergefromme->timemodified) && (int)$mergefromme->success;
-        $lastmergetootheruser = $lastmergetootheruser ||
-            (   isset($mergetome->timemodified) &&
-                isset($mergefromme->timemodified) &&
-                (int)$mergetome->success &&
-                $mergefromme->timemodified > $mergetome->timemodified
-            );
-        $deletablestring = ($suspended && $lastmergetootheruser) ? 'deletableuser' : 'nondeletableuser';
+        // Only when the user who is viewing the user profile can delete users, show whether this user is deletable.
+        // This calculation is based on the behaviour of this plugin and last successful merges related to this user.
+        $deletablestring = ($lastmerge->is_this_user_deletable()) ? 'deletableuser' : 'nondeletableuser';
 
         return $output . '<br/><br/>' . get_string($deletablestring, 'tool_mergeusers');
     }

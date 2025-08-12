@@ -149,6 +149,7 @@ function tool_mergeusers_inform_about_pending_user_profile_fields(): stdClass {
  * @param bool $iscurrentuser
  * @param null|stdClass $course Course object
  * @throws coding_exception
+ * @throws dml_exception
  */
 function tool_mergeusers_myprofile_navigation(
     core_user\output\myprofile\tree $tree,
@@ -164,17 +165,13 @@ function tool_mergeusers_myprofile_navigation(
 
     /** @var tool_mergeusers_renderer $renderer */
     $renderer = $PAGE->get_renderer('tool_mergeusers');
-    $logger = new logger();
-
-    // Find last merge to/from this profile.
-    $lastmergetome = current($logger->get(['touserid' => $user->id], 0, 1)) ?: null;
-    $lastmergefromme = current($logger->get(['fromuserid' => $user->id], 0, 1)) ?: null;
+    $lastmerge = tool_mergeusers\local\last_merge::from($user->id);
 
     // Display last merge.
     $category = new core_user\output\myprofile\category('tool_mergeusers_info', get_string('pluginname', 'tool_mergeusers'));
     $tree->add_category($category);
     $node = new core_user\output\myprofile\node('tool_mergeusers_info', 'olduser',
         get_string('lastmerge', 'tool_mergeusers'), null, null,
-        $renderer->get_merge_detail($user, $lastmergetome, $lastmergefromme));
+        $renderer->get_merge_detail($user, $lastmerge));
     $category->add_node($node);
 }
