@@ -82,6 +82,8 @@ $string['olduseridonlog'] = 'User removed';
 $string['openlog'] = 'View log';
 $string['pluginname'] = 'Merge user accounts';
 $string['privacy:metadata'] = 'The Merge User Accounts plugin does not store any personal data.';
+$string['profilefields'] = 'User profie fields';
+$string['profilefieldsdesc'] = 'This plugin now shows merge status under a specific box on the user profile page. Prior custom user profile fields related to this plugin <strong>are no longer used, and they show outdated information</strong>.<p>We inform you that we found the fields with shortname "{$a->shortnames}" still present under field categories "{$a->categories}". Please, visit <a href="{$a->url}">user profile fields management page</a> to delete them completely by hand. We did not delete them on an upgrade process to let you adapt to the new situation.';
 $string['qa_action_delete_fromid'] = 'Keep attempts from the new user';
 $string['qa_action_delete_toid'] = 'Keep attempts from the old user';
 $string['qa_action_remain'] = 'Do nothing: do not merge nor delete';

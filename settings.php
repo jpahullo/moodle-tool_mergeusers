@@ -90,6 +90,15 @@ if ($hassiteconfig) {
         get_string('uniquekeynewidtomaintain_desc', 'tool_mergeusers'),
         1));
 
+    $fields = tool_mergeusers_inform_about_pending_user_profile_fields();
+    if ($fields->exists) {
+        $settings->add(new admin_setting_description(
+            'tool_mergeusers/profilefields',
+            get_string('profilefields', 'tool_mergeusers'),
+            get_string('profilefieldsdesc', 'tool_mergeusers', $fields),
+        ));
+    }
+
     // Add settings.
     $ADMIN->add('tools', $settings);
 }

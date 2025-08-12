@@ -1,7 +1,7 @@
 Release notes
 =============
 
-2025081202
+2025081204
 
 1. 2025-08-12 - fix: #329: set renumber quiz attempts as the default setting.
 2. 2025-08-12 - fix: #331: prevents web browser alert from leaving form page on the summary page.
@@ -9,6 +9,12 @@ Release notes
 4. 2025-08-12 - improvement: #306: remove user profile fields; use profile page hook to show merging detail. Thanks to @matthewhilton.
 5. 2025-08-12 - fix: #68: move logger to proper namespace. Thanks to @matthewhilton.
 6. 2025-08-12 - improvement: #306: define new capability to see logs, either as admin or from user profile. Thanks to @matthewhilton.
+7. 2025-08-12 - improvement: #306: add information about whether a user is deletable from this plugin viewpoint.
+8. 2025-08-12 - improvement: #306: add settings item to inform that prior custom user profile fields added by this plugin still exist and should be deleted.
+ There are no longer used nor updated.
+
+**IMPORTANT:** Before upgrading to this version, please check your own automatization processes in case they use the plugin profile fields.
+You should adapt them to use the logs from the plugin table `tool_mergeusers`.
 
 2025081100
 

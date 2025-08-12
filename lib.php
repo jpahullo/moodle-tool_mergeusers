@@ -96,6 +96,52 @@ function tool_mergeusers_build_quiz_options(): stdClass {
 }
 
 /**
+ * Informs whether there exist yet prior user profile fields from this plugin.
+ *
+ * In prior versions we added custom user profile fields to inform about
+ * last merges related to the user on its profile.
+ *
+ * With this function we inform whether there are yet some of the custom
+ * user profile fields and informs the administrator that they are no longer used,
+ * and they can be securely deleted.
+ *
+ * We do not delete them on an upgrade to let administrators adapt to the new
+ * way of proceeding.
+ *
+ * @throws dml_exception
+ */
+function tool_mergeusers_inform_about_pending_user_profile_fields(): stdClass {
+    global $DB;
+
+    // Upgrade and install code related to user profile fields was removed.
+    // Using literals here for convenience.
+    $shortnames = [
+        'mergeusers_date',
+        'mergeusers_logid',
+        'mergeusers_olduserid',
+        'mergeusers_newuserid',
+    ];
+    $results = [];
+    $categories = [];
+    foreach ($shortnames as $shortname) {
+        $categoryid = $DB->get_field('user_info_field', 'categoryid', ['shortname' => $shortname]);
+        if (!$categoryid) {
+            continue;
+        }
+        $results[$shortname] = $shortname;
+        $categories[$categoryid] = $DB->get_field('user_info_category', 'name', ['id' => $categoryid]);
+    }
+
+    $stillexists = (count($results) > 0);
+    return (object)[
+        'exists' => $stillexists,
+        'shortnames' => implode(', ', $results),
+        'categories' => implode(', ', $categories),
+        'url' => (new moodle_url('/user/profile/index.php'))->out(false),
+    ];
+}
+
+/**
  * Profile callback to add merging data to a users profile.
  *
  * @param core_user\output\myprofile\tree $tree Tree object

@@ -385,7 +385,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         $output = implode('<br/>', array_filter([$tohtml, $fromhtml]));
 
         if (empty($output)) {
-            return $output;
+            return get_string('none');
         }
 
         if (!has_capability('moodle/user:delete', context_system::instance())) {
