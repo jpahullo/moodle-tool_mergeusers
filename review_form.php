@@ -51,12 +51,9 @@ class reviewuserform extends moodleform
     }
 
     /**
-     * Form definition
-     *
-     * @uses $CFG
+     * Form definition.
      */
-    public function definition()
-    {
+    public function definition() {
         // if there are no rows in the table, return.
         // (won't be rows if both olduser and newuser are NULL in session stdClass)
         if (empty($this->urt->data)) {
@@ -93,6 +90,9 @@ class reviewuserform extends moodleform
             $mergeurl->param('option', 'searchusers');
             $mergeusersbutton = new single_button($mergeurl, get_string('cancel'));
             $buttonarray[0][] = $this->output->render($mergeusersbutton);
+            // Prevents web browser alert from leaving the form page.
+            // This page is a summary and there is no actual updatable form from the user viewpoint.
+            $mform->disable_form_change_checker();
         }
         $htmltable = new html_table();
         $htmltable->attributes['class'] = 'clearfix';

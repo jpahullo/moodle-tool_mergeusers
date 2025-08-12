@@ -4,6 +4,7 @@ Release notes
 2025081200
 
 1. 2025-08-12 - fix: #329: set renumber quiz attempts as the default setting.
+2. 2025-08-12 - fix: #331: prevents web browser alert from leaving form page on the summary page.
 
 2025081100
 
