@@ -31,10 +31,10 @@ require_once($CFG->dirroot . '/lib/clilib.php');
 require_once(__DIR__ . '/autoload.php');
 
 class Merger {
-    /**
-     * @var MergeUserTool instance of the tool.
-     */
-    protected $mut;
+    /** @var MergeUserTool instance of the tool. */
+    protected MergeUserTool $mut;
+    /** @var logger logger instace. */
+    protected logger $logger;
 
     /**
      * Initializes the MergeUserTool to process any incoming merging action through
@@ -56,7 +56,7 @@ class Merger {
      * Called when aborting from command-line on Ctrl+C interruption.
      * @param int $signo only SIGINT.
      */
-    public function aborting($signo) {
+    public function aborting(int $signo): void {
         if (defined("CLI_SCRIPT")) {
             echo "\n\nAborting!\n\n";
         }
@@ -66,16 +66,18 @@ class Merger {
     /**
      * This iterates over all merging actions from the given Gathering instance and tries to
      * perform it. The result of every action is logged internally for future checking.
+     *
      * @param Gathering $gathering List of merging actions.
+     * @throws coding_exception
      */
-    public function merge(Gathering $gathering) {
+    public function merge(Gathering $gathering): void {
         $numberoperations = 0;
         foreach ($gathering as $action) {
             list($success, $log, $id) = $this->mut->merge($action->toid, $action->fromid);
 
             // Only shows results on cli script.
             if (defined("CLI_SCRIPT")) {
-                $status = ($success) ? "Success" : "Error";
+                $status = ($success) ? get_string("success") : get_string("error");
 
                 cli_writeln('');
                 cli_writeln("From {$action->fromid} to {$action->toid}: $status; Log id: $id");

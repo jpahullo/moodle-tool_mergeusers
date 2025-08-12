@@ -24,6 +24,7 @@
 
 namespace tool_mergeusers;
 
+use dml_exception;
 use Exception;
 use moodle_exception;
 use moodle_url;
@@ -48,9 +49,10 @@ class logger {
      * @param bool $success true if merging action was ok; false otherwise.
      * @param array $log list of actions performed for a successful merging;
      * or a problem description if merging failed.
+     * @return bool|int false when could not insert the record; the log id when success.
      * @throws moodle_exception when log record cannot be inserted.
      */
-    public function log($touserid, $fromuserid, $success, $log) {
+    public function log(int $touserid, int $fromuserid, bool $success, array $log): bool|int {
         global $DB, $USER;
 
         $record = new stdClass();
@@ -76,17 +78,21 @@ class logger {
                 );
             }
         }
+        return false;
     }
 
     /**
      * Gets the merging logs and stores on to and from attributes the related user records.
-     * @param array $filter associative array with conditions to match for getting results.
+     *
+     * @param array|null $filter associative array with conditions to match for getting results.
      * If empty, this will return all logs.
      * @param int $limitfrom starting number of record to get. 0 to get all.
      * @param int $limitnum maximum number of records to get. 0 to get all.
-     * @param string $order SQL ordering, defaults to "timemodified DESC"
+     * @param string $sort SQL ordering, defaults to "timemodified DESC"
+     * @return array|bool false when there are no records matching; list of merging logs otherwise.
+     * @throws dml_exception
      */
-    public function get($filter = null, $limitfrom=0, $limitnum=0, $sort = "timemodified DESC") {
+    public function get(array $filter = null, int $limitfrom = 0, int $limitnum = 0, string $sort = "timemodified DESC"): array|bool {
         global $DB;
         $logs = $DB->get_records('tool_mergeusers', $filter, $sort, 'id, touserid, fromuserid, mergedbyuserid, success, timemodified', $limitfrom, $limitnum);
         if (!$logs) {
@@ -107,10 +113,12 @@ class logger {
 
     /**
      * Get the whole detail of a log id.
-     * @param int $logid
+     *
+     * @param int $logid To user.id.
      * @return stdClass the whole record related to the $logid
+     * @throws dml_exception when log does not exist.
      */
-    public function getDetail($logid) {
+    public function detail_from(int $logid): stdClass {
         global $DB;
         $log = $DB->get_record('tool_mergeusers', array('id' => $logid), '*', MUST_EXIST);
         $log->log = json_decode($log->log);

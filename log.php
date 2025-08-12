@@ -44,7 +44,7 @@ $id = required_param('id', PARAM_INT);
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 $logger = new logger();
 
-$log = $logger->getDetail($id);
+$log = $logger->detail_from($id);
 
 if (empty($log)) {
     throw new moodle_exception(

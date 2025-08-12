@@ -184,17 +184,16 @@ class MergeUserTool {
     /**
      * Merges two users into one. User-related data records from user id $fromid are merged into the
      * user with id $toid.
-     * @global object $CFG
-     * @global moodle_database $DB
+     *
      * @param int $toid The user inheriting the data
      * @param int $fromid The user being replaced
      * @return array An array(bool, array, int) having the following cases: if array(true, log, id)
      * users' merging was successful and log contains all actions done; if array(false, errors, id)
      * means users' merging was aborted and errors contain the list of errors.
      * The last id is the log id of the merging action for later visual revision.
+     * @throws dml_exception
      */
-    public function merge($toid, $fromid)
-    {
+    public function merge(int $toid, int $fromid): array {
         list($success, $log) = $this->_merge($toid, $fromid);
 
         $eventpath = "\\tool_mergeusers\\event\\";
@@ -220,29 +219,31 @@ class MergeUserTool {
 
     /**
      * Real method that performs the merging action.
-     * @global object $CFG
-     * @global moodle_database $DB
+     *
      * @param int $toid The user inheriting the data
      * @param int $fromid The user being replaced
      * @return array An array(bool, array) having the following cases: if array(true, log)
      * users' merging was successful and log contains all actions done; if array(false, errors)
      * means users' merging was aborted and errors contain the list of errors.
+     * @throws coding_exception
+     * @throws dml_transaction_exception
+     * @global object $CFG
+     * @global moodle_database $DB
      */
-    private function _merge($toid, $fromid)
-    {
+    private function _merge(int $toid, int $fromid): array {
         global $DB;
 
         // initial checks.
         // are they the same?
         if ($fromid == $toid) {
             // yes. do nothing.
-            return array(false, array(get_string('errorsameuser', 'tool_mergeusers')));
+            return [false, [get_string('errorsameuser', 'tool_mergeusers')]];
         }
 
         // ok, now we have to work;-)
         // first of all... initialization!
-        $errorMessages = array();
-        $actionLog = array();
+        $errorMessages = [];
+        $actionLog = [];
 
         if ($this->debugdb) {
             $DB->set_debug(true);
@@ -256,10 +257,10 @@ class MergeUserTool {
 
         try {
             // processing each table name
-            $data = array(
+            $data = [
                 'toid' => $toid,
                 'fromid' => $fromid,
-            );
+            ];
             foreach ($this->userFieldsPerTable as $tableName => $userFields) {
                 $data['tableName'] = $tableName;
                 $data['userFields'] = $userFields;
@@ -332,8 +333,7 @@ class MergeUserTool {
      * @global object $CFG
      * @global moodle_database $DB
      */
-    private function init()
-    {
+    private function init(): void {
         global $DB;
 
         $userFieldsPerTable = array();
@@ -391,9 +391,7 @@ class MergeUserTool {
                 }
             }
 
-            // If we find some compound index with missing columns,
-            // it is that loaded configuration does not corresponds to current database scheme
-            // and this index does not apply.
+            // Remove compound index when loaded configuration does not correspond to current database scheme.
             $found = array_sum($columnNames);
             if (sizeof($columnNames) !== $found) {
                 unset($existingCompoundIndexes[$tableName]);
@@ -415,7 +413,7 @@ class MergeUserTool {
      * @throws moodle_exception when the current db instance does not support transactions
      * and the plugin settings prevents merging users under this case.
      */
-    public function checkTransactionSupport() {
+    public function checkTransactionSupport(): bool {
         global $CFG;
 
         $transactionsSupported = tool_mergeusers_transactionssupported();
@@ -441,12 +439,10 @@ class MergeUserTool {
     /**
      * Gets the matching fields on the given $tableName against the given $userFields.
      * @param string $tableName database table name to analyse, with $CFG->prefix.
-     * @param string $userFields candidate user fields to check.
-     * @return bool | array false if no matching field name;
-     * string array with matching field names otherwise.
+     * @param array $userFields candidate user fields to check.
+     * @return array table columns that correspond to user.id field.
      */
-    private function getCurrentUserFieldNames($tableName, $userFields)
-    {
+    private function getCurrentUserFieldNames(string $tableName, array $userFields): array {
         global $DB;
         $columns = $DB->get_columns($tableName,false);
         $usercolumns = [];
@@ -459,10 +455,15 @@ class MergeUserTool {
     }
 
     /**
-     * Update all of the target user's grades.
-     * @param int $toid User id
+     * Update all the target user's grades.
+     *
+     * @param int $toid To user.id
+     * @param int $fromid From user.id
+     * @throws dml_exception
+     * @throws coding_exception
+     * @throws Exception
      */
-    private function updateGrades($toid, $fromid) {
+    private function updateGrades(int $toid, int $fromid): void {
         global $DB, $CFG;
         require_once($CFG->libdir.'/gradelib.php');
 
@@ -475,10 +476,10 @@ class MergeUserTool {
 
         foreach ($iteminstances as $iteminstance) {
             if (!$activity = $DB->get_record($iteminstance->itemmodule, array('id' => $iteminstance->iteminstance))) {
-                throw new \Exception("Can not find $iteminstance->itemmodule activity with id $iteminstance->iteminstance");
+                throw new Exception("Can not find $iteminstance->itemmodule activity with id $iteminstance->iteminstance");
             }
             if (!$cm = get_coursemodule_from_instance($iteminstance->itemmodule, $activity->id, $iteminstance->courseid)) {
-                throw new \Exception('Can not find course module');
+                throw new Exception('Can not find course module');
             }
 
             $activity->modname    = $iteminstance->itemmodule;
@@ -488,12 +489,22 @@ class MergeUserTool {
         }
     }
 
-    private function reaggregateCompletions($toid) {
+    /**
+     * Forces Moodle to repeat aggregation of completion conditions.
+     *
+     * @param int $toid To user.id
+     * @return void
+     * @throws dml_exception
+     */
+    private function reaggregateCompletions(int $toid): void {
         global $DB;
 
         $now = time();
         $DB->execute(
-                'UPDATE {course_completions} set reaggregate = :now where userid = :toid and (timecompleted is null or timecompleted = 0)',
+                'UPDATE {course_completions}
+                        SET reaggregate = :now
+                      WHERE userid = :toid 
+                        AND (timecompleted IS NULL OR timecompleted = 0)',
                 ['now' => $now, 'toid' => $toid]
         );
     }

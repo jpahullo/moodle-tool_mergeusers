@@ -23,14 +23,13 @@
 
 use tool_mergeusers\logger;
 
-defined('MOODLE_INTERNAL') || die;
-
 /**
  * Gets whether database transactions are allowed.
- * @global moodle_database $DB
+ *
  * @return bool true if transactions are allowed. false otherwise.
+ * @throws ReflectionException
  */
-function tool_mergeusers_transactionssupported() {
+function tool_mergeusers_transactionssupported(): bool {
     global $DB;
 
     // Tricky way of getting real transactions support, without re-programming it.
@@ -40,7 +39,13 @@ function tool_mergeusers_transactionssupported() {
     return $method->invoke($DB);
 }
 
-function tool_mergeusers_build_exceptions_options() {
+/**
+ * Builds the form options for table exception from processing.
+ *
+ * @return stdClass instance with attributes for defining exception options.
+ * @throws coding_exception
+ */
+function tool_mergeusers_build_exceptions_options(): stdClass {
     require_once(__DIR__ . '/classes/tool_mergeusers_config.php');
 
     $config = tool_mergeusers_config::instance();
@@ -65,7 +70,7 @@ function tool_mergeusers_build_exceptions_options() {
  * @return stdClass instance with the options and defaultkey to be used.
  * @throws coding_exception
  */
-function tool_mergeusers_build_quiz_options() {
+function tool_mergeusers_build_quiz_options(): stdClass {
     require_once(__DIR__ . '/lib/table/quizattemptsmerger.php');
 
     // Quiz attempts.
@@ -93,28 +98,37 @@ function tool_mergeusers_build_quiz_options() {
 /**
  * Profile callback to add merging data to a users profile.
  *
- * @param tree $tree Tree object
+ * @param core_user\output\myprofile\tree $tree Tree object
  * @param stdClass $user user object
  * @param bool $iscurrentuser
  * @param null|stdClass $course Course object
+ * @throws coding_exception
  */
-function tool_mergeusers_myprofile_navigation($tree, $user, $iscurrentuser, $course) {
+function tool_mergeusers_myprofile_navigation(
+    core_user\output\myprofile\tree $tree,
+    stdClass $user,
+    bool $iscurrentuser,
+    null|stdClass $course,
+) {
     global $PAGE;
 
-    if (has_capability('tool/mergeusers:viewlog', context_system::instance())) {
-        $renderer = $PAGE->get_renderer('tool_mergeusers');
-        $logger = new logger();
-
-        // Find last merge to/from this profile.
-        $lastmergetome = current($logger->get(['touserid' => $user->id], 0, 1)) ?: null;
-        $lastmergefromme = current($logger->get(['fromuserid' => $user->id], 0, 1)) ?: null;
-
-        // Display last merge.
-        $category = new core_user\output\myprofile\category('tool_mergeusers_info', get_string('pluginname', 'tool_mergeusers'));
-        $tree->add_category($category);
-        $node = new core_user\output\myprofile\node('tool_mergeusers_info', 'olduser',
-            get_string('lastmerge', 'tool_mergeusers'), null, null,
-            $renderer->get_merge_detail($lastmergetome, $lastmergefromme));
-        $category->add_node($node);
+    if (!has_capability('tool/mergeusers:viewlog', context_system::instance())) {
+        return;
     }
+
+    /** @var tool_mergeusers_renderer $renderer */
+    $renderer = $PAGE->get_renderer('tool_mergeusers');
+    $logger = new logger();
+
+    // Find last merge to/from this profile.
+    $lastmergetome = current($logger->get(['touserid' => $user->id], 0, 1)) ?: null;
+    $lastmergefromme = current($logger->get(['fromuserid' => $user->id], 0, 1)) ?: null;
+
+    // Display last merge.
+    $category = new core_user\output\myprofile\category('tool_mergeusers_info', get_string('pluginname', 'tool_mergeusers'));
+    $tree->add_category($category);
+    $node = new core_user\output\myprofile\node('tool_mergeusers_info', 'olduser',
+        get_string('lastmerge', 'tool_mergeusers'), null, null,
+        $renderer->get_merge_detail($lastmergetome, $lastmergefromme));
+    $category->add_node($node);
 }
