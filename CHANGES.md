@@ -1,6 +1,10 @@
 Release notes
 =============
 
+2025081200
+
+1. 2025-08-12 - fix: #329: set renumber quiz attempts as the default setting.
+
 2025081100
 
 1. 2025-08-11 - fix: #315: replaced print_error() functions for moodle_exception. Thanks to @ManaElmountasir and @minhduchoang195.

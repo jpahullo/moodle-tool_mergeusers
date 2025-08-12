@@ -57,10 +57,16 @@ function tool_mergeusers_build_exceptions_options() {
     return $result;
 }
 
+/**
+ * Builds the quiz attempts options for the plugin settings.
+ *
+ * @return stdClass instance with the options and defaultkey to be used.
+ * @throws coding_exception
+ */
 function tool_mergeusers_build_quiz_options() {
     require_once(__DIR__ . '/lib/table/quizattemptsmerger.php');
 
-    // quiz attempts
+    // Quiz attempts.
     $quizStrings = new stdClass();
     $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
     $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
@@ -76,7 +82,7 @@ function tool_mergeusers_build_quiz_options() {
 
     $result = new stdClass();
     $result->allstrings = $quizStrings;
-    $result->defaultkey = QuizAttemptsMerger::ACTION_REMAIN;
+    $result->defaultkey = QuizAttemptsMerger::ACTION_RENUMBER;
     $result->options = $quizOptions;
 
     return $result;
