@@ -1,7 +1,7 @@
 Release notes
 =============
 
-2025081204
+2025081205
 
 1. 2025-08-12 - fix: #329: set renumber quiz attempts as the default setting.
 2. 2025-08-12 - fix: #331: prevents web browser alert from leaving form page on the summary page.
@@ -12,9 +12,13 @@ Release notes
 7. 2025-08-12 - improvement: #306: add information about whether a user is deletable from this plugin viewpoint.
 8. 2025-08-12 - improvement: #306: add settings item to inform that prior custom user profile fields added by this plugin still exist and should be deleted.
  There are no longer used nor updated.
+9. 2025-08-12 - improvement: #306: add PHP API to list deletable users.
 
 **IMPORTANT:** Before upgrading to this version, please check your own automatization processes in case they use the plugin profile fields.
-You should adapt them to use the logs from the plugin table `tool_mergeusers`.
+You should adapt them to use the logs from the plugin table `tool_mergeusers`. In this case,
+we provide a PHP API on `tool_mergeusers\local\last_merge::list_all_deletable_users()`
+to list all candidate users to be deletable. You can adapt your scripts starting from
+this new API.
 
 2025081100
 
