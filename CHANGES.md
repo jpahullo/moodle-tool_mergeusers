@@ -4,6 +4,7 @@ Release notes
 2025081300
 
 1. 2025-08-13 - fix: #275: make web user search work on any database engine. Thanks to @leonstr.
+2. 2025-08-13 - fix: #273: exclude deleted users from the web search. Thanks to @leonstr.
 
 2025081205
 
