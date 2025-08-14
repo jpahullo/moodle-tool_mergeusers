@@ -144,14 +144,35 @@ return array(
     // These are necessary for matching passed by userids in these column names.
     // In other words, only column names given below will be search for matching user ids.
     // The key 'default' will be applied for any non matching table name.
-    'userfieldnames' => array(
-        'logstore_standard_log' => array('userid', 'relateduserid'),
-        'message_contacts' => array('userid', 'contactid'), //compound index
-        'message' => array('useridfrom', 'useridto'),
-        'message_read' => array('useridfrom', 'useridto'),
-        'question' => array('createdby', 'modifiedby'),
-        'default' => array('authorid', 'reviewerid', 'userid', 'user_id', 'id_user', 'user'), //may appear compound index
-    ),
+    'userfieldnames' => [
+        'badge' => ['usercreated', 'usermodified'],
+        'competency_evidence' => ['actionuserid', 'usermodified'],
+        'contentbank_content' => ['usercreated', 'usermodified'],
+        'logstore_standard_log' => ['userid','relateduserid','realuserid'],
+        'message_contacts' => ['userid', 'contactid'], // It is a compound index.
+        'message' => ['useridfrom','useridto'],
+        'message_contact_requests' => ['userid', 'requesteduserid'],
+        'message_read' => ['useridfrom','useridto'],
+        'message_users_blocked' => ['userid', 'blockeduserid'],
+        'notifications' => ['useridfrom', 'useridto'],
+        'question' => ['createdby', 'modifiedby'],
+        'reportbuilder_schedule' => ['userviewas', 'usercreated', 'usermodified'],
+        'search_simpledb_index' => ['owneruserid', 'userid'],
+        'sms_messages' => ['recipientuserid'],
+        'tool_mergeusers' => ['mergedbyuserid'], // Only this column. Others must be kept as is.
+        'default' => [
+            'authorid',
+            'id_user',
+            'loggeduser',
+            'reviewerid',
+            'user',
+            'user_id',
+            'usercreated',
+            'userid',
+            'usermodified',
+
+        ], // May appear compound index.
+    ],
 
     // TableMergers to process each database table.
     // 'default' is applied when no specific TableMerger is specified.
