@@ -24,6 +24,11 @@
 
 namespace tool_mergeusers;
 
+use advanced_testcase;
+use coding_exception;
+use dml_exception;
+use MergeUserSearch;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/../lib/mergeusersearch.php');
@@ -31,12 +36,16 @@ require_once(__DIR__ . '/../lib/mergeusersearch.php');
 /**
  * Tests for searching for users.
  */
-final class search_users_test extends \advanced_testcase {
+final class search_users_test extends advanced_testcase {
     /**
-     * Test deleted users are not returned with any search criteria.
+     * Test for searching for specific user fields.
+     * Also, search must not return any matching deleted users.
+     *
      * @dataProvider search_criteria
+     * @throws dml_exception
+     * @throws coding_exception
      */
-    public function test_nodeletedusers($searchfield, $input, $count): void {
+    public function test_search_for_user_field_excluding_deleted_users(string $searchfield, string $input, int $count): void {
         $this->resetAfterTest(true);
 
         $deleteduser = $this->getDataGenerator()->create_user([
@@ -57,9 +66,11 @@ final class search_users_test extends \advanced_testcase {
             $input = md5($deleteduser->username);
         }
 
-        $mus = new \MergeUserSearch();
-        $this->assertEquals($count,
-                    count($mus->search_users($input, $searchfield)));
+        $mus = new MergeUserSearch();
+        $this->assertCount(
+            $count,
+            $mus->search_users($input, $searchfield)
+        );
     }
 
     /**
@@ -70,10 +81,11 @@ final class search_users_test extends \advanced_testcase {
         return [
             'id' => [
                 'searchfield' => 'id',
-                'input' => 'id', // Special case, to be swapped with real ID.
+                'input' => 'id', // Special case, to be swapped with real ID into the test.
                 'count' => 0,
             ],
-            'id_abc' => [
+            // Special case for database engines: compare the "id" int field against a string value.
+            'id_with_letters' => [
                 'searchfield' => 'id',
                 'input' => 'abc',
                 'count' => 0,
@@ -83,15 +95,10 @@ final class search_users_test extends \advanced_testcase {
                 'input' => '',
                 'count' => 0,
             ],
-            'id_int' => [
+            'id_existing' => [
                 'searchfield' => 'id',
-                'input' => 1,
+                'input' => '1',
                 'count' => 1, // Guest.
-            ],
-            'id_null' => [
-                'searchfield' => 'id',
-                'input' => null,
-                'count' => 0,
             ],
             'username' => [
                 'searchfield' => 'username',

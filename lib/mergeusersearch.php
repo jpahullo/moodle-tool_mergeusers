@@ -44,42 +44,36 @@ require_once __DIR__ . '/autoload.php';
  *
  * @author John Hoopes <hoopes@wisc.edu>
  */
-class MergeUserSearch{
-
-
+class MergeUserSearch {
     /**
-     * Searches the user table based on the input.
+     * Searches users matching a condition on a given field and text to match partially for that field.
      *
-     * @param mixed $input input
-     * @param string $searchfield The field to search on.  empty string means all fields
-     * @return array $results the results of the search
+     * @param string $input Term to search by.
+     * @param string $searchfield The user's field to search by. Empty string means searching by all fields.
+     * @return array the results of the search.
+     * @throws dml_exception
      */
-    public function search_users($input, $searchfield){
+    public function search_users(string $input, string $searchfield): array {
         global $DB;
 
         switch($searchfield){
-            case 'id': // search on id field
-
-                // sql_cast_to_char() prevents PostgreSQL error when comparing
-                // id column when $input is not an integer.
+            // Search on id field.
+            case 'id':
+                // The sql_cast_to_char() prevents PostgreSQL error when comparing id column when $input is not an integer.
                 $where = $DB->sql_cast_to_char('id') . ' = :userid';
                 $params = ['userid' => $input];
-
                 break;
-
-            case 'username': // search on username
-            case 'firstname': // search on firstname
-            case 'lastname': // search on lastname
-            case 'email': // search on email
-            case 'idnumber': // search on idnumber
-
+            // Search by these fields:
+            case 'username':
+            case 'firstname':
+            case 'lastname':
+            case 'email':
+            case 'idnumber':
                 $where = $DB->sql_like($searchfield, ":$searchfield", false, false);
                 $params = [$searchfield => '%' . $input . '%'];
-
                 break;
-
-            default: // search on all fields by default
-
+            // Search on all fields by default.
+            default:
                 $where = '(' .
                          $DB->sql_cast_to_char('id') . ' = :userid OR ' .
                          $DB->sql_like('username', ':username', false, false)
@@ -92,46 +86,46 @@ class MergeUserSearch{
                          . ' OR ' .
                          $DB->sql_like('idnumber', ':idnumber', false, false)
                          . ')';
-
                 $params['userid'] = $input;
                 $params['username'] = '%' . $input . '%';
                 $params['firstname'] = '%' . $input . '%';
                 $params['lastname'] = '%' . $input . '%';
                 $params['email'] = '%' . $input . '%';
                 $params['idnumber'] = '%' . $input . '%';
-
                 break;
         }
 
-        $where .= ' AND deleted = 0';
+        $where .= ' AND deleted = :deleted';
+        $params['deleted'] = 0;
         return $DB->get_records_select('user', $where, $params, 'lastname, firstname');
     }
 
     /**
-     * Verifies whether or not a user exists based upon the user information
-     * to verify and the column that matches that information
+     * Verifies whether a user exists based upon the user information
+     * to verify and the column that matches that information.
+     *
+     * The result has this structure:
+     *   [
+     *       0 => Either NULL or the user object.  Will be NULL if not valid user,
+     *       1 => Message for invalid user to display/log
+     *   ]
      *
      * @param mixed $uinfo The identifying information about the user
      * @param string $column The column name to verify against.  (should not be direct user input)
      *
-     * @return array
-     *      (
-     *          0 => Either NULL or the user object.  Will be NULL if not valid user,
-     *          1 => Message for invalid user to display/log
-     *      )
+     * @return array two positions with the results of the verification.
+     * @throws coding_exception
      */
-    public function verify_user($uinfo, $column){
+    public function verify_user($uinfo, $column): array {
         global $DB;
         $message = '';
         try {
-            $user = $DB->get_record('user', array($column => $uinfo), '*', MUST_EXIST);
+            $user = $DB->get_record('user', [$column => $uinfo], '*', MUST_EXIST);
         } catch (Exception $e) {
             $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
             $user = null;
         }
 
-        return array($user, $message);
+        return [$user, $message];
     }
-
-
 }
