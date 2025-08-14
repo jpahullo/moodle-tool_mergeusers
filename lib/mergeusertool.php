@@ -496,7 +496,12 @@ class MergeUserTool {
                 throw new Exception("Can not find $iteminstance->itemmodule activity with id $iteminstance->iteminstance");
             }
             if (!$cm = get_coursemodule_from_instance($iteminstance->itemmodule, $activity->id, $iteminstance->courseid)) {
-                throw new Exception('Can not find course module');
+                throw new Exception(sprintf(
+                    'Can not find course module. Debug info: module=%s, activity.id=%d, course.id=%d',
+                    $iteminstance->itemmodule,
+                    $activity->id,
+                    $iteminstance->courseid
+                ));
             }
 
             $activity->modname    = $iteminstance->itemmodule;
