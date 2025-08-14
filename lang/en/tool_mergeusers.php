@@ -54,7 +54,7 @@ $string['header'] = 'Merge two users into a single account';
 $string['header_help'] ='<p>Given a user to be deleted and a user to keep, this will merge the user data associated with the former user into the latter user. Note that both users must already exist and no accounts will actually be deleted. That process is left to the administrator to do manually.</p><p><strong>Only do this if you know what you are doing as it is not reversable!</strong></p>';
 $string['into'] = 'into';
 $string['invalid_option'] = 'Invalid form option';
-$string['invaliduser'] = 'Invalid user';
+$string['invaliduser'] = 'Does not exist a user with field "{$a->field}" = "{$a->value}"';
 $string['lastmerge'] = 'Last merges involving this user:';
 $string['logid'] = 'For further reference, these results are recorded in the log id {$a}.';
 $string['logko'] = 'Some error occurred:';

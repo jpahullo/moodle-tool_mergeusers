@@ -15,10 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Web form to look for users to merge.
  *
- * @package    tool
- * @subpackage mergeusers
+ * @package    tool_mergeusers
  * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
  * @author     Mike Holzer
  * @author     Forrest Gaston
@@ -28,7 +27,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once($CFG->libdir.'/formslib.php'); /// forms library
+defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+require_once($CFG->libdir . '/formslib.php');
 
 /**
  * Define form snippet for getting the userids of the two users to merge
@@ -38,13 +40,12 @@ class mergeuserform extends moodleform {
     /**
      * Form definition
      *
+     * @throws coding_exception
      * @uses $CFG
      */
     public function definition() {
 
         $mform =& $this->_form;
-
-        $strrequired = get_string('required');
 
         $idstype = array(
             'username' => get_string('username'),
@@ -69,7 +70,9 @@ class mergeuserform extends moodleform {
         // Add elements
         $searchuser = array();
         $searchuser[] = $mform->createElement('text', 'searcharg');
-        $searchuser[] = $mform->createElement('select', 'searchfield', '', $searchfields, ['selected' => 'username']);
+        $searchuser[] = $searchuserfield = $mform->createElement('select', 'searchfield', '', $searchfields);
+        // We need to set this up. On attributes parameters it gets lost after visiting several times the web search.
+        $searchuserfield->setSelected('username');
 
         $mform->addGroup($searchuser, 'searchgroup', get_string('searchuser', 'tool_mergeusers'));
         $mform->setType('searchgroup[searcharg]', PARAM_TEXT);
@@ -81,14 +84,18 @@ class mergeuserform extends moodleform {
 
         $olduser = array();
         $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
-        $olduser[] = $mform->createElement('select', 'olduseridtype', '', $idstype, ['selected' => 'username']);
+        $olduser[] = $olduserid = $mform->createElement('select', 'olduseridtype', '', $idstype);
+        $olduserid->setSelected('username');
+
         $mform->addGroup($olduser, 'oldusergroup', get_string('olduserid', 'tool_mergeusers'));
         $mform->setType('oldusergroup[olduserid]', PARAM_RAW_TRIMMED);
         $mform->setAdvanced('oldusergroup');
 
         $newuser = array();
         $newuser[] = $mform->createElement('text', 'newuserid', "", 'size="10"');
-        $newuser[] = $mform->createElement('select', 'newuseridtype', '', $idstype, ['selected' => 'username']);
+        $newuser[] = $newuserid = $mform->createElement('select', 'newuseridtype', '', $idstype);
+        $newuserid->setSelected('username');
+
         $mform->addGroup($newuser, 'newusergroup', get_string('newuserid', 'tool_mergeusers'));
         $mform->setType('newusergroup[newuserid]', PARAM_RAW_TRIMMED);
         $mform->setAdvanced('newusergroup');

@@ -110,19 +110,19 @@ class MergeUserSearch {
      *       1 => Message for invalid user to display/log
      *   ]
      *
-     * @param mixed $uinfo The identifying information about the user
-     * @param string $column The column name to verify against.  (should not be direct user input)
+     * @param string $value The identifying information about the user
+     * @param string $field The column name to verify against.  (should not be direct user input)
      *
      * @return array two positions with the results of the verification.
      * @throws coding_exception
      */
-    public function verify_user($uinfo, $column): array {
+    public function verify_user(string $value, string $field): array {
         global $DB;
         $message = '';
         try {
-            $user = $DB->get_record('user', [$column => $uinfo], '*', MUST_EXIST);
+            $user = $DB->get_record('user', [$field => $value, 'deleted' => 0], '*', MUST_EXIST);
         } catch (Exception $e) {
-            $message = get_string('invaliduser', 'tool_mergeusers'). '('.$column . '=>' . $uinfo .'): ' . $e->getMessage();
+            $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
             $user = null;
         }
 

@@ -227,21 +227,38 @@ class MergeUserTool {
      * means users' merging was aborted and errors contain the list of errors.
      * @throws coding_exception
      * @throws dml_transaction_exception
-     * @global object $CFG
-     * @global moodle_database $DB
      */
     private function _merge(int $toid, int $fromid): array {
         global $DB;
 
-        // initial checks.
-        // are they the same?
+        // Initial checks.
+        // Are they the same?
         if ($fromid == $toid) {
-            // yes. do nothing.
+            // Do nothing.
             return [false, [get_string('errorsameuser', 'tool_mergeusers')]];
         }
 
-        // ok, now we have to work;-)
-        // first of all... initialization!
+
+        $someuserdoesnotexists = array_filter(
+            array_map(
+                function ($userid) use ($DB) {
+                    if ($DB->record_exists('user', ['id' => $userid, 'deleted' => 0])) {
+                        return null;
+                    }
+                    return get_string('invaliduser', 'tool_mergeusers', ['field' => 'id', 'value' => $userid]);
+                },
+                [$toid, $fromid],
+            ),
+        );
+
+        // Abort merging users when at least one of them is already deleted.
+        // We need to enforce this condition here.
+        if (count($someuserdoesnotexists) > 0) {
+            return [false, $someuserdoesnotexists];
+        }
+
+        // Ok, now we have to work ;-)
+        // First of all... initialization!
         $errorMessages = [];
         $actionLog = [];
 
@@ -256,7 +273,7 @@ class MergeUserTool {
         $transaction = $DB->start_delegated_transaction();
 
         try {
-            // processing each table name
+            // Processing each table name.
             $data = [
                 'toid' => $toid,
                 'fromid' => $fromid,
@@ -300,7 +317,7 @@ class MergeUserTool {
             $transaction->allow_commit();
 
             // add skipped tables as first action in log
-            $skippedTables = array();
+            $skippedTables = [];
             if (!empty($this->tablesSkipped)) {
                 $skippedTables[] = get_string('tableskipped', 'tool_mergeusers', implode(", ", $this->tablesSkipped));
             }
@@ -309,12 +326,12 @@ class MergeUserTool {
             $actionLog[] = get_string('finishtime', 'tool_mergeusers', userdate($finishTime));
             $actionLog[] = get_string('timetaken', 'tool_mergeusers', $finishTime - $startTime);
 
-            return array(true, array_merge($skippedTables, $actionLog));
+            return [true, array_merge($skippedTables, $actionLog)];
         } else {
             try {
-                //thrown controlled exception.
+                // Thrown controlled exception.
                 $transaction->rollback(new Exception(__METHOD__ . ':: Rolling back transcation.'));
-            } catch (Exception $e) { /* do nothing, just for correctness */
+            } catch (Exception $e) { /* Do nothing, just for correctness */
             }
         }
 
@@ -322,8 +339,8 @@ class MergeUserTool {
         $errorMessages[] = $startTimeString;
         $errorMessages[] = get_string('timetaken', 'tool_mergeusers', $finishTime - $startTime);
 
-        // concludes with an array of error messages otherwise.
-        return array(false, $errorMessages);
+        // Concludes with an array of error messages otherwise.
+        return [false, $errorMessages];
     }
 
     // ****************** INTERNAL UTILITY METHODS ***********************************************

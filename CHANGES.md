@@ -1,6 +1,10 @@
 Release notes
 =============
 
+2025081400
+
+1. 2025-08-14: fix: #336: deleted users are excluded from everywhere when searching by and merging users.
+
 2025081300
 
 1. 2025-08-13 - fix: #275: make web user search work on any database engine. Thanks to @leonstr.
