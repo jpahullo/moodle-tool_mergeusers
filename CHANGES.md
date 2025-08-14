@@ -1,10 +1,12 @@
 Release notes
 =============
 
-2025081401
+2025081402
 
 1. 2025-08-14: fix: #336: deleted users are excluded from everywhere when searching by and merging users.
 2. 2025-08-14: improvement: #281: add debug info into log when no course module is found when regrading. Thanks to @Richardvi.
+3. 2025-08-14: fix: #277: revisit all Moodle tables and user-related fields to
+   update config.php settings. Provide a CLI script to help.
 
 2025081300
 
