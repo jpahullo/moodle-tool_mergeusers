@@ -35,19 +35,37 @@ require_once $CFG->dirroot . '/lib/clilib.php';
 
 cli_heading('List of Moodle database tables and potential %user%-related columns');
 $tables = $DB->get_tables(false);
-cli_writeln(sprintf('Processing %d tables...', count($tables)));
+
+cli_writeln(sprintf('Processing %d tables and loading their XML schema...', count($tables)));
+$schema = $DB->get_manager()->get_install_xml_schema();
 $matching = [];
 $matchingcount = [];
+$matchingbykeys = [];
 $nonmatching = [];
 $alluserrelatedcolumns = [];
 $alluserrelatedcolumnswithtable = [];
 foreach ($tables as $table) {
     $columns = $DB->get_columns($table, false);
+    $tablekeys = $schema->getTable($table)->getKeys();
+    $userrelatedbykeys = array_filter(
+        array_map(
+            /** @param xmldb_key $key */
+            function ($key) {
+                $keyfields = implode(',', $key->getRefFields());
+                if ($key->getRefTable() == 'user' && $keyfields == 'id') {
+                    return implode(',', $key->getFields());
+                }
+                return null;
+            },
+            $tablekeys,
+        ),
+    );
+    $userrelatedbykeys = array_flip($userrelatedbykeys);
     $userrelatedcolumns = array_filter(
         $columns,
-        function ($column) use ($table) {
-            return (strstr($column->name, 'user') && $column->meta_type == 'I')||
-                ($table == 'user' && $column == 'id');
+        function ($column) use ($table, $userrelatedbykeys) {
+            return (strstr($column->name, 'user') && $column->meta_type == 'I') ||
+                isset($userrelatedbykeys[$column->name]);
         }
     );
     if (count($userrelatedcolumns) <= 0) {
@@ -60,7 +78,11 @@ foreach ($tables as $table) {
         },
         $userrelatedcolumns,
     );
+    sort($userrelatedcolumns);
     $matching[$table] = $userrelatedcolumns;
+    $userrelatedbykeys = array_keys($userrelatedbykeys);
+    sort($userrelatedbykeys);
+    $matchingbykeys[$table] = $userrelatedbykeys;
     $matchingcount[$table] = count($userrelatedcolumns);
     foreach ($userrelatedcolumns as $column) {
         if (!isset($alluserrelatedcolumns[$column])) {
@@ -70,22 +92,27 @@ foreach ($tables as $table) {
         $alluserrelatedcolumnswithtable[$column][$table] = $table;
     }
 }
+ksort($matchingcount);
+sort($nonmatching);
+ksort($alluserrelatedcolumns);
 cli_writeln('... done!');
 $log = new text_progress_trace();
 $log->output('Tables without potential %user%-related fields:', 1);
-foreach ($matching as $table => $columns) {
+foreach ($nonmatching as $table) {
     $log->output($table, 2);
 }
 $log->output('Tables with potential %user%-related fields:', 1);
-$log->output('NOTE: All tables that has more than one user-related column should appear on "userfieldnames" config setting.', 2);
+$log->output('NOTE: All tables with non-default user-related field names must appear into "userfieldnames" config.php setting.', 2);
+$log->output('FORMAT: {number of user-related fields}: \'{table name}\' => [{list of fields}] // {list of fields that appear as foreign key to user.id on the XML definition.}', 2);
 arsort($matchingcount);
 foreach ($matchingcount as $table => $numberofcolumns) {
     $log->output(
         sprintf(
-            "%d: '%s' => ['%s'],",
+            "%d: '%s' => ['%s'], // %s",
             $numberofcolumns,
             $table,
             implode("', '", $matching[$table]),
+            implode(", ", $matchingbykeys[$table]),
         ),
         2,
     );
@@ -93,7 +120,15 @@ foreach ($matchingcount as $table => $numberofcolumns) {
 $log->output('List of user-related column names and number of appearances:', 1);
 arsort($alluserrelatedcolumns);
 foreach ($alluserrelatedcolumns as $column => $appearances) {
-    $log->output(sprintf('%s: %d: %s', $column, $appearances, implode(',', $alluserrelatedcolumnswithtable[$column])), 2);
+    $log->output(
+        sprintf(
+            '%d: %s: %s',
+            $appearances,
+            $column,
+            implode(',', $alluserrelatedcolumnswithtable[$column]),
+        ),
+        2,
+    );
 }
 $log->finished();
 cli_writeln('End!');

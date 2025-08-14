@@ -142,24 +142,29 @@ return array(
 
     // List of column names per table, where their content is a user.id.
     // These are necessary for matching passed by userids in these column names.
-    // In other words, only column names given below will be search for matching user ids.
-    // The key 'default' will be applied for any non matching table name.
+    // In other words, only column names given below will be searching for matching user ids.
+    // The key 'default' will be applied for any non-matching table name.
     'userfieldnames' => [
-        'badge' => ['usercreated', 'usermodified'],
+        'badge_manual_award' => ['issuerid', 'recipientid'],
         'competency_evidence' => ['actionuserid', 'usermodified'],
-        'contentbank_content' => ['usercreated', 'usermodified'],
+        'external_tokens' => ['creatorid', 'userid'],
+        'grade_import_values' => ['importer', 'userid'],
+        'grade_import_newitem' => ['importer'],
+        'grading_instances' => ['raterid'],
         'logstore_standard_log' => ['userid','relateduserid','realuserid'],
-        'message_contacts' => ['userid', 'contactid'], // It is a compound index.
-        'message' => ['useridfrom','useridto'],
+        'message_contacts' => ['contactid', 'userid'],
         'message_contact_requests' => ['userid', 'requesteduserid'],
-        'message_read' => ['useridfrom','useridto'],
-        'message_users_blocked' => ['userid', 'blockeduserid'],
-        'notifications' => ['useridfrom', 'useridto'],
+        'message_users_blocked' => ['blockeduserid', 'userid'],
         'question' => ['createdby', 'modifiedby'],
-        'reportbuilder_schedule' => ['userviewas', 'usercreated', 'usermodified'],
+        'reportbuilder_schedule' => ['usercreated', 'usermodified', 'userviewas'],
+        'role_capabilities' => ['modifierid'],
         'search_simpledb_index' => ['owneruserid', 'userid'],
         'sms_messages' => ['recipientuserid'],
         'tool_mergeusers' => ['mergedbyuserid'], // Only this column. Others must be kept as is.
+        'tool_dataprivacy_request' => ['dp4o', 'requestedby', 'userid', 'usermodified'],
+        'user_enrolments' => ['modifierid', 'userid'],
+        'workshop_assessments' => ['gradinggradeoverby', 'reviewerid'],
+        'workshop_submissions' => ['authorid', 'gradeoverby'],
         'default' => [
             'authorid',
             'id_user',
@@ -169,9 +174,10 @@ return array(
             'user_id',
             'usercreated',
             'userid',
+            'useridfrom',
+            'useridto',
             'usermodified',
-
-        ], // May appear compound index.
+        ],
     ],
 
     // TableMergers to process each database table.
