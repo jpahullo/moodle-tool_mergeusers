@@ -26,7 +26,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot . '/mod/assign/tests/generator.php');
+require_once("$CFG->dirroot/mod/assign/tests/generator.php");
+require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
 
 /**
  * Class assign_test
@@ -34,12 +35,7 @@ require_once($CFG->dirroot . '/mod/assign/tests/generator.php');
 class assign_test extends advanced_testcase {
     use \mod_assign_test_generator;
 
-    /**
-     *
-     */
     public function setUp(): void {
-        global $CFG;
-        require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         parent::setUp();
         $this->resetAfterTest();
     }
@@ -50,7 +46,7 @@ class assign_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_assign
      */
-    public function test_mergenonconflictingassigngrades() {
+    public function test_merge_non_conflicting_assign_grades() {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();
@@ -94,5 +90,116 @@ class assign_test extends advanced_testcase {
         $gradebookitem   = array_shift($gradebookgrades->items);
         $grade     = $gradebookitem->grades[$user->id];
         return $grade->str_grade;
+    }
+
+    /**
+     * Test failing merge due to missing course module.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_assign
+     * @throws dml_exception
+     */
+    public function test_failed_merged_for_missing_course_module() {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $student1 = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $student2 = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $assign = $this->create_instance($course);
+
+        // Give a grade to student 1.
+        $data = new stdClass();
+        $data->grade = '75.0';
+        $assign->testable_apply_grade_to_user($data, $student2->id, 0);
+
+        // Delete course_modules record. This emulates some weird behaviour on the Moodle site.
+        $assignmodule = $DB->get_record('modules', ['name' => 'assign']);
+        $DB->delete_records(
+            'course_modules',
+            [
+                'module' => $assignmodule->id,
+                'instance' => $assign->get_course_module()->instance,
+                'course' => $course->id,
+            ],
+        );
+
+        // Try to merge users.
+        $mut = new MergeUserTool();
+        [$success, $log, $logid] = $mut->merge($student1->id, $student2->id);
+
+        // Merge have failed. Check it!
+        $this->assertFalse($success);
+        // Be sure logs contain the detail of the exception.
+        $exceptionmessage = get_string(
+            'exception:nocoursemodule',
+            'tool_mergeusers',
+            [
+                'module' => 'assign',
+                'activityid' => $assign->get_course_module()->instance,
+                'courseid' => $course->id,
+            ],
+        );
+        $matchingerror = array_filter(
+            $log,
+            function ($line) use ($exceptionmessage) {
+                return strstr($line, $exceptionmessage);
+            },
+        );
+        $this->assertCount(1, $matchingerror);
+
+        // Users are kept unaltered.
+        $this->assertEquals(0, $DB->get_field('user', 'suspended', ['id' => $student1->id]));
+        $this->assertEquals(0, $DB->get_field('user', 'suspended', ['id' => $student2->id]));
+    }
+
+    /**
+     * Test failing merge due to missing module record.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_assign
+     * @throws dml_exception
+     */
+    public function test_failed_merged_for_missing_module_record() {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $student1 = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $student2 = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $assign = $this->create_instance($course);
+
+        // Give a grade to student 1.
+        $data = new stdClass();
+        $data->grade = '75.0';
+        $assign->testable_apply_grade_to_user($data, $student2->id, 0);
+
+        // Delete module's table record. This emulates some weird behaviour on the Moodle site.
+        $DB->delete_records('assign', ['id' => $assign->get_course_module()->instance]);
+
+        // Try to merge users.
+        $mut = new MergeUserTool();
+        [$success, $log, $logid] = $mut->merge($student1->id, $student2->id);
+
+        // Merge have failed. Check it!
+        $this->assertFalse($success);
+        // Be sure logs contain the detail of the exception.
+        $exceptionmessage = get_string(
+            'exception:nomoduleinstance',
+            'tool_mergeusers',
+            [
+                'module' => 'assign',
+                'activityid' => $assign->get_course_module()->instance,
+            ],
+        );
+        $matchingerror = array_filter(
+            $log,
+            function ($line) use ($exceptionmessage) {
+                return strstr($line, $exceptionmessage);
+            },
+        );
+        $this->assertCount(1, $matchingerror);
+
+        // Users are kept unaltered.
+        $this->assertEquals(0, $DB->get_field('user', 'suspended', ['id' => $student1->id]));
+        $this->assertEquals(0, $DB->get_field('user', 'suspended', ['id' => $student2->id]));
     }
 }

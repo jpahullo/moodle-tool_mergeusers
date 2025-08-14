@@ -493,15 +493,27 @@ class MergeUserTool {
 
         foreach ($iteminstances as $iteminstance) {
             if (!$activity = $DB->get_record($iteminstance->itemmodule, array('id' => $iteminstance->iteminstance))) {
-                throw new Exception("Can not find $iteminstance->itemmodule activity with id $iteminstance->iteminstance");
+                throw new moodle_exception(
+                    'exception:nomoduleinstance',
+                    'tool_mergeusers',
+                    '',
+                    [
+                        'module' => $iteminstance->itemmodule,
+                        'activityid' => $iteminstance->iteminstance,
+                    ]
+                );
             }
             if (!$cm = get_coursemodule_from_instance($iteminstance->itemmodule, $activity->id, $iteminstance->courseid)) {
-                throw new Exception(sprintf(
-                    'Can not find course module. Debug info: module=%s, activity.id=%d, course.id=%d',
-                    $iteminstance->itemmodule,
-                    $activity->id,
-                    $iteminstance->courseid
-                ));
+                throw new moodle_exception(
+                    'exception:nocoursemodule',
+                    'tool_mergeusers',
+                    '',
+                    [
+                        'module' => $iteminstance->itemmodule,
+                        'activityid' => $activity->id,
+                        'courseid' => $iteminstance->courseid,
+                    ],
+                );
             }
 
             $activity->modname    = $iteminstance->itemmodule;
