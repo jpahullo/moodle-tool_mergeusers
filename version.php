@@ -29,9 +29,9 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version = 2025081402;
+$plugin->version = 2025081500;
 $plugin->release = '(In vacation mode ;-) )';
 $plugin->requires = 2024100700; // Moodle 4.5+, https://moodledev.io/general/releases#moodle-45-lts.
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [405, 405];
+$plugin->supported = [405, 500];

@@ -92,7 +92,7 @@ class logger {
      * @return array|bool false when there are no records matching; list of merging logs otherwise.
      * @throws dml_exception
      */
-    public function get(array $filter = null, int $limitfrom = 0, int $limitnum = 0, string $sort = "timemodified DESC"): array|bool {
+    public function get(?array $filter = null, int $limitfrom = 0, int $limitnum = 0, string $sort = "timemodified DESC"): array|bool {
         global $DB;
         $logs = $DB->get_records('tool_mergeusers', $filter, $sort, 'id, touserid, fromuserid, mergedbyuserid, success, timemodified', $limitfrom, $limitnum);
         if (!$logs) {

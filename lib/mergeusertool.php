@@ -124,7 +124,7 @@ class MergeUserTool {
      * @param logger $logger logger facility to save results of mergings.
      * @throws moodle_exception when the merger for a given table is not an instance of TableMerger
      */
-    public function __construct(tool_mergeusers_config $config = null, logger $logger = null) {
+    public function __construct(?tool_mergeusers_config $config = null, ?logger $logger = null) {
         $this->logger = (is_null($logger)) ? new logger() : $logger;
         $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
 

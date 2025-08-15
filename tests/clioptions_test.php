@@ -84,7 +84,7 @@ class clioptions_test extends advanced_testcase {
 
         $mut = new MergeUserTool();
         list($success, $log, $logid) = $mut->merge($user_keep->id, $user_remove->id);
-        $this->assertFalse($this->hasOutput());
+        $this->expectOutputString("");
 
         // Check $user_remove is suspended.
         $user_remove = $DB->get_record('user', array('id' => $user_remove->id));

@@ -104,7 +104,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * @param UserSelectTable $ust table for users to merge after searching
      * @return string html to show on index page.
      */
-    public function index_page(moodleform $mform, $step, UserSelectTable $ust = null)
+    public function index_page(moodleform $mform, $step, ?UserSelectTable $ust = null)
     {
         $output = $this->header();
         $output .= $this->heading_with_help(get_string('mergeusers', 'tool_mergeusers'), 'header', 'tool_mergeusers');

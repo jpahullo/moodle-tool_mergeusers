@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use mod_quiz\quiz_attempt;
 use mod_quiz\quiz_settings;
 
 /**
@@ -169,15 +170,40 @@ class quiz_test extends advanced_testcase {
         $attempt = quiz_create_attempt($quizobj, 1, false, $timenow, false, $user->id);
         quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
         quiz_attempt_save_started($quizobj, $quba, $attempt);
-        $attemptobj = \mod_quiz\quiz_attempt::create($attempt->id);
+        $attemptobj = quiz_attempt::create($attempt->id);
         $attemptobj->process_submitted_actions($timenow, false, $answers);
 
         $timefinish = time();
 
         // Finish the attempt.
-        $attemptobj->process_finish($timefinish, false);
+        $this->finish_attempt($attemptobj, $timefinish);
 
         return $timefinish;
+    }
+
+    /**
+     * Provides a necessary abstraction to support Moodle 5.0 onwards for quiz testing.
+     *
+     * If this test is executed on Moodle 5, it executes the new attempt methods, preventing deprecation warnings.
+     *
+     * On Moodle 4.5, it executes the necessary attempt method for testing.
+     *
+     * TODO: If, at some time, this code is only supported for Moodle 5 onwards, we will be able to remove the condition
+     * and leave only the Moodle-5-compatible code.
+     *
+     * @param quiz_attempt $attempt
+     * @param int $timefinish
+     * @return void
+     */
+    private function finish_attempt(quiz_attempt $attempt, int $timefinish): void {
+        if (method_exists($attempt, 'process_submit')) {
+            // Temporary patch for supporting for Moodle 5.0 and onwards.
+            $attempt->process_submit($timefinish, false);
+            $attempt->process_grade_submission($timefinish);
+        } else {
+            // Valid only for Moodle 4.5 branch.
+            $attempt->process_finish($timefinish, false);
+        }
     }
 
     /**
@@ -185,7 +211,7 @@ class quiz_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_quiz
      */
-    public function test_mergeconflictingquizattempts() {
+    public function test_merge_conflicting_quiz_attempts() {
         global $DB;
 
         $this->submit_quiz_attempt($this->quiz1, $this->user_keep, $this->get_fiftypercent_answers());
@@ -212,7 +238,7 @@ class quiz_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_quiz
      */
-    public function test_mergenonconflictingquizattempts() {
+    public function test_merge_non_conflicting_quiz_attempts() {
         global $DB;
 
         $this->submit_quiz_attempt($this->quiz1, $this->user_keep, $this->get_fiftypercent_answers());

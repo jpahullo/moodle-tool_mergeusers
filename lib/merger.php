@@ -87,7 +87,7 @@ class Merger {
         }
 
         if (defined("CLI_SCRIPT")) {
-            cli_writeln("${numberoperations} merge operations performed. Bye!");
+            cli_writeln("{$numberoperations} merge operations performed. Bye!");
         }
     }
 }
