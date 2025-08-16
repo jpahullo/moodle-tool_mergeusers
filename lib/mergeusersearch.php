@@ -106,18 +106,25 @@ class MergeUserSearch {
      *
      * The result has this structure:
      *   [
-     *       0 => Either NULL or the user object.  Will be NULL if not valid user,
-     *       1 => Message for invalid user to display/log
+     *       0 => Either NULL or the user object.  Will be NULL if not valid user or without actual selection,
+     *       1 => Message for invalid user to display/log. Empty string for no actual selection.
      *   ]
      *
-     * @param string $value The identifying information about the user
-     * @param string $field The column name to verify against.  (should not be direct user input)
+     * @param ?string $value The identifying information about the user. Null when no actual selection was done.
+     * @param string $field The column name to verify against. (Should not be direct user input)
      *
      * @return array two positions with the results of the verification.
      * @throws coding_exception
      */
-    public function verify_user(string $value, string $field): array {
+    public function verify_user(?string $value, string $field): array {
         global $DB;
+
+        // Inform there is no actual selection this time.
+        if (is_null($value)) {
+            return [null, ''];
+        }
+
+        // Check for existing user matching the specified criteria.
         $message = '';
         try {
             $user = $DB->get_record('user', [$field => $value, 'deleted' => 0], '*', MUST_EXIST);

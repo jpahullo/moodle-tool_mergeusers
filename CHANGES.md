@@ -1,6 +1,15 @@
 Release notes
 =============
 
+2025081600
+
+1. 2025-0816: improvement: #244: allow resetting web user selection. Unified search and review tables. 
+ Added extra column on search table to show whether a user is already suspended (probably already merged).
+
+2025081500
+
+1. 2025-08-15: improvement: #328: added support for Moodle 5.0.
+
 2025081402
 
 1. 2025-08-14: fix: #336: deleted users are excluded from everywhere when searching by and merging users.

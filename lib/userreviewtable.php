@@ -89,61 +89,60 @@ class UserReviewTable extends html_table implements renderable
      */
     protected function buildtable()
     {
-        // Reset any existing data
-        $this->data = array();
+        // Reset any existing data.
+        $this->data = [];
 
-        if (!empty($this->olduser) || !empty($this->newuser)) { // if there is a user add table rows and columns
-            $this->id = 'merge_users_tool_user_review_table';
-            $this->attributes['class'] = 'generaltable boxaligncenter';
+        if (empty($this->olduser) && empty($this->newuser)) {
+            return;
+        }
 
-            if ((isset($this->olduser->idnumber) && !empty($this->olduser->idnumber))
-                || (isset($this->newuser->idnumber) && !empty($this->newuser->idnumber))) {
-                $extrafield = 'idnumber';
+        // Show the selected users to merge. At least, there is one selected user for merging.
+        $this->id = 'merge_users_tool_user_review_table';
+        $this->attributes['class'] = 'generaltable boxaligncenter';
+
+        if ((isset($this->olduser->idnumber) && !empty($this->olduser->idnumber))
+            || (isset($this->newuser->idnumber) && !empty($this->newuser->idnumber))) {
+            $extrafield = 'idnumber';
+        } else {
+            $extrafield = 'description';
+        }
+        $suspendedstr = get_string('suspended');
+        $columns = array(
+            'col_label' => '',
+            'col_userid' => 'Id',
+            'col_suspended' => $suspendedstr,
+            'col_username' => get_string('user'),
+            'col_email' => get_string('email'),
+            'col_extra' => get_string($extrafield)
+        );
+        $this->head = array_values($columns);
+        $this->colclasses = array_keys($columns);
+
+        // Always display both rows so that the end user can see what is selected/not selected.
+        $users = [
+            [get_string('olduser', 'tool_mergeusers'), $this->olduser],
+            [get_string('newuser', 'tool_mergeusers'), $this->newuser],
+        ];
+        foreach ($users as $user) {
+            $row = [array_shift($user)];
+            $user = reset($user);
+            if (empty($user)) {
+                $row = array_merge($row, array_fill(0,5, ''));
+
             } else {
-                $extrafield = 'description';
+                $spanclass = ($user->suspended) ? ('usersuspended') : ('');
+                $suspendedstrrow = ($user->suspended) ? $suspendedstr : '';
+                $row[] = html_writer::tag('span', $user->id, ['class' => $spanclass]);
+                $row[] = html_writer::tag('span', $suspendedstrrow, ['class' => $spanclass]);
+                $row[] = html_writer::tag(
+                    'span',
+                    $this->renderer->show_user($user->id, $this->olduser),
+                    ['class' => $spanclass],
+                );;
+                $row[] = html_writer::tag('span', $user->email, ['class' => $spanclass]);
+                $row[] = html_writer::tag('span', $user->$extrafield, ['class' => $spanclass]);
             }
-            $columns = array(
-                'col_label' => '',
-                'col_userid' => 'Id',
-                'col_username' => get_string('user'),
-                'col_email' => get_string('email'),
-                'col_extra' => get_string($extrafield)
-            );
-            $this->head = array_values($columns);
-            $this->colclasses = array_keys($columns);
-
-            // Always display both rows so that the end user can see what is selected/not selected
-            // Add old user row
-            $olduserrow = array();
-            $olduserrow[] = get_string('olduser', 'tool_mergeusers');
-            if (!empty($this->olduser)) { // if there is an old user display it
-                $olduserrow[] = $this->olduser->id;
-                $olduserrow[] = $this->renderer->show_user($this->olduser->id, $this->olduser);
-                $olduserrow[] = $this->olduser->email;
-                $olduserrow[] = $this->olduser->$extrafield;
-            } else { // otherwise display empty fields
-                $olduserrow[] = '';
-                $olduserrow[] = '';
-                $olduserrow[] = '';
-                $olduserrow[] = '';
-            }
-            $this->data[] = $olduserrow;
-
-            // Add new user row
-            $newuserrow = array();
-            $newuserrow[] = get_string('newuser', 'tool_mergeusers');
-            if (!empty($this->newuser)) { // if there is an new user display it
-                $newuserrow[] = $this->newuser->id;
-                $newuserrow[] = $this->renderer->show_user($this->newuser->id, $this->newuser);
-                $newuserrow[] = $this->newuser->email;
-                $newuserrow[] = $this->newuser->$extrafield;
-            } else { // otherwise display empty fields
-                $newuserrow[] = '';
-                $newuserrow[] = '';
-                $newuserrow[] = '';
-                $newuserrow[] = '';
-            }
-            $this->data[] = $newuserrow;
+            $this->data[] = $row;
         }
     }
 }
