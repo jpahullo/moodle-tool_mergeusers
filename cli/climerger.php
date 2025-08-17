@@ -57,7 +57,10 @@ if ($options['help']) {
 Options:
 --help            Print out this help
 --debugdb         Output all db statements used to do the merge
---alwaysrollback  Do the full merge but rollback the transaction at the last opportunity
+--alwaysrollback  Useful for testing without actual changes on the system.
+                  Do the full merge but rollback the transaction at the last opportunity.
+                  When using this option, the exception used for the rollback aborts the CLI script.
+                  You will have to execute this script again manually to test another merge. 
 ";
 
     echo $help;

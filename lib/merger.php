@@ -43,24 +43,6 @@ class Merger {
     public function __construct(MergeUserTool $mut) {
         $this->mut = $mut;
         $this->logger = new logger();
-
-        // To catch Ctrl+C interruptions, we need this stuff.
-        declare(ticks = 1);
-
-        if (extension_loaded('pcntl')) {
-            pcntl_signal(SIGINT, [$this, 'aborting']);
-        }
-    }
-
-    /**
-     * Called when aborting from command-line on Ctrl+C interruption.
-     * @param int $signo only SIGINT.
-     */
-    public function aborting(int $signo): void {
-        if (defined("CLI_SCRIPT")) {
-            echo "\n\nAborting!\n\n";
-        }
-        exit(0); // Exiting without error.
     }
 
     /**

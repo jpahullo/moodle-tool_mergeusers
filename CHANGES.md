@@ -1,6 +1,15 @@
 Release notes
 =============
 
+2025081700
+
+1. 2025-08-17: fix: #308: reportedly, extension pcntl seems to be loaded sometimes but its pcntl_* functions
+ are not available. We have removed support for aborting for Ctrl+C (SIGINT) using pcntl extension.
+ No panic: in several instances we have, we can cancel the CLI script execution with Ctrl+C without
+ the pcntl extension loaded. It was necessary on initial version of this plugin. Nowadays it seems unnecessary.
+2. 2025-08-17: improvement: #308: updated the CLI script help to show that when using --alwaysrollback option
+ there is no loop for merging pairs of users.
+
 2025081603
 
 1. 2025-0816: improvement: #244: allow resetting web user selection. Unified search and review tables. 
