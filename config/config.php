@@ -188,6 +188,7 @@ return array(
         'assign_submission' => 'AssignSubmissionTableMerger',
     ),
 
-    'alwaysRollback' => false,
+    // Attention! All lowercase!
+    'alwaysrollback' => false,
     'debugdb' => false,
 );

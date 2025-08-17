@@ -31,6 +31,9 @@ use MergeUserTool;
 class lib_test extends advanced_testcase {
     /**
      * Tests mergeuser_myprofile_navigation lib hook
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_lib
      */
     public function test_mergeuser_myprofile_navigation() {
         global $CFG;

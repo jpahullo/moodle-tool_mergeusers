@@ -31,6 +31,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mergeusers\local\config;
 use tool_mergeusers\logger;
 
 defined('MOODLE_INTERNAL') || die();
@@ -110,7 +111,7 @@ class MergeUserTool {
     /**
      * @var bool if true then never commit the transaction, used for testing.
      */
-    protected $alwaysRollback;
+    protected $alwaysrollback;
 
     /**
      * @var bool if true then write out all sql, used for testing.
@@ -120,13 +121,13 @@ class MergeUserTool {
     /**
      * Initializes the tool to merge users.
      *
-     * @param tool_mergeusers_config $config local configuration.
+     * @param config $config local configuration.
      * @param logger $logger logger facility to save results of mergings.
      * @throws moodle_exception when the merger for a given table is not an instance of TableMerger
      */
-    public function __construct(?tool_mergeusers_config $config = null, ?logger $logger = null) {
+    public function __construct(?config $config = null, ?logger $logger = null) {
         $this->logger = (is_null($logger)) ? new logger() : $logger;
-        $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
+        $config = (is_null($config)) ? config::instance() : $config;
 
         $this->checkTransactionSupport();
 
@@ -174,8 +175,8 @@ class MergeUserTool {
         $this->tableMergers = $tableMergers;
         $this->tablesProcessedByTableMergers = array_flip($tablesProcessedByTableMergers);
 
-        $this->alwaysRollback = !empty($config->alwaysRollback);
-        $this->debugdb = !empty($config->debugdb);
+        $this->alwaysrollback = $config->alwaysrollback;
+        $this->debugdb = $config->debugdb;
 
         // Initializes the list of fields and tables to check in the current database, given the local configuration.
         $this->init();
@@ -308,8 +309,8 @@ class MergeUserTool {
             $DB->set_debug(false);
         }
 
-        if ($this->alwaysRollback) {
-            $transaction->rollback(new Exception('alwaysRollback option is set so rolling back transaction'));
+        if ($this->alwaysrollback) {
+            $transaction->rollback(new Exception('alwaysrollback option is set so rolling back transaction'));
         }
 
         // concludes with true if no error

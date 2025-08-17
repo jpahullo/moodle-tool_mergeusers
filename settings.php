@@ -28,13 +28,18 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mergeusers\local\settings\json_setting;
+use tool_mergeusers\local\config;
+
 defined('MOODLE_INTERNAL') || die;
 
+// Add options under the User menu.
 if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
     /**
-     * @var \part_of_admin_tree $ADMIN
+     * @var part_of_admin_tree $ADMIN
      */
     if (!$ADMIN->locate('tool_mergeusers')) {
+        global $CFG;
         $ADMIN->add('accounts',
             new admin_category('tool_mergeusers', get_string('pluginname', 'tool_mergeusers')));
         $ADMIN->add('tool_mergeusers',
@@ -44,33 +49,89 @@ if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
         $ADMIN->add('tool_mergeusers',
             new admin_externalpage('tool_mergeusers_viewlog', get_string('viewlog', 'tool_mergeusers'),
                 $CFG->wwwroot . '/' . $CFG->admin . '/tool/mergeusers/view.php',
-                'tool/mergeusers:mergeusers'));
+                'tool/mergeusers:viewlog'));
     }
 }
 
+// Prepare admin setting pages.
+// Keep only under administrators' responsibility the ability to customize the behaviour of the plugin.
+$generalsettings = new admin_settingpage(
+    'toolmergeusersgeneralsettings',
+    new lang_string('settings:generalsettings', 'tool_mergeusers'),
+    'moodle/site:config',
+);
+$databasesettings = new admin_settingpage(
+    'toolmergeusersdatabasesettings',
+    new lang_string('settings:databasesettings', 'tool_mergeusers'),
+    'moodle/site:config',
+);
+
+// Build just the links on the settings page.
 if ($hassiteconfig) {
+    $ADMIN->add(
+        'tools',
+        new admin_category(
+            'toolmergeuserscat',
+            new lang_string('pluginname', 'tool_mergeusers'),
+        ),
+    );
+
+    $ADMIN->add('toolmergeuserscat', $generalsettings);
+    $ADMIN->add('toolmergeuserscat', $databasesettings);
+}
+
+// Only when showing the whole tree, show all options below.
+if ($ADMIN->fulltree) {
     require_once(__DIR__ . '/lib/autoload.php');
     require_once(__DIR__ . '/lib.php');
 
-    // Add configuration for making user suspension optional.
-    $settings = new admin_settingpage('mergeusers_settings',
-        get_string('pluginname', 'tool_mergeusers'));
+    $tabs = [
+        new tabobject(
+            'toolmergeusersgeneralsettings',
+            new moodle_url('/admin/settings.php', ['section' => 'toolmergeusersgeneralsettings']),
+            new lang_string('settings:generalsettings', 'tool_mergeusers'),
+        ),
+        new tabobject(
+            'toolmergeusersdatabasesettings',
+            new moodle_url('/admin/settings.php', ['section' => 'toolmergeusersdatabasesettings']),
+            new lang_string('settings:databasesettings', 'tool_mergeusers'),
+        ),
+    ];
 
-    $settings->add(new admin_setting_configcheckbox('tool_mergeusers/suspenduser',
+    global $OUTPUT;
+    $currenttab = optional_param('section', 'toolmergeusersgeneralsettings', PARAM_ALPHA);
+    $tabtree = new tabtree($tabs, $currenttab);
+    $tabs = new admin_setting_heading(
+        'toolmergeuserstabs',
+        null,
+        $OUTPUT->render($tabtree)
+    );
+
+    $iscategoryselected = optional_param('category', false, PARAM_RAW_TRIMMED);
+    $isaquery = optional_param('query', false, PARAM_RAW_TRIMMED);
+    $showtabs = !$iscategoryselected && !$isaquery;
+
+    // Add general settings.
+    if ($showtabs) {
+        $generalsettings->add($tabs);
+    }
+
+    // Add configuration for making user suspension optional.
+    $generalsettings->add(new admin_setting_configcheckbox('tool_mergeusers/suspenduser',
         get_string('suspenduser_setting', 'tool_mergeusers'),
         get_string('suspenduser_setting_desc', 'tool_mergeusers'),
         1));
 
     $supportinglang = (tool_mergeusers_transactionssupported()) ? 'transactions_supported' : 'transactions_not_supported';
 
-    $settings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',
+    $generalsettings->add(new admin_setting_configcheckbox('tool_mergeusers/transactions_only',
         get_string('transactions_setting', 'tool_mergeusers'),
         get_string('transactions_setting_desc', 'tool_mergeusers') . '<br /><br />' .
-            get_string($supportinglang, 'tool_mergeusers'),
+        get_string($supportinglang, 'tool_mergeusers'),
         1));
 
     $exceptionoptions = tool_mergeusers_build_exceptions_options();
-    $settings->add(new admin_setting_configmultiselect('tool_mergeusers/excluded_exceptions',
+    $generalsettings->add(new admin_setting_configmultiselect('tool_mergeusers/excluded_exceptions',
         get_string('excluded_exceptions', 'tool_mergeusers'),
         get_string('excluded_exceptions_desc', 'tool_mergeusers', $exceptionoptions->defaultvalue),
         array($exceptionoptions->defaultkey), // Default value: empty => apply all exceptions.
@@ -78,27 +139,62 @@ if ($hassiteconfig) {
 
     // Quiz attempts.
     $quizoptions = tool_mergeusers_build_quiz_options();
-    $settings->add(new admin_setting_configselect('tool_mergeusers/quizattemptsaction',
-        get_string('quizattemptsaction', 'tool_mergeusers'),
-        get_string('quizattemptsaction_desc', 'tool_mergeusers', $quizoptions->allstrings),
-        $quizoptions->defaultkey,
-        $quizoptions->options)
+    $generalsettings->add(new admin_setting_configselect('tool_mergeusers/quizattemptsaction',
+            get_string('quizattemptsaction', 'tool_mergeusers'),
+            get_string('quizattemptsaction_desc', 'tool_mergeusers', $quizoptions->allstrings),
+            $quizoptions->defaultkey,
+            $quizoptions->options)
     );
 
-    $settings->add(new admin_setting_configcheckbox('tool_mergeusers/uniquekeynewidtomaintain',
+    $generalsettings->add(new admin_setting_configcheckbox('tool_mergeusers/uniquekeynewidtomaintain',
         get_string('uniquekeynewidtomaintain', 'tool_mergeusers'),
         get_string('uniquekeynewidtomaintain_desc', 'tool_mergeusers'),
         1));
 
     $fields = tool_mergeusers_inform_about_pending_user_profile_fields();
     if ($fields->exists) {
-        $settings->add(new admin_setting_description(
+        $generalsettings->add(new admin_setting_description(
             'tool_mergeusers/profilefields',
-            get_string('profilefields', 'tool_mergeusers'),
-            get_string('profilefieldsdesc', 'tool_mergeusers', $fields),
+            new lang_string('profilefields', 'tool_mergeusers'),
+            new lang_string('profilefieldsdesc', 'tool_mergeusers', $fields),
         ));
     }
 
-    // Add settings.
-    $ADMIN->add('tools', $settings);
+    // Add database settings.
+    if ($showtabs) {
+        $databasesettings->add($tabs);
+    }
+
+    $config = config::instance();
+    $oldconfiglocalphpjson = $config->json_from_config_local_php_file();
+    $defaultjson = $config->json_from_default_config();
+    $calculatedjson = $config->json_from_calculated_config();
+
+    $databasesettings->add(new json_setting(
+        'tool_mergeusers/customdbsettings',
+        new lang_string('settings:customdbsettings', 'tool_mergeusers'),
+        new lang_string('settings:customdbsettingsdesc', 'tool_mergeusers'),
+        $oldconfiglocalphpjson,  // Old config/config.local.php content as default value, if exists.
+        60,
+        12,
+    ));
+
+    $databasesettings->add(new admin_setting_description(
+        'tool_mergeusers/calculateddbsettings',
+        new lang_string('settings:calculateddbsettings', 'tool_mergeusers'),
+        new lang_string(
+            'settings:calculateddbsettingsdesc',
+            'tool_mergeusers',
+            [
+                'defaultname' => new lang_string('settings:defaultdbsettings', 'tool_mergeusers'),
+                'calculatedname' => new lang_string('settings:calculateddbsettings', 'tool_mergeusers'),
+                'default' => $defaultjson,
+                'calculated' => $calculatedjson
+            ],
+        ),
+    ));
 }
+
+// Prevent build normal settings page.
+// We provide a separated settings pages for every concern.
+$settings = null;

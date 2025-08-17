@@ -34,6 +34,8 @@ class last_merge_test extends advanced_testcase {
     /**
      * Tests API when no user was merged.
      *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_last_merge
      * @throws \dml_exception
      */
     public function test_empty_list_of_deletable_users(): void {
@@ -44,6 +46,8 @@ class last_merge_test extends advanced_testcase {
     /**
      * Tests the API when a user was merged and can be deletable.
      *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_last_merge
      * @throws \dml_exception
      */
     public function test_a_user_can_be_deletable(): void {

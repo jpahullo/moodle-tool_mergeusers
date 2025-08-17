@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+use tool_mergeusers\local\config;
 
 /**
  * Version information
@@ -31,8 +32,8 @@ class clioptions_test extends advanced_testcase {
     }
 
     public function tearDown(): void {
-        $config = tool_mergeusers_config::instance();
-        unset($config->alwaysRollback);
+        $config = config::instance();
+        unset($config->alwaysrollback);
         unset($config->debugdb);
     }
 
@@ -60,13 +61,13 @@ class clioptions_test extends advanced_testcase {
 
         $user_remove_2 = $this->getDataGenerator()->create_user();
 
-        $config = tool_mergeusers_config::instance();
-        $config->alwaysRollback = true;
+        $config = config::instance();
+        $config->alwaysrollback = true;
 
         $mut = new MergeUserTool($config);
 
         $this->expectException('Exception');
-        $this->expectExceptionMessage('alwaysRollback option is set so rolling back transaction');
+        $this->expectExceptionMessage('alwaysrollback option is set so rolling back transaction');
         list($success, $log, $logid) = $mut->merge($user_keep->id, $user_remove_2->id);
     }
 
@@ -95,7 +96,7 @@ class clioptions_test extends advanced_testcase {
 
         $user_remove_2 = $this->getDataGenerator()->create_user();
 
-        $config = tool_mergeusers_config::instance();
+        $config = config::instance();
         $config->debugdb = true;
 
         $mut = new MergeUserTool($config);

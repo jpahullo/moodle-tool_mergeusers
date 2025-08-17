@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mergeusers\local\config;
+
 define("CLI_SCRIPT", true);
 
 require_once __DIR__ . '/../../../../config.php';
@@ -38,7 +40,7 @@ require_once __DIR__ . '/../lib/autoload.php';
 list($options, $unrecognized) = cli_get_params(
     array(
         'debugdb'    => false,
-        'alwaysRollback' => false,
+        'alwaysrollback' => false,
         'help'    => false,
     )
 );
@@ -55,7 +57,7 @@ if ($options['help']) {
 Options:
 --help            Print out this help
 --debugdb         Output all db statements used to do the merge
---alwaysRollback  Do the full merge but rollback the transaction at the last opportunity
+--alwaysrollback  Do the full merge but rollback the transaction at the last opportunity
 ";
 
     echo $help;
@@ -63,10 +65,10 @@ Options:
 }
 
 // loads current configuration
-$config = tool_mergeusers_config::instance();
+$config = config::instance();
 
 $config->debugdb = !empty($options['debugdb']);
-$config->alwaysRollback = !empty($options['alwaysRollback']);
+$config->alwaysrollback = !empty($options['alwaysrollback']);
 
 // initializes merger tool
 $mut = new MergeUserTool($config); //may abort execution if database is not supported

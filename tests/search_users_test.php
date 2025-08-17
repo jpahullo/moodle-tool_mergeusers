@@ -41,6 +41,8 @@ final class search_users_test extends advanced_testcase {
      * Test for searching for specific user fields.
      * Also, search must not return any matching deleted users.
      *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
      * @dataProvider search_criteria
      * @throws dml_exception
      * @throws coding_exception
@@ -76,6 +78,9 @@ final class search_users_test extends advanced_testcase {
     /**
      * Test various allowed values for MergeUserSearch->search_users()'s
      * $searchfield parameter.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
      */
     public static function search_criteria(): array {
         return [

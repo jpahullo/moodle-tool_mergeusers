@@ -21,7 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mergeusers\logger;
+use tool_mergeusers\local\config;
 
 /**
  * Gets whether database transactions are allowed.
@@ -46,9 +46,7 @@ function tool_mergeusers_transactionssupported(): bool {
  * @throws coding_exception
  */
 function tool_mergeusers_build_exceptions_options(): stdClass {
-    require_once(__DIR__ . '/classes/tool_mergeusers_config.php');
-
-    $config = tool_mergeusers_config::instance();
+    $config = config::instance();
     $none = get_string('none');
     $options = array('none' => $none);
     foreach ($config->exceptions as $exception) {

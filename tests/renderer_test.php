@@ -39,6 +39,9 @@ class renderer_test extends advanced_testcase {
 
     /**
      * Tests get_merge_display_text function with a user that does exist
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
      */
     public function test_get_merge_detail_missing_user() {
         // User does not exist, should contain 'unknown profile' lang string.
@@ -59,6 +62,9 @@ class renderer_test extends advanced_testcase {
 
     /**
      * Tests get_merge_display_text function with a user that does exist
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
      */
     public function test_get_merge_detail_existing_user() {
         $this->resetAfterTest();

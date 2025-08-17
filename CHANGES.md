@@ -1,10 +1,17 @@
 Release notes
 =============
 
-2025081600
+2025081603
 
 1. 2025-0816: improvement: #244: allow resetting web user selection. Unified search and review tables. 
  Added extra column on search table to show whether a user is already suspended (probably already merged).
+2. 2025-08-16: improvement: #345: move config.local.php into a new admin setting, in JSON format, for being human-readable.
+   1. **Recomendation when upgrading:** Keep your `config/config.local.php` in place. It will help to
+   update the value of your new setting automatically, without the need to convert your old config/config.local.php to JSON.
+   Otherwise, you will have to update it manually with the content of your previous `config/config.local.php` on the
+   new admin setting.
+   2. Also, consider that setting with name `alwaysRollback` was renamed to `alwaysrollback` to unify the case insensitiveness
+   of the rest of the configuration settings. It applies within the code and also on the CLI script parameters.
 
 2025081500
 
