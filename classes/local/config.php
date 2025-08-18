@@ -25,13 +25,18 @@
 
 namespace tool_mergeusers\local;
 
+use core\di;
+use core\hook\manager;
+use tool_mergeusers\hook\add_settings_before_merging;
+
 /**
  * Wrapper class for the configuration settings of the merge user utility.
  *
- * This class loads the standard settings from the file:
- * 1. <code>lib/config.php</code> and then loads the local settings from the file:
- * 2. Web setting <code>tool_mergeusers/customdbsettings</code>. Note this custom
- *  settings overwrite the default settings. When upgraded the plugin, it loads
+ * This class loads the standard settings from:
+ * 1. The default settings from this plugin (old <code>config/config.php</code> file).
+ * 2. The settings from the hook callbacks to complement and override the default settings.
+ * 3. Finally, the admin setting <code>tool_mergeusers/customdbsettings</code> is loaded. Note this custom
+ *  setting override any existing setting. When upgrading the plugin, this admin setting loads
  *  the existing content from <code>lib/config.local.php</code> if it exists.
  *
  * Important: The reference to any table name must be present without the $CFG->prefix.
@@ -45,7 +50,6 @@ namespace tool_mergeusers\local;
  *         'tablename' => [
  *             'userfield' => 'user-related_fieldname_on_tablename',
  *             'otherfield' => 'other_fieldname_on_tablename',
- *             ['both' => true,]
  *         ],
  *     ],
  *     'userfieldnames' => [
@@ -53,9 +57,6 @@ namespace tool_mergeusers\local;
  *     ],
  * ]
  * </pre>
- *
- * If the key 'both' appears, means that both columns are user-related and must be searched for
- * both.
  *
  * @property-read array gathering Gathering instance to use for the CLI script.
  * @property-read array exceptions List of tables that are excluded from processing.
@@ -74,12 +75,14 @@ class config {
     /** @var config singleton instance. */
     private static $instance = null;
 
-    /** @var array the whole set of settings, with the default and custom ones. */
-    private array $config;
-    /** @var array the settings from the config/config.php. */
-    private array $defaultconfig;
-    /** @var ?array the custom settings from the admin setting. */
-    private ?array $customconfig;
+    /** @var settable_db_config the whole set of settings, with the default and custom ones. */
+    private settable_db_config $config;
+    /** @var db_config the settings from the config/config.php. */
+    private db_config $defaultconfig;
+    /** @var db_config the custom settings from the admin setting. */
+    private db_config $customconfig;
+    /** @var db_config the custom settings provided by the hook callbacks. */
+    private db_config $hookconfig;
 
     /**
      * Singleton method.
@@ -102,26 +105,45 @@ class config {
     private function __construct() {
         $this->defaultconfig = $this->get_default_config();
         $this->customconfig = $this->get_custom_config();
-        $this->config = array_replace_recursive($this->defaultconfig, $this->customconfig);
+        $this->hookconfig = $this->get_hook_config();
+
+        $this->config = new settable_db_config();
+        // The merge_with() considers the first added settings with the highest priority. They will be kept.
+        $this->config->merge_with($this->customconfig); // First, the most important settings: web admin settings.
+        $this->config->merge_with($this->hookconfig); // Second, the aggregated settings from hooks.
+        $this->config->merge_with($this->defaultconfig); // The least important, the default settings.
     }
 
     /**
-     * Informs the default config settings from config/config.php file.
+     * Informs the default config settings provided by this plugin.
      *
-     * @return array
+     * @return db_config
      */
-    private function get_default_config(): array {
-        return include(dirname(__DIR__, 2) . '/config/config.php');
+    private function get_default_config(): db_config {
+        return new db_config(default_db_config::$config);
     }
 
     /**
      * Informs the custom settings. If empty, it informs an empty instance.
      *
-     * @return array
+     * @return db_config
      * @throws \dml_exception
      */
-    private function get_custom_config(): array {
-        return jsonizer::from_json(get_config('tool_mergeusers', 'customdbsettings') ?: self::EMPTY_SETTING) ?: [];
+    private function get_custom_config(): db_config {
+        $custom = jsonizer::from_json(get_config('tool_mergeusers', 'customdbsettings') ?: self::EMPTY_SETTING);
+        $custom = $custom ?: [];
+        return new db_config($custom);
+    }
+
+    /**
+     * Aggregates the database related settings from the hook callbacks.
+     *
+     * @return db_config
+     */
+    private function get_hook_config(): db_config {
+        $hook = new add_settings_before_merging();
+        di::get(manager::class)->dispatch($hook);
+        return $hook->get_settings();
     }
 
     /**
@@ -166,10 +188,7 @@ class config {
      * string or array having the value of the $name property.
      */
     public function __get(string $name): mixed {
-        if (isset($this->config[$name])) {
-            return $this->config[$name];
-        }
-        return null;
+        return $this->config->$name;
     }
 
     /**
@@ -180,11 +199,6 @@ class config {
      * @return void
      */
     public function __set(string $name, mixed $value) {
-        switch ($name) {
-            case 'alwaysrollback':
-            case 'debugdb':
-                $this->config[$name] = $value;
-                break;
-        }
+        $this->config->$name = $value;
     }
 }

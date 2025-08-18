@@ -42,7 +42,7 @@ class clioptions_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_clioptions
      */
-    public function test_alwaysrollback() {
+    public function test_option_alwaysrollback_is_set() {
         global $DB;
 
         // Setup two users to merge.
@@ -76,7 +76,7 @@ class clioptions_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_clioptions
      */
-    public function test_debugdb() {
+    public function test_option_debugdb_is_set() {
         global $DB;
 
         // Setup two users to merge.

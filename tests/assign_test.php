@@ -17,8 +17,7 @@
 /**
  * Version information
  *
- * @package    tool
- * @subpackage mergeusers
+ * @package    tool_mergeusers
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
