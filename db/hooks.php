@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Definition of the callback for the add_setting_before_merging hook.
+ * Callbacks for our hooks.
  *
  * @package   tool_mergeusers
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
@@ -23,15 +23,21 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mergeusers\fixtures\add_settings_before_merging_callbacks;
-use tool_mergeusers\hook\add_settings_before_merging;
-
 $callbacks = [
     [
-        'hook' => add_settings_before_merging::class,
+        'hook' => \tool_mergeusers\hook\after_merged_all_tables::class,
         'callback' => [
-            add_settings_before_merging_callbacks::class,
-            'add_settings_before_merging',
+            \tool_mergeusers\local\callbacks\regrading_after_merged_callback::class,
+            'regrade'
         ],
+        'priority' => 100,
+    ],
+    [
+        'hook' => \tool_mergeusers\hook\after_merged_all_tables::class,
+        'callback' => [
+            \tool_mergeusers\local\callbacks\update_completion_after_merged_callback::class,
+            'update_completion'
+        ],
+        'priority' => 90,
     ],
 ];

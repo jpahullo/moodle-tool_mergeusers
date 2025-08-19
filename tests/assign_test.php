@@ -66,6 +66,7 @@ class assign_test extends advanced_testcase {
 
         // Merge student 1 into student 0.
         $mut = new MergeUserTool();
+        // This merge already invokes the callback for regrading.
         $mut->merge($student1->id, $student2->id);
 
         // Student 0 should now have a grade of 75.00.

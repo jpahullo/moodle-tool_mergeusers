@@ -296,8 +296,9 @@ class MergeUserTool {
                 $tableMerger->merge($data, $actionLog, $errorMessages);
             }
 
-            $this->updateGrades($toid, $fromid);
-            $this->reaggregateCompletions($toid);
+            \core\di::get(\core\hook\manager::class)->dispatch(
+                new \tool_mergeusers\hook\after_merged_all_tables($toid, $fromid, $actionLog, $errorMessages),
+            );
         } catch (Exception $e) {
             $errorMessages[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
                     html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
@@ -470,77 +471,5 @@ class MergeUserTool {
             }
         }
         return $usercolumns;
-    }
-
-    /**
-     * Update all the target user's grades.
-     *
-     * @param int $toid To user.id
-     * @param int $fromid From user.id
-     * @throws dml_exception
-     * @throws coding_exception
-     * @throws Exception
-     */
-    private function updateGrades(int $toid, int $fromid): void {
-        global $DB, $CFG;
-        require_once($CFG->libdir.'/gradelib.php');
-
-        $sql = "SELECT DISTINCT gi.id, gi.iteminstance, gi.itemmodule, gi.courseid
-                FROM {grade_grades} gg
-                INNER JOIN {grade_items} gi on gg.itemid = gi.id
-                WHERE itemtype = 'mod' AND (gg.userid = :toid OR gg.userid = :fromid)";
-
-        $iteminstances = $DB->get_records_sql($sql, array('toid' => $toid, 'fromid' => $fromid));
-
-        foreach ($iteminstances as $iteminstance) {
-            if (!$activity = $DB->get_record($iteminstance->itemmodule, array('id' => $iteminstance->iteminstance))) {
-                throw new moodle_exception(
-                    'exception:nomoduleinstance',
-                    'tool_mergeusers',
-                    '',
-                    [
-                        'module' => $iteminstance->itemmodule,
-                        'activityid' => $iteminstance->iteminstance,
-                    ]
-                );
-            }
-            if (!$cm = get_coursemodule_from_instance($iteminstance->itemmodule, $activity->id, $iteminstance->courseid)) {
-                throw new moodle_exception(
-                    'exception:nocoursemodule',
-                    'tool_mergeusers',
-                    '',
-                    [
-                        'module' => $iteminstance->itemmodule,
-                        'activityid' => $activity->id,
-                        'courseid' => $iteminstance->courseid,
-                    ],
-                );
-            }
-
-            $activity->modname    = $iteminstance->itemmodule;
-            $activity->cmidnumber = $cm->idnumber;
-
-            grade_update_mod_grades($activity, $toid);
-        }
-    }
-
-    /**
-     * Forces Moodle to repeat aggregation of completion conditions.
-     *
-     * @param int $toid To user.id
-     * @return void
-     * @throws dml_exception
-     */
-    private function reaggregateCompletions(int $toid): void {
-        global $DB;
-
-        $now = time();
-        $DB->execute(
-                'UPDATE {course_completions}
-                        SET reaggregate = :now
-                      WHERE userid = :toid 
-                        AND (timecompleted IS NULL OR timecompleted = 0)',
-                ['now' => $now, 'toid' => $toid]
-        );
     }
 }
