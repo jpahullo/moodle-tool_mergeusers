@@ -1,6 +1,24 @@
 Release notes
 =============
 
+2025081800
+
+1. 2025-08-18: improvement: #348: added hook to load database-related settings.
+   1. This is though to help Moodle and plugin developers to adjust their code to help
+      this plugin merge users properly.
+   2. The settings that are loaded by this hook are those populated on the old 
+      `config/config.php` and `config/config.local.php` files. These files are not supported any more.
+   3. The content of the old `config/config.php` is now placed on `classes/local/default_db_config.php`.
+      This must help this plugin maintainers to keep in a single place the default behaviour.
+   4. Added tests to ensure the database-related settings are kept properly.
+   5. Priority of the settings (more priority settings are kept, in front of subsequent settings):
+      1. Custom admin setting: the set of settings with the highest priority. 
+         This must let administrators adjusting plugin behaviour at any time.
+      2. Hook settings: settings populated from this hook's callbacks are the second set of
+         settings in priority.
+      3. Default settings: the plugin's default settings are kept as with the lowest priority.
+         Any existing setting from hooks and custom settings will replace default ones. 
+
 2025081700
 
 1. 2025-08-17: fix: #308: reportedly, extension pcntl seems to be loaded sometimes but its pcntl_* functions
