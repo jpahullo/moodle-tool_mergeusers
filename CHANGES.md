@@ -1,5 +1,11 @@
 # Release notes
 
+## 2025082000
+
+1. 2025-08-20: fix: #354: ensure that setting `tool_mergeusers/uniquekeynewidtomaintain`
+   applies.
+
+
 ## 2025081900
 
 1. 2025-08-19: improvement: #350: added hook to proceed with operations after

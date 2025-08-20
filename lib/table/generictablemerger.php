@@ -30,20 +30,18 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @author jordi
  */
-class GenericTableMerger implements TableMerger
-{
+class GenericTableMerger implements TableMerger {
     const CHUNK_SIZE = 500;
 
     /**
      * Sets that in case of conflict, data related to new user is kept.
      * Otherwise (when false), data related to old user is kept.
-     * @var int
+     * @var bool
      */
-    protected $newidtomaintain;
+    protected bool $newidtomaintain;
 
-    public function __construct()
-    {
-        $this->newidtomaintain = get_config('tool_mergeusers', 'uniquekeynewidtomaintain');
+    public function __construct() {
+        $this->newidtomaintain = (bool)(int)get_config('tool_mergeusers', 'uniquekeynewidtomaintain');
     }
 
     /**
@@ -54,9 +52,8 @@ class GenericTableMerger implements TableMerger
      * @return array List of database table names without the $CFG->prefix.
      * Returns an empty array when nothing to do.
      */
-    public function getTablesToSkip()
-    {
-        return array(); // empty array when doing nothing.
+    public function getTablesToSkip() {
+        return []; // empty array when doing nothing.
     }
 
     /**
@@ -67,8 +64,7 @@ class GenericTableMerger implements TableMerger
      * @param array $actionLog list of action performed.
      * @param array $errorMessages list of error messages.
      */
-    public function merge($data, &$actionLog, &$errorMessages)
-    {
+    public function merge($data, &$actionLog, &$errorMessages) {
         foreach ($data['userFields'] as $fieldName) {
             $recordsToUpdate = $this->get_records_to_be_updated($data, $fieldName);
             if (count($recordsToUpdate) == 0) {
@@ -109,14 +105,13 @@ class GenericTableMerger implements TableMerger
      * This function extracts the records' ids that have to be updated to the $newId, appearing only the
      * $currentId, and deletes the records for the $currentId when both appear.
      *
-     * @global object $CFG
-     * @global moodle_database $DB
      * @param array $data array with the details of merging
      * @param string $userfield table's field name that refers to the user id.
      * @param array $otherfields table's field names that refers to the other members of the coumpund index.
      * @param array $recordsToModify array with current $table's id to update.
      * @param array $actionLog Array where to append the list of actions done.
      * @param array $errorMessages Array where to append any error occurred.
+     * @throws dml_exception
      */
     protected function mergeCompoundIndex($data, $userfield, $otherfields, &$recordsToModify, &$actionLog,
             &$errorMessages)
@@ -150,7 +145,8 @@ class GenericTableMerger implements TableMerger
             } else { // both users appears in the group
                 //confirm both records exist, preventing problems from inconsistent data in database
                 if (isset($otherInfo[$data['toid']]) && isset($otherInfo[$data['fromid']])) {
-                    $idsToRemove[$otherInfo[$data['fromid']]] = $otherInfo[$data['fromid']];
+                    $useridtoclean = $this->get_user_id_to_delete_on_conflicts($data['toid'], $data['fromid']);
+                    $idsToRemove[$otherInfo[$useridtoclean]] = $otherInfo[$useridtoclean];
                 }
             }
         }
@@ -255,16 +251,28 @@ class GenericTableMerger implements TableMerger
         } catch (Exception $e) {
             // if we get here, we have found a unique index on a user-id related column.
             // therefore, there will be only a single record from one or other user.
-            $useridtoclean = ($this->newidtomaintain) ? $data['fromid'] : $data['toid'];
+            $useridtoclean = $this->get_user_id_to_delete_on_conflicts($data['toid'], $data['fromid']);
             $deleteRecord = "DELETE FROM " . $tableName .
-                    " WHERE " . $fieldName . " = '" . $useridtoclean . "'";
+                " WHERE " . $fieldName . " = '" . $useridtoclean . "'";
 
             if (!$DB->execute($deleteRecord)) {
                 $errorMessages[] = get_string('tableko', 'tool_mergeusers', $data['tableName']) .
-                        ': ' . $DB->get_last_error();
+                    ': ' . $DB->get_last_error();
             }
             $actionLog[] = $deleteRecord;
         }
+    }
+
+    /**
+     * Informs the user.id from which records have to be deleted when conflicting
+     * records arises.
+     *
+     * @param int $toid user.id from user to keep.
+     * @param int $fromid user.id from user to remove.
+     * @return int user.id from which records have to be deleted.
+     */
+    private function get_user_id_to_delete_on_conflicts(int $toid, int $fromid): int {
+        return $this->newidtomaintain ? $fromid : $toid;
     }
 
     /**
