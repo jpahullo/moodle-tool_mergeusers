@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -20,31 +19,36 @@
  *
  * The effort of all given authors below gives you this current version of the file.
  *
- * @package    tool
- * @subpackage mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló <jordi.pujol@urv.cat>,  SREd, Universitat Rovira i Virgili
- * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_mergeusers
+ * @author    Nicolas Dunand <Nicolas.Dunand@unil.ch>
+ * @author    Mike Holzer
+ * @author    Forrest Gaston
+ * @author    Juan Pablo Torres Herrera
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>, Universitat Rovira i Virgili
+ * @author    John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
+ * @copyright University of Wisconsin - Madison
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
-require_once dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php';
+namespace tool_mergeusers\local;
+
+use coding_exception;
+use dml_exception;
+use Exception;
+
+defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once $CFG->dirroot . '/lib/clilib.php';
-require_once __DIR__ . '/autoload.php';
+require_once($CFG->libdir . '/clilib.php');
 
 /**
- * A class to perform user search and lookup (verification)
+ * A class to perform user search and verification.
  *
  * @author John Hoopes <hoopes@wisc.edu>
  */
-class MergeUserSearch {
+final class user_searcher {
     /**
      * Searches users matching a condition on a given field and text to match partially for that field.
      *
@@ -56,14 +60,14 @@ class MergeUserSearch {
     public function search_users(string $input, string $searchfield): array {
         global $DB;
 
-        switch($searchfield){
+        switch ($searchfield) {
             // Search on id field.
             case 'id':
                 // The sql_cast_to_char() prevents PostgreSQL error when comparing id column when $input is not an integer.
                 $where = $DB->sql_cast_to_char('id') . ' = :userid';
                 $params = ['userid' => $input];
                 break;
-            // Search by these fields:
+            // Searching by any of these fields.
             case 'username':
             case 'firstname':
             case 'lastname':
@@ -115,6 +119,7 @@ class MergeUserSearch {
      *
      * @return array two positions with the results of the verification.
      * @throws coding_exception
+     * @throws dml_exception
      */
     public function verify_user(?string $value, string $field): array {
         global $DB;

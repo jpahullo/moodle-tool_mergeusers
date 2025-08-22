@@ -37,7 +37,7 @@ use tool_mergeusers\hook\add_settings_before_merging;
  */
 final class add_settings_before_merging_callbacks {
     /** @var string name of the gathering populated by the hook. */
-    public static string $GATHERING_NAME = 'hookgathering';
+    public static string $gatheringname = 'hookgathering';
 
     /**
      * Specifies a gathering implementation for the merge users tool.
@@ -48,6 +48,6 @@ final class add_settings_before_merging_callbacks {
     public static function add_settings_before_merging(
         add_settings_before_merging $hook,
     ): void {
-        $hook->add_setting('gathering', self::$GATHERING_NAME);
+        $hook->add_setting('gathering', self::$gatheringname);
     }
 }

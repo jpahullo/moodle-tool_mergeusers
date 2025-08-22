@@ -53,7 +53,7 @@ class regrading_after_merged_callback {
      */
     public static function regrade(after_merged_all_tables $hook) {
         global $DB, $CFG;
-        require_once($CFG->libdir.'/gradelib.php');
+        require_once($CFG->libdir . '/gradelib.php');
 
         $sql = "SELECT DISTINCT gi.id, gi.iteminstance, gi.itemmodule, gi.courseid
                 FROM {grade_grades} gg
@@ -63,7 +63,7 @@ class regrading_after_merged_callback {
         $iteminstances = $DB->get_records_sql($sql, ['itemtype' => 'mod', 'toid' => $hook->toid, 'fromid' => $hook->fromid]);
 
         foreach ($iteminstances as $iteminstance) {
-            if (!$activity = $DB->get_record($iteminstance->itemmodule, array('id' => $iteminstance->iteminstance))) {
+            if (!$activity = $DB->get_record($iteminstance->itemmodule, ['id' => $iteminstance->iteminstance])) {
                 throw new moodle_exception(
                     'exception:nomoduleinstance',
                     'tool_mergeusers',
@@ -93,5 +93,4 @@ class regrading_after_merged_callback {
             grade_update_mod_grades($activity, $hook->toid);
         }
     }
-
 }

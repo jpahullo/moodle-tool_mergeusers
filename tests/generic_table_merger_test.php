@@ -16,15 +16,11 @@
 
 namespace tool_mergeusers;
 
-defined('MOODLE_INTERNAL') || die();
-
-require_once(__DIR__ . "/../lib/table/generictablemerger.php");
-
 use advanced_testcase;
 use ddl_exception;
 use dml_exception;
-use GenericTableMerger;
 use moodle_exception;
+use tool_mergeusers\local\merger\generic_table_merger;
 use xmldb_table;
 
 /**
@@ -35,16 +31,17 @@ use xmldb_table;
  * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class generic_table_merger_test extends advanced_testcase {
+final class generic_table_merger_test extends advanced_testcase {
     public const USER_TO_KEEP = 1;
     public const USER_TO_REMOVE = 2;
     public const TABLE_NAME_FOR_TESTING = 'generic_table_merger_test';
 
     private array $datafortablemerger;
-    private GenericTableMerger $merger;
+    private generic_table_merger $merger;
 
     public function setUp(): void {
         global $DB;
+        parent::setUp();
         $this->resetAfterTest(true);
 
         $dbman = $DB->get_manager();
@@ -68,7 +65,7 @@ class generic_table_merger_test extends advanced_testcase {
             ],
         ];
 
-        $this->merger = new GenericTableMerger();
+        $this->merger = new generic_table_merger();
     }
 
     /**
@@ -79,7 +76,7 @@ class generic_table_merger_test extends advanced_testcase {
      * @throws moodle_exception
      * @throws ddl_exception
      */
-    public function test_merge_without_conflicting_records(?object $record, bool $withlog) {
+    public function test_merge_without_conflicting_records(?object $record, bool $withlog): void {
         global $DB;
 
         // Prepare scenario.
@@ -111,7 +108,7 @@ class generic_table_merger_test extends advanced_testcase {
      * @param array $stringstomatchperline
      * @return void
      */
-    private function assertLogsContain(array $logs, array $stringstomatchperline): void {
+    private function assertlogscontain(array $logs, array $stringstomatchperline): void {
         $matchinglogs = array_filter(
             $logs,
             function ($log) use ($stringstomatchperline) {
@@ -154,7 +151,7 @@ class generic_table_merger_test extends advanced_testcase {
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function test_merge_with_conflicting_records(bool $informedindex) {
+    public function test_merge_with_conflicting_records(bool $informedindex): void {
         global $DB;
 
         // Prepare scenario.

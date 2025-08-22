@@ -27,12 +27,12 @@ use tool_mergeusers\local\db_config;
  * @copyright 2025 onwards to Universitat Rovira i Virgili
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class db_config_test extends basic_testcase {
+final class db_config_test extends basic_testcase {
     /**
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
-    public function test_config_is_initialized_empty() {
+    public function test_config_is_initialized_empty(): void {
         $config = new db_config();
         $this->assertTrue($config->empty());
     }
@@ -41,7 +41,7 @@ class db_config_test extends basic_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
-    public function test_config_is_initialized_with_valid_settings() {
+    public function test_config_is_initialized_with_valid_settings(): void {
         $config = new db_config(['gathering' => 'somevalue']);
         $this->assertFalse($config->empty());
         $this->assertEquals('somevalue', $config->gathering);
@@ -51,7 +51,7 @@ class db_config_test extends basic_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
-    public function test_config_is_initialized_with_invalid_settings_and_not_considered() {
+    public function test_config_is_initialized_with_invalid_settings_and_not_considered(): void {
         $config = new db_config(['invalidkey' => 'somevalue']);
         $this->assertTrue($config->empty());
         $this->assertNull($config->invalidkey);
@@ -61,7 +61,7 @@ class db_config_test extends basic_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
-    public function test_config_merges_content_and_first_settings_are_kept() {
+    public function test_config_merges_content_and_first_settings_are_kept(): void {
         $config = new db_config(['gathering' => 'somevalue']);
         $config->add('gathering', 'othervalue');
         $this->assertEquals('somevalue', $config->gathering);
@@ -71,7 +71,7 @@ class db_config_test extends basic_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
-    public function test_config_merges_content_and_first_array_settings_are_kept() {
+    public function test_config_merges_content_and_first_array_settings_are_kept(): void {
         $initialsettings = [
             'compoundindexes' => [
                 'grade_grades' => [
@@ -112,7 +112,7 @@ class db_config_test extends basic_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
-    public function test_config_merge_with_other_config_and_first_settings_are_kept() {
+    public function test_config_merge_with_other_config_and_first_settings_are_kept(): void {
         $config = new db_config(['gathering' => 'somevalue']);
         $config->merge_with(new db_config(['gathering', 'othervalue']));
         $this->assertEquals('somevalue', $config->gathering);
@@ -122,10 +122,9 @@ class db_config_test extends basic_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
-    public function test_config_settings_are_not_settable() {
+    public function test_config_settings_are_not_settable(): void {
         $config = new db_config(['alwaysrollback' => false]);
         $config->alwaysrollback = true;
         $this->assertFalse($config->alwaysrollback);
-
     }
 }

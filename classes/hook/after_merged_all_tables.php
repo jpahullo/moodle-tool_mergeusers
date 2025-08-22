@@ -29,6 +29,8 @@
 
 namespace tool_mergeusers\hook;
 
+// phpcs:disable moodle.Commenting.MissingDocblock
+
 /**
  * Hook to address operations after all tables have been merged.
  *
@@ -42,6 +44,10 @@ namespace tool_mergeusers\hook;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class after_merged_all_tables {
+    /** @var array $logs list of logs where to add logs, if necessary. */
+    private array $logs;
+    /** @var array $errormessages list of error messages where to add any, if necessary. */
+    private array $errormessages;
     /**
      * Builds the hook with just the user.ids.
      *
@@ -55,11 +61,11 @@ class after_merged_all_tables {
         public readonly int $toid,
         /** @var int $fromid user.id from the user to remove. */
         public readonly int $fromid,
-        /** @var array $logs list of logs where to add logs, if necessary. */
-        private array &$logs,
-        /** @var array $errormessages list of error messages where to add any, if necessary. */
-        private array &$errormessages,
+        array &$logs,
+        array &$errormessages,
     ) {
+        $this->logs = &$logs;
+        $this->errormessages = &$errormessages;
     }
 
     /**

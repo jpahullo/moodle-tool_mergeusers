@@ -53,7 +53,7 @@ class update_completion_after_merged_callback {
         $DB->execute(
             'UPDATE {course_completions}
                     SET reaggregate = :now
-                  WHERE userid = :toid 
+                  WHERE userid = :toid
                     AND (timecompleted IS NULL OR timecompleted = 0)',
             [
                 'now' => time(),

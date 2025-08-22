@@ -16,6 +16,7 @@
 
 /**
  * List potential user-related fields from Moodle database.
+ *
  * @package   tool_mergeusers
  * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
  * @copyright 2025 Universitat Rovira i Virgili
@@ -30,8 +31,8 @@ ini_set('display_errors', true);
 ini_set('error_reporting', E_ALL | E_STRICT);
 
 global $CFG, $DB;
+require_once($CFG->libdir . '/clilib.php');
 
-require_once $CFG->dirroot . '/lib/clilib.php';
 
 cli_heading('List of Moodle database tables and potential %user%-related columns');
 $tables = $DB->get_tables(false);
@@ -102,8 +103,16 @@ foreach ($nonmatching as $table) {
     $log->output($table, 2);
 }
 $log->output('Tables with potential %user%-related fields:', 1);
-$log->output('NOTE: All tables with non-default user-related field names must appear into "userfieldnames" config.php setting.', 2);
-$log->output('FORMAT: {number of user-related fields}: \'{table name}\' => [{list of fields}] // {list of fields that appear as foreign key to user.id on the XML definition.}', 2);
+$log->output(
+    'NOTE: All tables with non-default user-related field names must appear into ' .
+    '"userfieldnames" config.php setting.',
+    2,
+);
+$log->output(
+    'FORMAT: {number of user-related fields}: \'{table name}\' => [{list of fields}] ' .
+    '// {list of fields that appear as foreign key to user.id on the XML definition.}',
+    2,
+);
 arsort($matchingcount);
 foreach ($matchingcount as $table => $numberofcolumns) {
     $log->output(

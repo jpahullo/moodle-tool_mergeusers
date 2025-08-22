@@ -19,8 +19,8 @@ namespace tool_mergeusers;
 use advanced_testcase;
 use coding_exception;
 use dml_exception;
-use MergeUserTool;
 use tool_mergeusers\fixtures\after_merged_all_tables_callbacks;
+use tool_mergeusers\local\user_merger;
 
 /**
  * Testing of after_merged-all_tables hook.
@@ -30,7 +30,7 @@ use tool_mergeusers\fixtures\after_merged_all_tables_callbacks;
  * @copyright 2025 onwards to Universitat Rovira i Virgili
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class after_merged_all_tables_test extends advanced_testcase {
+final class after_merged_all_tables_test extends advanced_testcase {
     /**
      * @group tool_mergeusers
      * @group tool_mergeusers_after_merge_hook
@@ -44,7 +44,7 @@ class after_merged_all_tables_test extends advanced_testcase {
         $usertoremove = $this->getDataGenerator()->create_user();
         $usertokeep = $this->getDataGenerator()->create_user();
 
-        $mut = new MergeUserTool();
+        $mut = new user_merger();
         [$success, $log, $logid] = $mut->merge($usertokeep->id, $usertoremove->id);
 
         $this->assertTrue($success);
@@ -67,7 +67,7 @@ class after_merged_all_tables_test extends advanced_testcase {
         $usertoremove = $this->getDataGenerator()->create_user();
         $usertokeep = $this->getDataGenerator()->create_user();
 
-        $mut = new MergeUserTool();
+        $mut = new user_merger();
         [$success, $log, $logid] = $mut->merge($usertokeep->id, $usertoremove->id);
 
         $this->assertFalse($success);

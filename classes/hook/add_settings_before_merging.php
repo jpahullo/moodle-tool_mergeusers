@@ -41,7 +41,6 @@ use tool_mergeusers\local\db_config;
  * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 #[label('Populate database configuration settings before merging users')]
 #[tags('tool_mergeusers', 'database_settings')]
 final class add_settings_before_merging {

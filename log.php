@@ -17,24 +17,22 @@
 /**
  * View one merging log.
  *
- * @package    tool
- * @subpackage mergeusers
- * @author     Jordi Pujol-Ahulló, Sred, Universitat Rovira i Virgili
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mergeusers\logger;
+use tool_mergeusers\local\logger;
 
 require('../../../config.php');
 
 global $CFG, $DB, $PAGE;
+require_once($CFG->libdir . '/adminlib.php');
 
-// Report all PHP errors
+// Report all PHP errors.
 error_reporting(E_ALL);
 ini_set('display_errors', 'On');
-
-require_once($CFG->dirroot . '/lib/adminlib.php');
-require_once('lib/autoload.php');
 
 require_login();
 require_capability('tool/mergeusers:viewlog', context_system::instance());
@@ -54,14 +52,14 @@ if (empty($log)) {
     );
 }
 
-$from = $DB->get_record('user', array('id' => $log->fromuserid), 'id, username');
+$from = $DB->get_record('user', ['id' => $log->fromuserid], 'id, username');
 if (!$from) {
     $from = new stdClass();
     $from->id = $log->fromuserid;
     $from->username = get_string('deleted');
 }
 
-$to = $DB->get_record('user', array('id' => $log->touserid), 'id, username');
+$to = $DB->get_record('user', ['id' => $log->touserid], 'id, username');
 if (!$to) {
     $to = new stdClass();
     $to->id = $log->touserid;

@@ -23,12 +23,14 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 $callbacks = [
     [
         'hook' => \tool_mergeusers\hook\after_merged_all_tables::class,
         'callback' => [
             \tool_mergeusers\local\callbacks\regrading_after_merged_callback::class,
-            'regrade'
+            'regrade',
         ],
         'priority' => 100,
     ],
@@ -36,7 +38,7 @@ $callbacks = [
         'hook' => \tool_mergeusers\hook\after_merged_all_tables::class,
         'callback' => [
             \tool_mergeusers\local\callbacks\update_completion_after_merged_callback::class,
-            'update_completion'
+            'update_completion',
         ],
         'priority' => 90,
     ],

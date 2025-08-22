@@ -17,11 +17,13 @@
 /**
  * Plugin capabilities.
  *
- * @package    tool
- * @subpackage mergeusers
- * @author     Ray Morris
+ * @package    tool_mergeusers
+ * @copyright  Ray Morris
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
+
 $capabilities = [
     'tool/mergeusers:mergeusers' => [
         'riskbitmask' => RISK_DATALOSS,
@@ -30,7 +32,7 @@ $capabilities = [
         'archetypes' => [
             'manager' => CAP_ALLOW,
         ],
-        'clonepermissionsfrom' => 'moodle/user:delete'
+        'clonepermissionsfrom' => 'moodle/user:delete',
     ],
     'tool/mergeusers:viewlog' => [
         'captype' => 'read',

@@ -15,50 +15,62 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Moodle form for selecting users.
  *
- * @package    tool
- * @subpackage mergeusers
- * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
- * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_mergeusers
+ * @copyright Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @copyright John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once($CFG->libdir.'/formslib.php'); /// forms library
+namespace tool_mergeusers\output;
+
+defined('MOODLE_INTERNAL') || die();
+
+use coding_exception;
+use html_writer;
+use moodleform;
+
+global $CFG;
+require_once($CFG->libdir . '/formslib.php');
 
 /**
- * Define form snippet for getting the userids of the two users to merge
+ * Define form snippet for getting the user.ids of the two users to merge.
+ *
+ * @package   tool_mergeusers
+ * @copyright Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @copyright John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class selectuserform extends moodleform {
+class select_user_form extends moodleform {
+    /** @var user_select_table Table to select users. */
+    protected user_select_table $ust;
 
-    /** @var UserSelectTable Table to select users. */
-    protected $ust;
-
-    public function __construct(?UserSelectTable $ust = null)
-    {
-        //just before parent's construct
+    /**
+     * Builds the form.
+     *
+     * @param user_select_table|null $ust
+     */
+    public function __construct(?user_select_table $ust = null) {
+        // Just before parent's constructor.
         $this->ust = $ust;
         parent::__construct();
-
-
     }
 
     /**
-     * Form definition
+     * Form definition.
      *
-     * @uses $CFG
+     * @throws coding_exception
      */
-    public function definition() {
-
+    public function definition(): void {
         $mform =& $this->_form;
 
-        // header
         $mform->addElement('header', 'selectusers', get_string('userselecttable_legend', 'tool_mergeusers'));
 
-        // table content
+        // Add the table content.
         $mform->addElement('static', 'selectuserslist', '', html_writer::table($this->ust));
 
-        // hidden elements
+        // Provide all necessary hidden elements.
         $mform->addElement('hidden', 'option', 'saveselection');
         $mform->setType('option', PARAM_RAW);
         $mform->addElement('hidden', 'selectedolduser', '');
@@ -66,7 +78,6 @@ class selectuserform extends moodleform {
         $mform->addElement('hidden', 'selectednewuser', '');
         $mform->setType('selectednewuser', PARAM_RAW);
 
-        // buttons
         $this->add_action_buttons(false, get_string('saveselection_submit', 'tool_mergeusers'));
     }
 }

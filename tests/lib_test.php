@@ -18,7 +18,7 @@ namespace tool_mergeusers;
 
 use advanced_testcase;
 use core_user\output\myprofile\tree;
-use MergeUserTool;
+use tool_mergeusers\local\user_merger;
 
 /**
  * Various small utility functions.
@@ -28,36 +28,35 @@ use MergeUserTool;
  * @copyright 2025 Catalyst IT Australia
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class lib_test extends advanced_testcase {
+final class lib_test extends advanced_testcase {
     /**
      * Tests mergeuser_myprofile_navigation lib hook
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_lib
      */
-    public function test_mergeuser_myprofile_navigation() {
+    public function test_mergeuser_myprofile_navigation(): void {
         global $CFG;
 
         $this->resetAfterTest();
-        require_once($CFG->dirroot . '/admin/tool/mergeusers/lib/mergeusertool.php');
 
         // Create some merge data.
         $fromuser = $this->getDataGenerator()->create_user();
         $touser = $this->getDataGenerator()->create_user();
-        $tool = new MergeUserTool();
+        $tool = new user_merger();
         $tool->merge($fromuser->id, $touser->id);
 
         // View as a user that does not have permissions, this should do nothing.
         $viewinguser = $this->getDataGenerator()->create_user();
         $this->setUser($viewinguser);
         $tree = new tree();
-        tool_mergeusers_myprofile_navigation($tree,  $fromuser, false, null);
+        tool_mergeusers_myprofile_navigation($tree, $fromuser, false, null);
         $this->assertCount(0, $tree->categories);
 
         // But view as admin user who does have permissions, this should display their merging status.
         $this->setAdminUser();
         $tree = new tree();
-        tool_mergeusers_myprofile_navigation($tree,  $touser, false, null);
+        tool_mergeusers_myprofile_navigation($tree, $touser, false, null);
         $this->assertCount(1, $tree->categories);
         $this->assertCount(1, current($tree->categories)->nodes);
     }

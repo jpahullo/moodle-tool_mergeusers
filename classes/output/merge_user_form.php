@@ -17,15 +17,20 @@
 /**
  * Web form to look for users to merge.
  *
- * @package    tool_mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
- * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_mergeusers
+ * @copyright Nicolas Dunand <Nicolas.Dunand@unil.ch>
+ * @copyright Mike Holzer
+ * @copyright Forrest Gaston
+ * @copyright Juan Pablo Torres Herrera
+ * @copyright Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @copyright John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+namespace tool_mergeusers\output;
+
+use coding_exception;
+use moodleform;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -33,28 +38,35 @@ global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
 /**
- * Define form snippet for getting the userids of the two users to merge
+ * Define form snippet for getting the userids of the two users to merge.
+ *
+ * @package   tool_mergeusers
+ * @copyright Nicolas Dunand <Nicolas.Dunand@unil.ch>
+ * @copyright Mike Holzer
+ * @copyright Forrest Gaston
+ * @copyright Juan Pablo Torres Herrera
+ * @copyright Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
+ * @copyright John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mergeuserform extends moodleform {
-
+class merge_user_form extends moodleform {
     /**
      * Form definition
      *
      * @throws coding_exception
-     * @uses $CFG
      */
-    public function definition() {
+    public function definition(): void {
 
         $mform =& $this->_form;
 
-        $idstype = array(
+        $idstype = [
             'username' => get_string('username'),
             'idnumber' => get_string('idnumber'),
             'id'       => 'Id',
-        );
+        ];
         asort($idstype);
 
-        $searchfields = array(
+        $searchfields = [
             'idnumber'  => get_string('idnumber'),
             ''          => get_string('all'),
             'id'        => 'Id',
@@ -62,13 +74,13 @@ class mergeuserform extends moodleform {
             'firstname' => get_string('firstname'),
             'lastname'  => get_string('lastname'),
             'email'     => get_string('email'),
-        );
+        ];
         asort($searchfields);
 
         $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));
 
-        // Add elements
-        $searchuser = array();
+        // Add elements.
+        $searchuser = [];
         $searchuser[] = $mform->createElement('text', 'searcharg');
         $searchuser[] = $searchuserfield = $mform->createElement('select', 'searchfield', '', $searchfields);
         // We need to set this up. On attributes parameters it gets lost after visiting several times the web search.
@@ -82,7 +94,7 @@ class mergeuserform extends moodleform {
         $mform->addHelpButton('mergeusersadvanced', 'mergeusersadvanced', 'tool_mergeusers');
         $mform->setAdvanced('mergeusersadvanced');
 
-        $olduser = array();
+        $olduser = [];
         $olduser[] = $mform->createElement('text', 'olduserid', "", 'size="10"');
         $olduser[] = $olduserid = $mform->createElement('select', 'olduseridtype', '', $idstype);
         $olduserid->setSelected('username');
@@ -91,7 +103,7 @@ class mergeuserform extends moodleform {
         $mform->setType('oldusergroup[olduserid]', PARAM_RAW_TRIMMED);
         $mform->setAdvanced('oldusergroup');
 
-        $newuser = array();
+        $newuser = [];
         $newuser[] = $mform->createElement('text', 'newuserid', "", 'size="10"');
         $newuser[] = $newuserid = $mform->createElement('select', 'newuseridtype', '', $idstype);
         $newuserid->setSelected('username');

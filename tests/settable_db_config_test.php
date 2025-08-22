@@ -27,12 +27,12 @@ use tool_mergeusers\local\settable_db_config;
  * @copyright 2025 onwards to Universitat Rovira i Virgili
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class settable_db_config_test extends basic_testcase {
+final class settable_db_config_test extends basic_testcase {
     /**
      * @group tool_mergeusers
      * @group tool_mergeusers_settable_db_config
      */
-    public function test_config_is_initialized_empty() {
+    public function test_config_is_initialized_empty(): void {
         $config = new settable_db_config();
         $this->assertTrue($config->empty());
     }
@@ -41,7 +41,7 @@ class settable_db_config_test extends basic_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_settable_db_config
      */
-    public function test_config_is_initialized_with_valid_settings() {
+    public function test_config_is_initialized_with_valid_settings(): void {
         $config = new settable_db_config();
         $config->add_raw(['gathering' => 'somevalue']);
         $this->assertFalse($config->empty());
@@ -58,7 +58,7 @@ class settable_db_config_test extends basic_testcase {
         mixed $firstvalue,
         mixed $secondvalue,
         mixed $expectedvalue,
-    ) {
+    ): void {
         $config = new settable_db_config();
         $config->add_raw([$settingname => $firstvalue]);
         $this->assertEquals($firstvalue, $config->{$settingname});

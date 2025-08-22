@@ -17,6 +17,7 @@
 namespace tool_mergeusers;
 
 use advanced_testcase;
+use tool_mergeusers\output\renderer;
 use tool_mergeusers_renderer;
 
 /**
@@ -27,12 +28,12 @@ use tool_mergeusers_renderer;
  * @copyright 2025 Catalyst IT Australia
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class renderer_test extends advanced_testcase {
+final class renderer_test extends advanced_testcase {
     /**
      * Get plugin renderer
-     * @return tool_mergeusers_renderer
+     * @return renderer
      */
-    private function get_renderer(): tool_mergeusers_renderer {
+    private function get_renderer(): renderer {
         global $PAGE;
         return $PAGE->get_renderer('tool_mergeusers');
     }
@@ -42,14 +43,15 @@ class renderer_test extends advanced_testcase {
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_renderer
+     * @throws \dml_exception
      */
-    public function test_get_merge_detail_missing_user() {
+    public function test_get_merge_detail_missing_user(): void {
         // User does not exist, should contain 'unknown profile' lang string.
         $dummylog = (object) [
             'fromuserid' => -5,
             'timemodified' => 0,
             'success' => '1',
-            'id' => 0
+            'id' => 0,
         ];
         $dummyuser = (object) [
             'id' => 0,
@@ -66,7 +68,7 @@ class renderer_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_renderer
      */
-    public function test_get_merge_detail_existing_user() {
+    public function test_get_merge_detail_existing_user(): void {
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user();
 

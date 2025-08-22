@@ -15,24 +15,27 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information.
+ * Merge request.
  *
  * @package   tool_mergeusers
- * @author    Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author    Mike Holzer
- * @author    Forrest Gaston
- * @author    Juan Pablo Torres Herrera
- * @author    Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
- * @author    John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
- * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
+ * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+namespace tool_mergeusers\local\cli;
 
-$plugin->version = 2025082200;
-$plugin->release = '(In vacation mode ;-) )';
-$plugin->requires = 2024100700; // Moodle 4.5+, https://moodledev.io/general/releases#moodle-45-lts.
-$plugin->component = 'tool_mergeusers';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [405, 500];
+/**
+ * Merge request.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class merge_request {
+    /** @var int user.id from the user to remove. */
+    public int $fromid;
+    /** @var int user.id from the user to keep. */
+    public int $toid;
+}

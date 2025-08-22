@@ -14,6 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_mergeusers;
+
+use advanced_testcase;
+use dml_exception;
+use moodle_exception;
+use tool_mergeusers\local\user_merger;
+
 /**
  * Merge tool testing.
  *
@@ -22,11 +29,10 @@
  * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_merge_test extends advanced_testcase {
-
+final class user_merger_test extends advanced_testcase {
     public function setUp(): void {
         global $CFG;
-        require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
+        parent::setUp();
         $this->resetAfterTest(true);
     }
 
@@ -38,15 +44,15 @@ class tool_merge_test extends advanced_testcase {
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function test_merge_existing_users_with_success() {
+    public function test_merge_existing_users_with_success(): void {
         global $DB;
 
         // Setup two users to merge.
         $usertoremove = $this->getDataGenerator()->create_user();
         $usertokeep = $this->getDataGenerator()->create_user();
 
-        $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($usertokeep->id, $usertoremove->id);
+        $mut = new user_merger();
+        [$success, $log, $logid] = $mut->merge($usertokeep->id, $usertoremove->id);
 
         // Be sure merge was ok.
         $this->assertTrue($success);
@@ -76,8 +82,8 @@ class tool_merge_test extends advanced_testcase {
         delete_user($usertoremove);
         $usertokeep = $this->getDataGenerator()->create_user();
 
-        $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($usertokeep->id, $usertoremove->id);
+        $mut = new user_merger();
+        [$success, $log, $logid] = $mut->merge($usertokeep->id, $usertoremove->id);
 
         // Be sure merge failed.
         $this->assertFalse($success);
@@ -128,8 +134,8 @@ class tool_merge_test extends advanced_testcase {
         $usertokeep = $this->getDataGenerator()->create_user();
         delete_user($usertokeep);
 
-        $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($usertokeep->id, $usertoremove->id);
+        $mut = new user_merger();
+        [$success, $log, $logid] = $mut->merge($usertokeep->id, $usertoremove->id);
 
         // Be sure merge failed.
         $this->assertFalse($success);

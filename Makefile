@@ -1,0 +1,69 @@
+# This file assumes exists a .env with the necessary environment variables.
+current-dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
+# By default, only "container_name=name_of_container" is required. See below.
+# If this file does not exists during development, the make command fails.
+include $(current-dir).env
+
+# This file assumes dockerized development environment and moodle-local_codechecker plugin installed.
+# However, you can redefine these variables into the .env file to meet your needs.
+ifndef docker:
+docker := docker exec -it $(container_name)
+endif
+ifndef docker-with-xdebug:
+docker-with-xdebug := docker exec -e XDEBUG_SESSION=1 -it $(container_name)
+endif
+ifndef phpcs:
+phpcs := $(docker) local/codechecker/vendor/bin/phpcs
+endif
+ifndef phpcbf:
+phpcbf := $(docker) local/codechecker/vendor/bin/phpcbf
+endif
+
+.PHONY: pass-tests
+pass-tests: options =
+pass-tests:
+	$(docker) vendor/bin/phpunit -c admin/tool/mergeusers --testdox $(options)
+
+.PHONY: pass-tests-with-xdebug
+pass-tests-with-xdebug:
+	$(docker-with-xdebug) vendor/bin/phpunit -c admin/tool/mergeusers --testdox $(options)
+
+.PHONY: build-phpunit-xml
+build-phpunit-xml:
+	$(docker)  php admin/tool/phpunit/cli/util.php --buildcomponentconfig
+
+.PHONY: init-phpunit
+init-phpunit:
+	$(docker) php admin/tool/phpunit/cli/init.php
+
+.PHONY: phpcs
+phpcs: options = admin/tool/mergeusers --ignore=tests/
+phpcs:
+	$(phpcs) $(options)
+
+.PHONY: phpcs-list-sniffs
+phpcs-list-sniffs: options = -e
+phpcs-list-sniffs:
+	$(phpcs) $(options)
+
+.PHONY: phpcbf
+phpcbf: options = admin/tool/mergeusers
+phpcbf:
+	$(phpcbf) $(options)
+
+.PHONY: purgecaches
+purgecaches:
+	$(docker) php admin/cli/purge_caches.php
+
+.PHONY: upgrade
+upgrade:
+	$(docker) php admin/cli/upgrade.php --non-interactive
+
+.PHONY: run-cli-merge
+run-cli-merge:
+	$(docker) php admin/tool/mergeusers/cli/climerger.php
+
+.PHONY: list-user-fields
+list-user-fields:
+	$(docker) php admin/tool/mergeusers/cli/listuserfields.php

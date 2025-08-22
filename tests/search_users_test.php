@@ -27,11 +27,9 @@ namespace tool_mergeusers;
 use advanced_testcase;
 use coding_exception;
 use dml_exception;
-use MergeUserSearch;
+use tool_mergeusers\local\user_searcher;
 
 defined('MOODLE_INTERNAL') || die();
-
-require_once(__DIR__ . '/../lib/mergeusersearch.php');
 
 /**
  * Tests for searching for users.
@@ -68,7 +66,7 @@ final class search_users_test extends advanced_testcase {
             $input = md5($deleteduser->username);
         }
 
-        $mus = new MergeUserSearch();
+        $mus = new user_searcher();
         $this->assertCount(
             $count,
             $mus->search_users($input, $searchfield)
@@ -137,8 +135,8 @@ final class search_users_test extends advanced_testcase {
             ],
             'idnumber' => [
                 'searchfield' => 'idnumber',
-                'input' => '',  // Equates to '%%' which matches all idnumbers.
-                'count' => 3,   // Users guest + admin + student1.
+                'input' => '', // Equates to '%%' which matches all idnumbers.
+                'count' => 3, // Users guest + admin + student1.
             ],
             'all' => [
                 'searchfield' => 'all',

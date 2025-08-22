@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,28 +15,46 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
- * @author John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
- * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
+ * Plugin renderer.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @author    John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
+ * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace tool_mergeusers\output;
+
+use coding_exception;
+use context_system;
+use core\exception\moodle_exception;
+use core_user;
+use dml_exception;
+use html_table;
+use html_table_row;
+use html_writer;
+use moodle_url;
+use moodleform;
+use plugin_renderer_base;
+use stdClass;
+use tool_mergeusers\local\database_transactions;
 use tool_mergeusers\local\last_merge;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once __DIR__ . '/select_form.php';
-require_once __DIR__ . '/review_form.php';
-require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
+global $CFG;
+require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/mergeusers/lib.php');
 
 /**
  * Renderer for the merge user plugin.
  *
- * @package    tool
- * @subpackage mergeuser
- * @copyright  2013 Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_mergeuser
+ * @author    Jordi Pujol-Ahulló
+ * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_mergeusers_renderer extends plugin_renderer_base
+class renderer extends plugin_renderer_base
 {
     /** On index page, show only the search form. */
     const INDEX_PAGE_SEARCH_STEP = 1;
@@ -53,8 +70,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * @param array $items An array of items
      * @return string
      */
-    public function progress_bar(array $items)
-    {
+    public function progress_bar(array $items): string {
         foreach ($items as &$item) {
             $text = $item['text'];
             unset($item['text']);
@@ -66,7 +82,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
                 $item = html_writer::tag('span', $text, $item);
             }
         }
-        return html_writer::tag('div', join(get_separator(), $items), array('class' => 'merge_progress clearfix'));
+        return html_writer::tag('div', join(get_separator(), $items), ['class' => 'merge_progress clearfix']);
     }
 
     /**
@@ -74,13 +90,12 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * @param int $step current step
      * @return string HTML for the progress bar.
      */
-    public function build_progress_bar($step)
-    {
-        $steps = array(
-            array('text' => '1. ' . get_string('choose_users', 'tool_mergeusers')),
-            array('text' => '2. ' . get_string('review_users', 'tool_mergeusers')),
-            array('text' => '3. ' . get_string('results', 'tool_mergeusers')),
-        );
+    public function build_progress_bar(int $step): string {
+        $steps = [
+            ['text' => '1. ' . get_string('choose_users', 'tool_mergeusers')],
+            ['text' => '2. ' . get_string('review_users', 'tool_mergeusers')],
+            ['text' => '3. ' . get_string('results', 'tool_mergeusers')],
+        ];
 
         switch ($step) {
             case self::INDEX_PAGE_SEARCH_STEP:
@@ -99,13 +114,13 @@ class tool_mergeusers_renderer extends plugin_renderer_base
 
     /**
      * Shows form for merging users.
+     *
      * @param moodleform $mform form for merging users.
      * @param int $step step to show in the index page.
-     * @param UserSelectTable $ust table for users to merge after searching
+     * @param user_select_table $ust table for users to merge after searching
      * @return string html to show on index page.
      */
-    public function index_page(moodleform $mform, $step, ?UserSelectTable $ust = null)
-    {
+    public function index_page(moodleform $mform, int $step, ?user_select_table $ust = null): string {
         $output = $this->header();
         $output .= $this->heading_with_help(get_string('mergeusers', 'tool_mergeusers'), 'header', 'tool_mergeusers');
 
@@ -117,9 +132,9 @@ class tool_mergeusers_renderer extends plugin_renderer_base
                 break;
             case self::INDEX_PAGE_SEARCH_AND_SELECT_STEP:
                 $output .= $this->moodleform($mform);
-                // Render user select table if available
+                // Render user select table if available.
                 if ($ust !== null) {
-                    $this->page->requires->js_init_call('M.tool_mergeusers.init_select_table', array());
+                    $this->page->requires->js_init_call('M.tool_mergeusers.init_select_table', []);
                     $output .= $this->render_user_select_table($ust);
                 }
                 break;
@@ -134,27 +149,29 @@ class tool_mergeusers_renderer extends plugin_renderer_base
 
     /**
      * Renders user select table
-     * @param UserSelectTable $ust the user select table
+     *
+     * @param user_select_table $ust the user select table
      *
      * @return string $tablehtml html string rendering
      */
-    public function render_user_select_table(UserSelectTable $ust)
-    {
-        return $this->moodleform(new selectuserform($ust));
+    public function render_user_select_table(user_select_table $ust) {
+        return $this->moodleform(new select_user_form($ust));
     }
 
     /**
      * Builds and renders a user review table
      *
      * @return string $reviewtable HTML of the review table section
+     * @throws coding_exception
      */
-    public function render_user_review_table($step)
-    {
+    public function render_user_review_table($step) {
         return $this->moodleform(
-                new reviewuserform(
-                    new UserReviewTable($this),
-                    $this,
-                    $step === self::INDEX_PAGE_CONFIRMATION_STEP));
+            new review_user_form(
+                new user_review_table($this),
+                $this,
+                $step === self::INDEX_PAGE_CONFIRMATION_STEP
+            )
+        );
     }
 
     /**
@@ -164,8 +181,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * @param bool $showreturn Shows a return button to the index page
      *
      */
-    public function mu_error($message, $showreturn = true)
-    {
+    public function mu_error($message, $showreturn = true) {
         $errorhtml = '';
 
         echo $this->header();
@@ -184,36 +200,36 @@ class tool_mergeusers_renderer extends plugin_renderer_base
 
     /**
      * Shows the result of a merging action.
+     *
      * @param object $to stdClass with at least id and username fields.
      * @param object $from stdClass with at least id and username fields.
      * @param bool $success true if merging was ok; false otherwise.
      * @param array $data logs of actions done if success, or list of errors on failure.
-     * @param id $logid id of the record with the whole detail of this merging action.
+     * @param int $logid id of the record with the whole detail of this merging action.
      * @return string html with the results.
+     * @throws \coding_exception
+     * @throws \ReflectionException
      */
-    public function results_page($to, $from, $success, array $data, $logid)
-    {
+    public function results_page(object $to, object $from, bool $success, array $data, int $logid): string {
         if ($success) {
             $resulttype = 'ok';
             $dbmessage = 'dbok';
             $notifytype = 'notifysuccess';
         } else {
-            $transactions = (tool_mergeusers_transactionssupported()) ?
-                    '_transactions' :
-                    '_no_transactions';
+            $dbmessage = (database_transactions::are_supported()) ?
+                    'dbko_transactions' :
+                    'dbko_no_transactions';
 
             $resulttype = 'ko';
-            $dbmessage = 'dbko' . $transactions;
             $notifytype = 'notifyproblem';
         }
-
 
         $output = $this->header();
         $output .= $this->heading(get_string('mergeusers', 'tool_mergeusers'));
         $output .= $this->build_progress_bar(self::INDEX_PAGE_RESULTS_STEP);
         $output .= html_writer::empty_tag('br');
-        $output .= html_writer::start_tag('div', array('class' => 'result'));
-        $output .= html_writer::start_tag('div', array('class' => 'title'));
+        $output .= html_writer::start_tag('div', ['class' => 'result']);
+        $output .= html_writer::start_tag('div', ['class' => 'title']);
         $output .= get_string('merging', 'tool_mergeusers');
         if (!is_null($to) && !is_null($from)) {
             $output .= ' ' . get_string('usermergingheader', 'tool_mergeusers', $from) . ' ' .
@@ -227,15 +243,21 @@ class tool_mergeusers_renderer extends plugin_renderer_base
         $output .= html_writer::end_tag('div');
         $output .= html_writer::empty_tag('br');
 
-        $output .= html_writer::start_tag('div', array('class' => 'resultset' . $resulttype));
+        $output .= html_writer::start_tag('div', ['class' => 'resultset' . $resulttype]);
         foreach ($data as $item) {
             $output .= $item . html_writer::empty_tag('br');
         }
         $output .= html_writer::end_tag('div');
         $output .= html_writer::end_tag('div');
         $output .= html_writer::tag('div', html_writer::empty_tag('br'));
-        $output .= $this->notification(html_writer::tag('center', get_string($dbmessage, 'tool_mergeusers')), $notifytype);
-        $output .= html_writer::tag('center', $this->single_button(new moodle_url('/admin/tool/mergeusers/index.php'), get_string('continue'), 'get'));
+        $output .= $this->notification(
+            html_writer::tag('center', get_string($dbmessage, 'tool_mergeusers')),
+            $notifytype,
+        );
+        $output .= html_writer::tag(
+            'center',
+            $this->single_button(new moodle_url('/admin/tool/mergeusers/index.php'), get_string('continue'), 'get'),
+        );
         $output .= $this->footer();
 
         return $output;
@@ -247,8 +269,7 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * @param moodleform $mform
      * @return string HTML
      */
-    protected function moodleform(moodleform $mform)
-    {
+    protected function moodleform(moodleform $mform) {
         ob_start();
         $mform->display();
         $o = ob_get_contents();
@@ -259,19 +280,23 @@ class tool_mergeusers_renderer extends plugin_renderer_base
 
     /**
      * This method produces the HTML to show the details of a user.
+     *
      * @param int $userid user.id
      * @param object $user an object with firstname and lastname attributes.
      * @return string the corresponding HTML.
+     * @throws moodle_exception
      */
-    public function show_user($userid, $user)
-    {
+    public function show_user($userid, $user) {
         return html_writer::link(
-            new moodle_url('/user/view.php',
-                array('id' => $userid, 'sesskey' => sesskey())),
-                fullname($user) .
+            new moodle_url(
+                '/user/view.php',
+                ['id' => $userid]
+            ),
+            fullname($user) .
                 ' (' . $user->username . ') ' .
                 ' &lt;' . $user->email . '&gt;' .
-                ' ' . $user->idnumber);
+            ' ' . $user->idnumber
+        );
     }
 
     /**
@@ -280,41 +305,46 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      *
      * @param array $logs array of logs.
      * @return string the corresponding HTML.
+     * @throws \coding_exception
+     * @throws moodle_exception
      */
-    public function logs_page($logs)
-    {
+    public function logs_page($logs) {
         global $CFG;
 
         $output = $this->header();
         $output .= $this->heading(get_string('viewlog', 'tool_mergeusers'));
-        $output .= html_writer::start_tag('div', array('class' => 'result'));
+        $output .= html_writer::start_tag('div', ['class' => 'result']);
         if (empty($logs)) {
             $output .= get_string('nologs', 'tool_mergeusers');
         } else {
-            $output .= html_writer::tag('div', get_string('loglist', 'tool_mergeusers'), array('class' => 'title'));
+            $output .= html_writer::tag('div', get_string('loglist', 'tool_mergeusers'), ['class' => 'title']);
 
-            $flags = array();
-            $flags[] = $this->pix_icon('i/invalid', get_string('eventusermergedfailure', 'tool_mergeusers')); //failure icon
-            $flags[] = $this->pix_icon('i/valid', get_string('eventusermergedsuccess', 'tool_mergeusers')); //ok icon
+            $flags = [];
+            // Prepare failure icon.
+            $flags[] = $this->pix_icon('i/invalid', get_string('eventusermergedfailure', 'tool_mergeusers'));
+            // Prepare success icon.
+            $flags[] = $this->pix_icon('i/valid', get_string('eventusermergedsuccess', 'tool_mergeusers'));
 
-            $output .= html_writer::link(new moodle_url('/admin/tool/mergeusers/view.php', ['export' => 1]),
-                    get_string('exportlogs', 'tool_mergeusers'));
+            $output .= html_writer::link(
+                new moodle_url('/admin/tool/mergeusers/view.php', ['export' => 1]),
+                get_string('exportlogs', 'tool_mergeusers')
+            );
 
             $table = new html_table();
-            $table->align = array('center', 'center', 'center', 'center', 'center', 'center');
-            $table->head = array(
+            $table->align = ['center', 'center', 'center', 'center', 'center', 'center'];
+            $table->head = [
                 get_string('olduseridonlog', 'tool_mergeusers'),
                 get_string('newuseridonlog', 'tool_mergeusers'),
                 get_string('mergedbyuseridonlog', 'tool_mergeusers'),
                 get_string('date'),
                 get_string('status'),
-                ''
-            );
+                '',
+            ];
 
-            $rows = array();
+            $rows = [];
             foreach ($logs as $i => $log) {
                 $row = new html_table_row();
-                $row->cells = array(
+                $row->cells = [
                     ($log->from)
                         ? $this->show_user($log->fromuserid, $log->from)
                         : get_string('deleted', 'tool_mergeusers', $log->fromuserid),
@@ -327,11 +357,14 @@ class tool_mergeusers_renderer extends plugin_renderer_base
                     userdate($log->timemodified, get_string('strftimedaydatetime', 'langconfig')),
                     $flags[$log->success],
                     html_writer::link(
-                        new moodle_url('/' . $CFG->admin . '/tool/mergeusers/log.php',
-                            array('id' => $log->id, 'sesskey' => sesskey())),
+                        new moodle_url(
+                            '/' . $CFG->admin . '/tool/mergeusers/log.php',
+                            ['id' => $log->id]
+                        ),
                         get_string('more'),
-                        array('target' => '_blank')),
-                );
+                        ['target' => '_blank']
+                    ),
+                ];
                 $rows[] = $row;
             }
 
@@ -353,14 +386,19 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * @param int $logid id of log
      * @return array Containing profile link, formatted timestamp and log link.
      * @throws coding_exception
+     * @throws moodle_exception
      */
     private function get_merge_detail_data(int $userid, int $timemodified, int $logid, bool $success): array {
         $profileuser = core_user::get_user($userid);
         $time = userdate($timemodified);
-        $profilelink = !empty($profileuser) ? html_writer::link(new moodle_url('/user/profile.php', ['id' => $userid]),
-            fullname($profileuser)) : get_string('unknownprofile', 'tool_mergeusers', $userid);
-        $loglink = html_writer::link(new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]),
-            get_string('openlog', 'tool_mergeusers'));
+        $profilelink = !empty($profileuser) ? html_writer::link(
+            new moodle_url('/user/profile.php', ['id' => $userid]),
+            fullname($profileuser)
+        ) : get_string('unknownprofile', 'tool_mergeusers', $userid);
+        $loglink = html_writer::link(
+            new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]),
+            get_string('openlog', 'tool_mergeusers')
+        );
         $successstring = ($success) ? 'success' : 'error';
         return [
             'profilelink' => $profilelink,
@@ -374,19 +412,25 @@ class tool_mergeusers_renderer extends plugin_renderer_base
      * Builds merge detail HTML.
      *
      * @param stdClass $user User object.
-     * @param object|null $mergetome last merge record into this account
-     * @param object|null $mergefromme last merge record from this account (into another account).
+     * @param last_merge $lastmerge last merge
      * @return string HTML to display
      * @throws coding_exception
      * @throws dml_exception
+     * @throws moodle_exception
      */
     public function get_merge_detail(stdClass $user, last_merge $lastmerge): string {
         $tome = $lastmerge->tome();
         $fromme = $lastmerge->fromme();
-        $tohtml = $tome ? get_string('tomedetail', 'tool_mergeusers',
-            $this->get_merge_detail_data($tome->fromuserid, $tome->timemodified, $tome->id, (bool)(int)$tome->success)) : '';
-        $fromhtml = $fromme ? get_string('frommedetail', 'tool_mergeusers',
-            $this->get_merge_detail_data($fromme->touserid, $fromme->timemodified, $fromme->id, (bool)(int)$fromme->success)) : '';
+        $tohtml = $tome ? get_string(
+            'tomedetail',
+            'tool_mergeusers',
+            $this->get_merge_detail_data($tome->fromuserid, $tome->timemodified, $tome->id, (bool)(int)$tome->success)
+        ) : '';
+        $fromhtml = $fromme ? get_string(
+            'frommedetail',
+            'tool_mergeusers',
+            $this->get_merge_detail_data($fromme->touserid, $fromme->timemodified, $fromme->id, (bool)(int)$fromme->success)
+        ) : '';
         $output = implode('<br/>', array_filter([$tohtml, $fromhtml]));
 
         // Ok, there is no merge related to this user.

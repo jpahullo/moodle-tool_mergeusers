@@ -15,14 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package tool
- * @subpackage mergeusers
- * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
- * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Provides a tool for managing merge logs.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_mergeusers;
+namespace tool_mergeusers\local;
+
+defined('MOODLE_INTERNAL') || die();
 
 use dml_exception;
 use Exception;
@@ -30,17 +33,19 @@ use moodle_exception;
 use moodle_url;
 use stdClass;
 
-require_once __DIR__ . '/../../../../config.php';
-
 global $CFG;
-
-require_once $CFG->dirroot .'/lib/clilib.php';
+require_once($CFG->libdir . '/clilib.php');
 
 /**
  * Class to manage logging actions for this tool.
  * General log table cannot be used for log.info field length restrictions.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class logger {
+final class logger {
     /**
      * Adds a merging action log into tool log.
      *
@@ -61,10 +66,10 @@ class logger {
         $record->timemodified = time();
         $record->mergedbyuserid = $USER->id;
         $record->success = (int)$success;
-        $record->log = json_encode($log); //to get it
+        $record->log = json_encode($log);
 
         try {
-            return $DB->insert_record('tool_mergeusers', $record, true); //exception is thrown on any error
+            return $DB->insert_record('tool_mergeusers', $record, true);
         } catch (Exception $e) {
             $msg = __METHOD__ . ' : Cannot insert new record on log. Reason: "' . $DB->get_last_error() .
                     '". Message: "' . $e->getMessage() . '". Trace' . $e->getTraceAsString();
@@ -92,20 +97,32 @@ class logger {
      * @return array|bool false when there are no records matching; list of merging logs otherwise.
      * @throws dml_exception
      */
-    public function get(?array $filter = null, int $limitfrom = 0, int $limitnum = 0, string $sort = "timemodified DESC"): array|bool {
+    public function get(
+        ?array $filter = null,
+        int $limitfrom = 0,
+        int $limitnum = 0,
+        string $sort = "timemodified DESC",
+    ): array|bool {
         global $DB;
-        $logs = $DB->get_records('tool_mergeusers', $filter, $sort, 'id, touserid, fromuserid, mergedbyuserid, success, timemodified', $limitfrom, $limitnum);
+        $logs = $DB->get_records(
+            'tool_mergeusers',
+            $filter,
+            $sort,
+            'id, touserid, fromuserid, mergedbyuserid, success, timemodified',
+            $limitfrom,
+            $limitnum,
+        );
         if (!$logs) {
             return $logs;
         }
         foreach ($logs as $id => &$log) {
-            $log->to = $DB->get_record('user', array('id' => $log->touserid));
-            $log->from = $DB->get_record('user', array('id' => $log->fromuserid));
+            $log->to = $DB->get_record('user', ['id' => $log->touserid]);
+            $log->from = $DB->get_record('user', ['id' => $log->fromuserid]);
 
             if (empty($log->mergedbyuserid)) {
                 $log->mergedby = null;
             } else {
-                $log->mergedby = $DB->get_record('user', array('id' => $log->mergedbyuserid));
+                $log->mergedby = $DB->get_record('user', ['id' => $log->mergedbyuserid]);
             }
         }
         return $logs;
@@ -120,7 +137,7 @@ class logger {
      */
     public function detail_from(int $logid): stdClass {
         global $DB;
-        $log = $DB->get_record('tool_mergeusers', array('id' => $logid), '*', MUST_EXIST);
+        $log = $DB->get_record('tool_mergeusers', ['id' => $logid], '*', MUST_EXIST);
         $log->log = json_decode($log->log);
         return $log;
     }

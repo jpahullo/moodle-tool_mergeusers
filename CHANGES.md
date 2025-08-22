@@ -1,5 +1,18 @@
 # Release notes
 
+## 2025082200
+
+1. 2025-08-22: improvement: #356: code reorganization on the whole plugin.
+   1. Placed all suitable file under `/classes/` for autoloading.
+   2. Revisited all files (except `/tests/`) with phpcs (using `local_codechecker`)
+   3. Removed content from `lib.php` in favour of `settingslib.php` and
+      a new class `database_transactions::are_supported()`.
+   4. Added a `Makefile` with some targets for helping while developing.
+   5. All tests passes again.
+   6. All clicks on the web work again.
+   7. Moved the link to see merge logs into the `Reports` administration menu.
+
+
 ## 2025082000
 
 1. 2025-08-20: fix: #354: ensure that setting `tool_mergeusers/uniquekeynewidtomaintain`

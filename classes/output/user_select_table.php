@@ -15,50 +15,51 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * User select table util file
+ * User select table.
  *
- * @package    tool_mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló, Sred, Universitat Rovira i Virgili
- * @author     John Hoopes <hoopes@wisc.edu>, Univeristy of Wisconsin - Madison
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_mergeusers
+ * @author    Nicolas Dunand <Nicolas.Dunand@unil.ch>
+ * @author    Mike Holzer
+ * @author    Forrest Gaston
+ * @author    Juan Pablo Torres Herrera
+ * @author    Jordi Pujol-Ahulló, Sred, Universitat Rovira i Virgili
+ * @author    John Hoopes <hoopes@wisc.edu>, Univeristy of Wisconsin - Madison
+ * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
+ * @copyright Univeristy of Wisconsin - Madison
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(__DIR__, 4) . '/config.php');
+namespace tool_mergeusers\output;
 
-global $CFG;
-
-// Require needed library files.
-require_once($CFG->dirroot . '/lib/clilib.php');
-require_once(__DIR__ . '/autoload.php');
+use coding_exception;
+use html_table;
+use html_writer;
+use renderable;
 
 /**
- * Extend the html table to provide a build function inside for creating a table
- * for user selecting.
+ * Extend the html_table to provide a user selection.
  *
+ * @package tool_mergeusers
  * @author  John Hoopes <hoopes@wisc.edu>
+ * @copyright University of Wisconsin - Madison
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class UserSelectTable extends html_table implements renderable {
-    /** @var tool_mergeusers_renderer Renderer to show user info. */
-    protected $renderer;
+class user_select_table extends html_table implements renderable {
+    /** @var renderer Renderer to show user info. */
+    protected renderer $renderer;
 
     /**
      * Call parent construct
      *
      * @param array $users
-     * @param tool_mergeusers_renderer $renderer
+     * @param renderer $renderer
      *
      * @throws coding_exception
      */
-    public function __construct(array $users, tool_mergeusers_renderer $renderer) {
+    public function __construct(array $users, renderer $renderer) {
         parent::__construct();
         $this->renderer = $renderer;
-        $this->buildtable($users);
+        $this->build_table_for($users);
     }
 
     /**
@@ -67,9 +68,9 @@ class UserSelectTable extends html_table implements renderable {
      * @param array $users array of user results
      * @throws coding_exception
      */
-    protected function buildtable($users): void {
-        // Reset any existing data
-        $this->data = array();
+    protected function build_table_for(array $users): void {
+        // Reset any existing data.
+        $this->data = [];
 
         $this->id = 'merge_users_tool_user_select_table';
         $this->attributes['class'] = 'generaltable boxaligncenter';

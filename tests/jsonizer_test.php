@@ -36,7 +36,7 @@ use tool_mergeusers\local\jsonizer;
  * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class jsonizer_test extends basic_testcase {
+final class jsonizer_test extends basic_testcase {
     /**
      * Tests to_json() method.
      *

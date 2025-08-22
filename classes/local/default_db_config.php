@@ -25,6 +25,11 @@
 
 namespace tool_mergeusers\local;
 
+use tool_mergeusers\local\cli\cli_gathering;
+use tool_mergeusers\local\merger\assign_submission_table_merger;
+use tool_mergeusers\local\merger\generic_table_merger;
+use tool_mergeusers\local\merger\quiz_attempts_table_merger;
+
 /**
  * Default database-related configuration.
  *
@@ -39,8 +44,8 @@ namespace tool_mergeusers\local;
 class default_db_config {
     /** @var string[] Default database-related settings from this plugin. */
     public static array $config = [
-        // Gathering tool
-        'gathering' => 'CLIGathering',
+        // The gathering tool.
+        'gathering' => cli_gathering::class,
 
         // Database tables to be excluded from normal processing.
         // You normally will add tables. Be very cautious if you delete any of them.
@@ -157,7 +162,7 @@ class default_db_config {
             'grade_import_values' => ['importer', 'userid'],
             'grade_import_newitem' => ['importer'],
             'grading_instances' => ['raterid'],
-            'logstore_standard_log' => ['userid','relateduserid','realuserid'],
+            'logstore_standard_log' => ['userid', 'relateduserid', 'realuserid'],
             'message_contacts' => ['contactid', 'userid'],
             'message_contact_requests' => ['userid', 'requesteduserid'],
             'message_users_blocked' => ['blockeduserid', 'userid'],
@@ -186,12 +191,12 @@ class default_db_config {
             ],
         ],
 
-        // TableMergers to process each database table.
-        // The 'default' is applied when no specific TableMerger is specified.
+        // The table_mergers to process each database table.
+        // The 'default' is applied when no specific table_merger is specified.
         'tablemergers' => [
-            'default' => 'GenericTableMerger',
-            'quiz_attempts' => 'QuizAttemptsMerger',
-            'assign_submission' => 'AssignSubmissionTableMerger',
+            'default' => generic_table_merger::class,
+            'quiz_attempts' => quiz_attempts_table_merger::class,
+            'assign_submission' => assign_submission_table_merger::class,
         ],
 
         'alwaysrollback' => false,

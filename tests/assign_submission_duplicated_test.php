@@ -17,14 +17,15 @@
 /**
  * @author    Daniel Tomé <danieltomefer@gmail.com>
  * @copyright 2018 Servei de Recursos Educatius (http://www.sre.urv.cat)
+ * @package tool_mergeusers
  */
 
-defined('MOODLE_INTERNAL') || die();
+use tool_mergeusers\local\merger\finder\in_memory_assign_submission_finder;
+use tool_mergeusers\local\merger\duplicateddata\assign_submission_duplicated_data_merger;
+use tool_mergeusers\local\merger\duplicateddata\duplicated_data;
 
-require_once(__DIR__ . '/../lib/db/inmemoryfindbyquery.php');
-require_once(__DIR__ . '/../lib/duplicateddata/assignsubmissionduplicateddatamerger.php');
 
-class assign_submission_duplicated_test extends advanced_testcase {
+final class assign_submission_duplicated_test extends advanced_testcase {
     /**
      * Should do nothing with new submission and remove old submission when old user has no content submission
      * and new user has content submission
@@ -33,10 +34,10 @@ class assign_submission_duplicated_test extends advanced_testcase {
      * @group tool_mergeusers_assign_submission
      * @dataProvider remove_old_ignore_new_data_provider
      */
-    public function test_remove_old_ignore_new($expectedtomodify, $expectedtoremove, $oldusersubmission, $newusersubmission) {
+    public function test_remove_old_ignore_new($expectedtomodify, $expectedtoremove, $oldusersubmission, $newusersubmission): void {
         $duplicateddata = $this->get_duplicated_data($oldusersubmission, $newusersubmission);
 
-        $this->assertEquals($duplicateddata->to_modify(), $expectedtomodify);
+        $this->assertEquals($duplicateddata->to_update(), $expectedtomodify);
         $this->assertEquals($duplicateddata->to_remove(), $expectedtoremove);
     }
 
@@ -77,10 +78,10 @@ class assign_submission_duplicated_test extends advanced_testcase {
      * @group tool_mergeusers_assign_submission
      * @dataProvider update_old_and_remove_new_data_provider
      */
-    public function test_update_old_and_remove_new($expectedtomodify, $expectedtoremove, $oldusersubmission, $newusersubmission) {
+    public function test_update_old_and_remove_new($expectedtomodify, $expectedtoremove, $oldusersubmission, $newusersubmission): void {
         $duplicateddata = $this->get_duplicated_data($oldusersubmission, $newusersubmission);
 
-        $this->assertEquals($duplicateddata->to_modify(), $expectedtomodify);
+        $this->assertEquals($duplicateddata->to_update(), $expectedtomodify);
         $this->assertEquals($duplicateddata->to_remove(), $expectedtoremove);
     }
 
@@ -119,10 +120,10 @@ class assign_submission_duplicated_test extends advanced_testcase {
         $expectedtoremove,
         $oldusersubmission,
         $newusersubmission,
-    ) {
+    ): void {
         $duplicateddata = $this->get_duplicated_data($oldusersubmission, $newusersubmission);
 
-        $this->assertEquals($duplicateddata->to_modify(), $expectedtomodify);
+        $this->assertEquals($duplicateddata->to_update(), $expectedtomodify);
         $this->assertEquals($duplicateddata->to_remove(), $expectedtoremove);
     }
 
@@ -215,16 +216,16 @@ class assign_submission_duplicated_test extends advanced_testcase {
     /**
      * @param $oldusersubmission
      * @param $newusersubmission
-     * @return DuplicatedData
+     * @return duplicated_data
      */
-    private function get_duplicated_data($oldusersubmission, $newusersubmission): DuplicatedData {
+    private function get_duplicated_data($oldusersubmission, $newusersubmission): duplicated_data {
         $data = [
             1111 => [1 => $oldusersubmission],
             2222 => [2 => $newusersubmission],
         ];
 
-        $inmemoryfindbyquery = new in_memory_assign_submission_query($data);
-        $assignsubmissionduplicateddatamerger = new AssignSubmissionDuplicatedDataMerger($inmemoryfindbyquery);
+        $inmemoryfindbyquery = new in_memory_assign_submission_finder($data);
+        $assignsubmissionduplicateddatamerger = new assign_submission_duplicated_data_merger($inmemoryfindbyquery);
 
         $duplicateddata = $assignsubmissionduplicateddatamerger->merge($oldusersubmission, $newusersubmission);
 

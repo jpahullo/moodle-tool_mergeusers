@@ -15,33 +15,48 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package tool
- * @subpackage mergeusers
- * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
- * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Merger tool to use to iterate through several pair of users.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urvc.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use tool_mergeusers\logger;
+namespace tool_mergeusers\local\cli;
 
 defined('MOODLE_INTERNAL') || die;
 
 global $CFG;
-require_once($CFG->dirroot . '/lib/clilib.php');
-require_once(__DIR__ . '/autoload.php');
+require_once($CFG->libdir . '/clilib.php');
 
-class Merger {
-    /** @var MergeUserTool instance of the tool. */
-    protected MergeUserTool $mut;
-    /** @var logger logger instace. */
+use coding_exception;
+use dml_exception;
+use moodle_exception;
+use tool_mergeusers\local\logger;
+use tool_mergeusers\local\user_merger;
+
+
+/**
+ * Merger tool to use to iterate through several pair of users.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urvc.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+final class gathering_merger {
+    /** @var user_merger user merger. */
+    protected user_merger $usermerger;
+    /** @var logger logger instance. */
     protected logger $logger;
 
     /**
-     * Initializes the MergeUserTool to process any incoming merging action through
+     * Initializes the to process any incoming merging action through
      * any Gathering instance.
      */
-    public function __construct(MergeUserTool $mut) {
-        $this->mut = $mut;
+    public function __construct(user_merger $mut) {
+        $this->usermerger = $mut;
         $this->logger = new logger();
     }
 
@@ -49,13 +64,15 @@ class Merger {
      * This iterates over all merging actions from the given Gathering instance and tries to
      * perform it. The result of every action is logged internally for future checking.
      *
-     * @param Gathering $gathering List of merging actions.
+     * @param gathering $gathering List of merging actions.
      * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
      */
-    public function merge(Gathering $gathering): void {
+    public function merge(gathering $gathering): void {
         $numberoperations = 0;
         foreach ($gathering as $action) {
-            list($success, $log, $id) = $this->mut->merge($action->toid, $action->fromid);
+            [$success, $log, $id] = $this->usermerger->merge($action->toid, $action->fromid);
 
             // Only shows results on cli script.
             if (defined("CLI_SCRIPT")) {

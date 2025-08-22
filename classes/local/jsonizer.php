@@ -25,6 +25,14 @@
 
 namespace tool_mergeusers\local;
 
+/**
+ * Provides an entity to transform from and to JSON content.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 final class jsonizer {
     /**
      * Transforms the given $data into a valid JSON string.

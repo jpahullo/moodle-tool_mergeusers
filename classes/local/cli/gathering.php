@@ -15,23 +15,30 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package tool
- * @subpackage mergeusers
- * @author Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
- * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Abstraction to allow the CLI script to iterate through pairs of users to merge them.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urvc.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+namespace tool_mergeusers\local\cli;
 
 /**
  * Abstraction layer to use to get the list of mergin actions to perform.
  *
  * For simplicity, we force to implement the Iterator interface.
  *
- * For complex gathering implementations, like obtaning the list from external databases,
+ * For complex gathering implementations, like obtaining the list from external databases,
  * loading CSV files, or command line scripts, you can initialize all the necessary stuff
  * in its constructor (__construct()). It is highly recommended to check all things are ok
  * in method rewind() to start the iteration.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urvc.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-interface Gathering extends Iterator {
-
+interface gathering extends \Iterator {
 }

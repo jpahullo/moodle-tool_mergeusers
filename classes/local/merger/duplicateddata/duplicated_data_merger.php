@@ -15,42 +15,31 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * The user_merged_success event.
+ * Entity that helps merge conflicting records from both user to keep and to remove.
  *
  * @package   tool_mergeusers
- * @author    Gerard Cuello Adell <gerard.urv@gmail.com>
- * @copyright 2016 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @author    Daniel Tomé <danieltomefer@gmail.com>
+ * @copyright 2018 onwards Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_mergeusers\event;
-
-use coding_exception;
+namespace tool_mergeusers\local\merger\duplicateddata;
 
 /**
- * Class user_merged_success called when merging user accounts has gone right.
+ * API definition for a duplicated data merger.
  *
  * @package   tool_mergeusers
- * @author    Gerard Cuello Adell <gerard.urv@gmail.com>
- * @copyright 2016 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @author    Daniel Tomé <danieltomefer@gmail.com>
+ * @copyright 2018 onwards Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class user_merged_success extends user_merged {
+interface duplicated_data_merger {
     /**
-     * Gets the event name.
-     * @return string
-     * @throws coding_exception
-     */
-    public static function get_name() {
-        return get_string('eventusermergedsuccess', 'tool_mergeusers');
-    }
-
-    /**
-     * Human-readable detail of this event.
+     * Merges both list of records potentially conflicting.
      *
-     * @return string
+     * @param array $olddata data from the user to remove.
+     * @param array $newdata data from the user to keep.
+     * @return duplicated_data the result of the merge.
      */
-    public function get_description() {
-        return $this->get_description_as('success');
-    }
+    public function merge(object $olddata, object $newdata): duplicated_data;
 }

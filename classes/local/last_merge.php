@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Informs about the last merge operations related to a given user.
  *
@@ -26,7 +27,6 @@ namespace tool_mergeusers\local;
 
 use dml_exception;
 use stdClass;
-use tool_mergeusers\logger;
 
 /**
  * Informs about the last merge operations related to a given user.
@@ -152,7 +152,7 @@ class last_merge {
                    JOIN {user} u ON (u.id = mremove.fromuserid)
                   WHERE mremove.rownumber = :rownumber1
                     AND u.deleted = :nodeleted
-                    AND u.suspended = :suspended 
+                    AND u.suspended = :suspended
                     AND mremove.success = :success1
                   ) mremove2
             LEFT JOIN (SELECT

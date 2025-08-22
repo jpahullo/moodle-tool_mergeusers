@@ -31,7 +31,7 @@ use tool_mergeusers\local\jsonizer;
  * @copyright 2025 onwards to Universitat Rovira i Virgili
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class config_test extends advanced_testcase {
+final class config_test extends advanced_testcase {
     /**
      * @group tool_mergeusers
      * @group tool_mergeusers_config
@@ -60,7 +60,7 @@ class config_test extends advanced_testcase {
         $this->prepare_hook_settings();
         $config = config::instance();
 
-        $this->assertEquals(add_settings_before_merging_callbacks::$GATHERING_NAME, $config->gathering);
+        $this->assertEquals(add_settings_before_merging_callbacks::$gatheringname, $config->gathering);
     }
 
     /**

@@ -22,16 +22,17 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mergeusers\local\user_merger;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once("$CFG->dirroot/mod/assign/tests/generator.php");
-require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
 
 /**
  * Class assign_test
  */
-class assign_test extends advanced_testcase {
+final class assign_test extends advanced_testcase {
     use \mod_assign_test_generator;
 
     public function setUp(): void {
@@ -45,7 +46,7 @@ class assign_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_assign
      */
-    public function test_merge_non_conflicting_assign_grades() {
+    public function test_merge_non_conflicting_assign_grades(): void {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();
@@ -65,7 +66,7 @@ class assign_test extends advanced_testcase {
         $this->assertEquals('-', $this->get_user_assign_grade($student1, $assign, $course));
 
         // Merge student 1 into student 0.
-        $mut = new MergeUserTool();
+        $mut = new user_merger();
         // This merge already invokes the callback for regrading.
         $mut->merge($student1->id, $student2->id);
 
@@ -74,8 +75,8 @@ class assign_test extends advanced_testcase {
         $this->assertEquals('75.00', $this->get_user_assign_grade($student1, $assign, $course));
 
         // Student 1 should now be suspended.
-        $user_remove = $DB->get_record('user', array('id' => $student2->id));
-        $this->assertEquals(1, $user_remove->suspended);
+        $userremove = $DB->get_record('user', ['id' => $student2->id]);
+        $this->assertEquals(1, $userremove->suspended);
     }
 
     /**
@@ -124,7 +125,7 @@ class assign_test extends advanced_testcase {
         );
 
         // Try to merge users.
-        $mut = new MergeUserTool();
+        $mut = new user_merger();
         [$success, $log, $logid] = $mut->merge($student1->id, $student2->id);
 
         // Merge have failed. Check it!
@@ -176,7 +177,7 @@ class assign_test extends advanced_testcase {
         $DB->delete_records('assign', ['id' => $assign->get_course_module()->instance]);
 
         // Try to merge users.
-        $mut = new MergeUserTool();
+        $mut = new user_merger();
         [$success, $log, $logid] = $mut->merge($student1->id, $student2->id);
 
         // Merge have failed. Check it!

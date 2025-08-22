@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,80 +14,77 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
  * User review table util file
  *
- * @package    tool
- * @subpackage mergeusers
- * @author     Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author     Mike Holzer
- * @author     Forrest Gaston
- * @author     Juan Pablo Torres Herrera
- * @author     Jordi Pujol-Ahulló, Sred, Universitat Rovira i Virgili
- * @author     John Hoopes <hoopes@wisc.edu>, Univeristy of Wisconsin - Madison
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_mergeusers
+ * @author    Nicolas Dunand <Nicolas.Dunand@unil.ch>
+ * @author    Mike Holzer
+ * @author    Forrest Gaston
+ * @author    Juan Pablo Torres Herrera
+ * @author    Jordi Pujol-Ahulló, Sred, Universitat Rovira i Virgili
+ * @author    John Hoopes <hoopes@wisc.edu>, Univeristy of Wisconsin - Madison
+ * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
+ * @copyright Univeristy of Wisconsin - Madison
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php');
+namespace tool_mergeusers\output;
 
-global $CFG;
-
-// require needed library files
-require_once($CFG->dirroot . '/lib/clilib.php');
-require_once(__DIR__ . '/autoload.php');
+use coding_exception;
+use html_table;
+use html_writer;
+use renderable;
+use stdClass;
 
 /**
  * Extend the html table to provide a build function inside for creating a table
  * for reviewing the users to merge.
  *
- * @author  John Hoopes <hoopes@wisc.edu>
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_mergeusers
+ * @author    John Hoopes <hoopes@wisc.edu>
+ * @copyright Univeristy of Wisconsin - Madison
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class UserReviewTable extends html_table implements renderable
+class user_review_table extends html_table implements renderable
 {
     /** @var stdClass $olduser The olduser db object */
-    protected $olduser;
+    protected stdClass $olduser;
 
     /** @var stdClass $newuser The newuser db object */
-    protected $newuser;
+    protected stdClass $newuser;
 
-    /** @var bool $showmergebutton Whether or not to show the merge button on rendering */
-    protected $showmergebutton = false;
-
-    /** @var tool_mergeusers_renderer Render to help showing user info. */
-    protected $renderer;
+    /** @var renderer Render to help showing user info. */
+    protected renderer $renderer;
 
     /**
      * Call parent construct and then build table
-     * @param tool_mergeusers_renderer $renderer
+     *
+     * @param renderer $renderer
+     * @throws coding_exception
      */
-    public function __construct($renderer)
-    {
+    public function __construct(renderer $renderer) {
         global $SESSION;
-
+        parent::__construct();
         $this->renderer = $renderer;
 
-        // Call parent constructor
-        parent::__construct();
-
-        if (!empty($SESSION->mut)) {
-            if (!empty($SESSION->mut->olduser)) {
-                $this->olduser = $SESSION->mut->olduser;
+        if (!empty($SESSION->toolmergeusers)) {
+            if (!empty($SESSION->toolmergeusers->olduser)) {
+                $this->olduser = $SESSION->toolmergeusers->olduser;
             }
-            if (!empty($SESSION->mut->newuser)) {
-                $this->newuser = $SESSION->mut->newuser;
+            if (!empty($SESSION->toolmergeusers->newuser)) {
+                $this->newuser = $SESSION->toolmergeusers->newuser;
             }
         }
-        $this->buildtable();
+        $this->build_table();
     }
 
     /**
      * Build the user select table using the extension of html_table
+     *
+     * @throws coding_exception
      */
-    protected function buildtable()
-    {
+    protected function build_table(): void {
         // Reset any existing data.
         $this->data = [];
 
@@ -100,35 +96,36 @@ class UserReviewTable extends html_table implements renderable
         $this->id = 'merge_users_tool_user_review_table';
         $this->attributes['class'] = 'generaltable boxaligncenter';
 
-        if ((isset($this->olduser->idnumber) && !empty($this->olduser->idnumber))
-            || (isset($this->newuser->idnumber) && !empty($this->newuser->idnumber))) {
+        if (
+            (isset($this->olduser->idnumber) && !empty($this->olduser->idnumber))
+            || (isset($this->newuser->idnumber) && !empty($this->newuser->idnumber))
+        ) {
             $extrafield = 'idnumber';
         } else {
             $extrafield = 'description';
         }
         $suspendedstr = get_string('suspended');
-        $columns = array(
+        $columns = [
             'col_label' => '',
             'col_userid' => 'Id',
             'col_suspended' => $suspendedstr,
             'col_username' => get_string('user'),
             'col_email' => get_string('email'),
-            'col_extra' => get_string($extrafield)
-        );
+            'col_extra' => get_string($extrafield),
+        ];
         $this->head = array_values($columns);
         $this->colclasses = array_keys($columns);
 
         // Always display both rows so that the end user can see what is selected/not selected.
         $users = [
-            [get_string('olduser', 'tool_mergeusers'), $this->olduser],
-            [get_string('newuser', 'tool_mergeusers'), $this->newuser],
+            [get_string('olduser', 'tool_mergeusers'), $this->olduser ?? null],
+            [get_string('newuser', 'tool_mergeusers'), $this->newuser ?? null],
         ];
         foreach ($users as $user) {
             $row = [array_shift($user)];
             $user = reset($user);
             if (empty($user)) {
-                $row = array_merge($row, array_fill(0,5, ''));
-
+                $row = array_merge($row, array_fill(0, 5, ''));
             } else {
                 $spanclass = ($user->suspended) ? ('usersuspended') : ('');
                 $suspendedstrrow = ($user->suspended) ? $suspendedstr : '';
@@ -138,7 +135,8 @@ class UserReviewTable extends html_table implements renderable
                     'span',
                     $this->renderer->show_user($user->id, $this->olduser),
                     ['class' => $spanclass],
-                );;
+                );
+                ;
                 $row[] = html_writer::tag('span', $user->email, ['class' => $spanclass]);
                 $row[] = html_writer::tag('span', $user->$extrafield, ['class' => $spanclass]);
             }

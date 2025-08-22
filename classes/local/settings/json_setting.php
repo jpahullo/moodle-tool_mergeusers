@@ -29,6 +29,14 @@ use admin_setting_configtextarea;
 use coding_exception;
 use tool_mergeusers\local\jsonizer;
 
+/**
+ * Setting to store JSON codified settings for this plugin.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class json_setting extends admin_setting_configtextarea {
     /**
      * Setting to store content in valid JSON format.
