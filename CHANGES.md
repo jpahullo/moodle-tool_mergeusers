@@ -1,5 +1,10 @@
 # Release notes
 
+## 2025082300
+
+1. 2025-08-23: improvement: #360: new class added to manage session-based
+   users selection when merging users from web administration.
+
 ## 2025082200
 
 1. 2025-08-22: improvement: #356: code reorganization on the whole plugin.

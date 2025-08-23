@@ -59,6 +59,11 @@ phpcs: options = admin/tool/mergeusers --ignore=tests/
 phpcs:
 	$(phpcs) $(options)
 
+.PHONY: phpcs
+phpcs-for-staged-files:
+	$(phpcs) $$( echo $$(git diff --cached --name-only | xargs -I {} -n 1 echo 'admin/tool/mergeusers/{}')) --ignore=tests/
+
+
 .PHONY: phpcs-list-sniffs
 phpcs-list-sniffs: options = -e
 phpcs-list-sniffs:
@@ -68,6 +73,11 @@ phpcs-list-sniffs:
 phpcbf: options = admin/tool/mergeusers
 phpcbf:
 	$(phpcbf) $(options)
+
+.PHONY: phpcbf-for-staged-files
+phpcbf-for-staged-files:
+	$(phpcbf) $$( echo $$(git diff --cached --name-only | xargs -I {} -n 1 echo 'admin/tool/mergeusers/{}')) --ignore=tests/
+
 
 .PHONY: purgecaches
 purgecaches:

@@ -28,6 +28,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_mergeusers\local\selected_users_to_merge;
 use tool_mergeusers\local\user_merger;
 use tool_mergeusers\local\user_searcher;
 use tool_mergeusers\output\merge_user_form;
@@ -35,9 +36,7 @@ use tool_mergeusers\output\user_select_table;
 
 require('../../../config.php');
 
-global $CFG;
-global $PAGE;
-global $SESSION;
+global $CFG, $PAGE;
 
 // Report all PHP errors.
 error_reporting(E_ALL);
@@ -76,6 +75,8 @@ $data = $mergeuserform->get_data();
 $usermerger = new user_merger();
 // Search tool for searching for users and verifying them.
 $usersearcher = new user_searcher();
+// Session-stored selection of users to merge.
+$currentuserselection = selected_users_to_merge::instance();
 
 // If there was a custom option submitted (by custom form) then use that option instead of main form's data.
 if (!empty($option)) {
@@ -97,23 +98,11 @@ if (!empty($option)) {
                 exit(); // Forces end of execution for error.
             }
 
-            if (empty($SESSION->toolmergeusers)) {
-                $SESSION->toolmergeusers = new stdClass();
-            }
+            // Store saved selection for displaying them on the index page.
+            $currentuserselection->set_from_user($olduser);
+            $currentuserselection->set_to_user($newuser);
 
-            // Store saved selection in session for display on index page.
-            // Requires logic to not overwrite existing session data, unless a "new" old, or "new" new is specified.
-            // If session old user already has a user and we have a "new" old user, replace the session's old user.
-            if (empty($SESSION->toolmergeusers->olduser) || !empty($olduser)) {
-                $SESSION->toolmergeusers->olduser = $olduser;
-            }
-
-            // If session new user already has a user and we have a "new" new user, replace the session's new user.
-            if (empty($SESSION->toolmergeusers->newuser) || !empty($newuser)) {
-                $SESSION->toolmergeusers->newuser = $newuser;
-            }
-
-            $step = (!empty($SESSION->toolmergeusers->olduser) && !empty($SESSION->toolmergeusers->newuser)) ?
+            $step = $currentuserselection->both_are_selected() ?
                     $renderer::INDEX_PAGE_CONFIRMATION_STEP :
                     $renderer::INDEX_PAGE_SEARCH_STEP;
 
@@ -122,7 +111,7 @@ if (!empty($option)) {
 
         // Remove any of the selected users to merge, and search for them again.
         case 'clearselection':
-            $SESSION->toolmergeusers = null;
+            $currentuserselection->clear_users_selection();
 
             // Redirect back to index/search page for new selections or review selections.
             $redirecturl = new moodle_url('/admin/tool/mergeusers/index.php');
@@ -132,8 +121,8 @@ if (!empty($option)) {
         // Proceed with the merging and show results.
         case 'mergeusers':
             // Verify users once more just to be sure.  Both users should already be verified, but just an extra layer of security.
-            [$fromuser, $oumessage] = $usersearcher->verify_user($SESSION->toolmergeusers->olduser->id, 'id');
-            [$touser, $numessage] = $usersearcher->verify_user($SESSION->toolmergeusers->newuser->id, 'id');
+            [$fromuser, $oumessage] = $usersearcher->verify_user($currentuserselection->from_user()->id ?? null, 'id');
+            [$touser, $numessage] = $usersearcher->verify_user($currentuserselection->to_user()->id ?? null, 'id');
             if ($fromuser === null || $touser === null) {
                 $renderer->mu_error($oumessage . '<br />' . $numessage);
                 break; // Break execution for error.
@@ -145,7 +134,7 @@ if (!empty($option)) {
             [$success, $log, $logid] = $usermerger->merge($touser->id, $fromuser->id);
 
             // Reset mut session to let the user choose another pair of users to merge.
-            $SESSION->toolmergeusers = null;
+            $currentuserselection->clear_users_selection();
 
             // Render results page.
             echo $renderer->results_page($touser, $fromuser, $success, $log, $logid);
@@ -188,11 +177,8 @@ if (!empty($option)) {
         }
 
         // Add users to session for review step.
-        if (empty($SESSION->toolmergeusers)) {
-            $SESSION->toolmergeusers = new stdClass();
-        }
-        $SESSION->toolmergeusers->olduser = $olduser;
-        $SESSION->toolmergeusers->newuser = $newuser;
+        $currentuserselection->set_from_user($olduser);
+        $currentuserselection->set_to_user($newuser);
 
         echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP);
     } else {

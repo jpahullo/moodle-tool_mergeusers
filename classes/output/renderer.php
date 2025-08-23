@@ -37,6 +37,7 @@ use html_writer;
 use moodle_url;
 use moodleform;
 use plugin_renderer_base;
+use single_button;
 use stdClass;
 use tool_mergeusers\local\database_transactions;
 use tool_mergeusers\local\last_merge;
@@ -117,8 +118,9 @@ class renderer extends plugin_renderer_base
      *
      * @param moodleform $mform form for merging users.
      * @param int $step step to show in the index page.
-     * @param user_select_table $ust table for users to merge after searching
+     * @param user_select_table|null $ust table for users to merge after searching
      * @return string html to show on index page.
+     * @throws coding_exception
      */
     public function index_page(moodleform $mform, int $step, ?user_select_table $ust = null): string {
         $output = $this->header();
@@ -180,6 +182,7 @@ class renderer extends plugin_renderer_base
      * @param string $message The error message
      * @param bool $showreturn Shows a return button to the index page
      *
+     * @throws coding_exception
      */
     public function mu_error($message, $showreturn = true) {
         $errorhtml = '';

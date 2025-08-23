@@ -32,10 +32,12 @@
 namespace tool_mergeusers\output;
 
 use coding_exception;
+use core\exception\moodle_exception;
 use html_table;
 use html_writer;
 use renderable;
 use stdClass;
+use tool_mergeusers\local\selected_users_to_merge;
 
 /**
  * Extend the html table to provide a build function inside for creating a table
@@ -64,17 +66,14 @@ class user_review_table extends html_table implements renderable
      * @throws coding_exception
      */
     public function __construct(renderer $renderer) {
-        global $SESSION;
         parent::__construct();
+        $currentuserselection = selected_users_to_merge::instance();
         $this->renderer = $renderer;
-
-        if (!empty($SESSION->toolmergeusers)) {
-            if (!empty($SESSION->toolmergeusers->olduser)) {
-                $this->olduser = $SESSION->toolmergeusers->olduser;
-            }
-            if (!empty($SESSION->toolmergeusers->newuser)) {
-                $this->newuser = $SESSION->toolmergeusers->newuser;
-            }
+        if ($currentuserselection->from_user_is_set()) {
+            $this->olduser = $currentuserselection->from_user();
+        }
+        if ($currentuserselection->to_user_is_set()) {
+            $this->newuser = $currentuserselection->to_user();
         }
         $this->build_table();
     }
@@ -83,6 +82,7 @@ class user_review_table extends html_table implements renderable
      * Build the user select table using the extension of html_table
      *
      * @throws coding_exception
+     * @throws moodle_exception
      */
     protected function build_table(): void {
         // Reset any existing data.
