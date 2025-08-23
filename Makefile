@@ -3,6 +3,15 @@ current-dir := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 # By default, only "container_name=name_of_container" is required. See below.
 # If this file does not exists during development, the make command fails.
+# This file should define at least:
+# ===========================
+# container_name=name_of_container
+# start=command to start the whole stack (web server, database, etc) to test the plugin
+# stop=command to stop th whole stack
+# ===========================
+# On my setup, both "start" and "stop" commands must be placed without colon nor double colons
+# to work properly.
+# I decided to proceed this way, since I work with custom shell scripts over the moodle-docker setup.
 include $(current-dir).env
 
 # This file assumes dockerized development environment and moodle-local_codechecker plugin installed.
@@ -19,6 +28,14 @@ endif
 ifndef phpcbf:
 phpcbf := $(docker) local/codechecker/vendor/bin/phpcbf
 endif
+
+.PHONY: start
+start:
+	bash -c "$(start)"
+
+.PHONY: stop
+stop:
+	bash -c "$(stop)"
 
 .PHONY: pass-tests
 pass-tests: options =

@@ -12,6 +12,22 @@
    6. All clicks on the web work again.
    7. Moved the link to see merge logs into the `Reports` administration menu.
 
+### UPGRADING
+
+When upgrading to this version, you have to choose one of these paths:
+
+1. **In case you have local plugin customizations:** you must check twice
+   the new plugin structure since there has been a major refactor 
+   of the whole plugin. The `lib/` directory was removed, and 
+   most of the plugin classes were moved inside the `classes/` directory
+   for a better code organization and with the benefit of autoloading.
+   Also, we removed the vast majority of functions from the `lib.php`, 
+   leaving there only the necessary Moodle callbacks.
+   Update your local customizations appropriately according to new
+   classes and file structure.
+2. **In case you DO NOT have local plugin customizations:** you can freely
+   upgrade the plugin without worrying.
+
 
 ## 2025082000
 
