@@ -233,12 +233,21 @@ class renderer extends plugin_renderer_base
         $output .= html_writer::empty_tag('br');
         $output .= html_writer::start_tag('div', ['class' => 'result']);
         $output .= html_writer::start_tag('div', ['class' => 'title']);
-        $output .= get_string('merging', 'tool_mergeusers');
-        if (!is_null($to) && !is_null($from)) {
-            $output .= ' ' . get_string('usermergingheader', 'tool_mergeusers', $from) . ' ' .
-                    get_string('into', 'tool_mergeusers') . ' ' .
-                    get_string('usermergingheader', 'tool_mergeusers', $to);
-        }
+        $output .= get_string('merging', 'tool_mergeusers') . ' ';
+
+        $fromheader = (object)[
+            'username' => $this->show_user($from->id, $from),
+            'id' => $from->id,
+        ];
+        $toheader = (object)[
+            'username' => $this->show_user($to->id, $to),
+            'id' => $to->id,
+        ];
+        $output .= get_string('usermergingheader', 'tool_mergeusers', $fromheader);
+        $output .= html_writer::empty_tag('br');
+        $output .= get_string('into', 'tool_mergeusers') . ' ';
+        $output .= get_string('usermergingheader', 'tool_mergeusers', $toheader);
+
         $output .= html_writer::empty_tag('br') . html_writer::empty_tag('br');
         $output .= get_string('logid', 'tool_mergeusers', $logid);
         $output .= html_writer::empty_tag('br');
@@ -290,16 +299,31 @@ class renderer extends plugin_renderer_base
      * @throws moodle_exception
      */
     public function show_user($userid, $user) {
-        return html_writer::link(
-            new moodle_url(
-                '/user/view.php',
-                ['id' => $userid]
-            ),
-            fullname($user) .
-                ' (' . $user->username . ') ' .
-                ' &lt;' . $user->email . '&gt;' .
-            ' ' . $user->idnumber
-        );
+        $suspendedstr = '';
+        $suspendedclass = '';
+        $deleted = isset($user->deleted) && $user->deleted;
+        if ($deleted) {
+            $text = get_string('deleted');
+        } else {
+            $text = fullname($user);
+            $text .= " &lt;{$user->email}&gt;";
+            $text .= " ({$user->username})";
+            $text .= " {$user->idnumber}";
+            if ($user->suspended) {
+                $suspendedstr = get_string('suspended', 'moodle');
+            }
+        }
+        if (!empty($suspendedstr)) {
+            // Found on core here: admin/classes/reportbuilder/local/systemreports/users.php.
+            $text .= \html_writer::tag('span', $suspendedstr, ['class' => 'badge badge-secondary ms-1']);
+            $suspendedclass = 'usersuspended';
+        }
+
+        $attributes = ['class' => $suspendedclass];
+        if ($deleted) {
+            return html_writer::tag('span', $text, $attributes);
+        }
+        return html_writer::link(new moodle_url('/user/view.php', ['id' => $userid]), $text, $attributes);
     }
 
     /**

@@ -74,14 +74,12 @@ class user_select_table extends html_table implements renderable {
 
         $this->id = 'merge_users_tool_user_select_table';
         $this->attributes['class'] = 'generaltable boxaligncenter';
-        $suspendedstr = get_string('suspended');
 
         $columns = [
             'col_reset' => get_string('reset'),
             'col_select_olduser' => get_string('olduser', 'tool_mergeusers'),
             'col_master_newuser' => get_string('newuser', 'tool_mergeusers'),
             'col_userid' => 'Id',
-            'col_suspended' => $suspendedstr,
             'col_username' => get_string('user'),
             'col_email' => get_string('email'),
             'col_idnumber' => get_string('idnumber'),
@@ -94,7 +92,6 @@ class user_select_table extends html_table implements renderable {
         foreach ($users as $userid => $user) {
             $row = [];
             $spanclass = ($user->suspended) ? ('usersuspended') : ('');
-            $suspendedstrrow = ($user->suspended) ? $suspendedstr : '';
             $row[] = html_writer::tag(
                 'a',
                 $reset,
@@ -113,8 +110,7 @@ class user_select_table extends html_table implements renderable {
                 ['type' => 'radio', 'name' => 'newuser', 'value' => $userid, 'id' => 'newuser' . $userid],
             );
             $row[] = html_writer::tag('span', $user->id, ['class' => $spanclass]);
-            $row[] = html_writer::tag('span', $suspendedstrrow, ['class' => $spanclass]);
-            $row[] = html_writer::tag('span', $this->renderer->show_user($user->id, $user), ['class' => $spanclass]);
+            $row[] = $this->renderer->show_user($user->id, $user);
             $row[] = html_writer::tag('span', $user->email, ['class' => $spanclass]);
             $row[] = html_writer::tag('span', $user->idnumber, ['class' => $spanclass]);
             $this->data[] = $row;

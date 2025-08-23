@@ -1,9 +1,16 @@
 # Release notes
 
-## 2025082300
+## 2025082301
 
 1. 2025-08-23: improvement: #360: new class added to manage session-based
    users selection when merging users from web administration.
+2. 2025-08-23: improvement: #358: add "suspended" tag besides the
+   user detail on all pages (including user search, user review and logs).
+   Single log page now shows the full user detail, as in the rest of pages.
+3. 2025-08-23: fix: #358: users selection table showed always the user
+   detail of the user to remove. Now, it shows properly both users.
+   It was detected while working on the improvement of #358.
+
 
 ## 2025082200
 

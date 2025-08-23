@@ -104,11 +104,10 @@ class user_review_table extends html_table implements renderable
         } else {
             $extrafield = 'description';
         }
-        $suspendedstr = get_string('suspended');
+
         $columns = [
             'col_label' => '',
             'col_userid' => 'Id',
-            'col_suspended' => $suspendedstr,
             'col_username' => get_string('user'),
             'col_email' => get_string('email'),
             'col_extra' => get_string($extrafield),
@@ -125,18 +124,11 @@ class user_review_table extends html_table implements renderable
             $row = [array_shift($user)];
             $user = reset($user);
             if (empty($user)) {
-                $row = array_merge($row, array_fill(0, 5, ''));
+                $row = array_merge($row, array_fill(0, count($columns), ''));
             } else {
                 $spanclass = ($user->suspended) ? ('usersuspended') : ('');
-                $suspendedstrrow = ($user->suspended) ? $suspendedstr : '';
                 $row[] = html_writer::tag('span', $user->id, ['class' => $spanclass]);
-                $row[] = html_writer::tag('span', $suspendedstrrow, ['class' => $spanclass]);
-                $row[] = html_writer::tag(
-                    'span',
-                    $this->renderer->show_user($user->id, $this->olduser),
-                    ['class' => $spanclass],
-                );
-                ;
+                $row[] = $this->renderer->show_user($user->id, $user);
                 $row[] = html_writer::tag('span', $user->email, ['class' => $spanclass]);
                 $row[] = html_writer::tag('span', $user->$extrafield, ['class' => $spanclass]);
             }

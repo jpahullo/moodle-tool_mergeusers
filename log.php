@@ -39,6 +39,7 @@ require_capability('tool/mergeusers:viewlog', context_system::instance());
 admin_externalpage_setup('tool_mergeusers_viewlog');
 $id = required_param('id', PARAM_INT);
 
+/** @var \tool_mergeusers\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 $logger = new logger();
 
@@ -52,18 +53,20 @@ if (empty($log)) {
     );
 }
 
-$from = $DB->get_record('user', ['id' => $log->fromuserid], 'id, username');
+$from = $DB->get_record('user', ['id' => $log->fromuserid]);
 if (!$from) {
     $from = new stdClass();
     $from->id = $log->fromuserid;
     $from->username = get_string('deleted');
+    $from->deleted = 1;
 }
 
-$to = $DB->get_record('user', ['id' => $log->touserid], 'id, username');
+$to = $DB->get_record('user', ['id' => $log->touserid]);
 if (!$to) {
     $to = new stdClass();
     $to->id = $log->touserid;
     $to->username = get_string('deleted');
+    $to->deleted = 1;
 }
 
 echo $renderer->results_page($to, $from, $log->success, $log->log, $log->id);
