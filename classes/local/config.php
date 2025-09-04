@@ -90,7 +90,11 @@ class config {
      * @return config singleton instance.
      */
     public static function instance(): config {
-        if (is_null(self::$instance) || defined('PHPUNIT_TEST') || defined('BEHAT_SITE_RUNNING')) {
+        if (
+            is_null(self::$instance) ||
+            (defined('PHPUNIT_TEST') && PHPUNIT_TEST) ||
+            defined('BEHAT_SITE_RUNNING')
+        ) {
             self::$instance = new config();
         }
 
@@ -152,7 +156,7 @@ class config {
      * @return string
      */
     public function json_from_default_config(): string {
-        return jsonizer::to_json($this->defaultconfig);
+        return $this->defaultconfig->to_json();
     }
 
     /**
@@ -177,7 +181,7 @@ class config {
      * @return string
      */
     public function json_from_calculated_config(): string {
-        return jsonizer::to_json($this->config);
+        return $this->config->to_json();
     }
 
     /**

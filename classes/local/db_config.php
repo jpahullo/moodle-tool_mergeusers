@@ -64,7 +64,8 @@ class db_config {
      * @param array $settings initial list of database-related settings.
      */
     public function __construct(array $settings = []) {
-        $this->settings = $settings;
+        $this->settings = [];
+        $this->add_raw($settings);
     }
 
     /**
@@ -85,6 +86,11 @@ class db_config {
      */
     public function add_raw(array $settings): void {
         $this->settings = array_replace_recursive($settings, $this->settings);
+        foreach ($this->settings as $name => $value) {
+            if (!isset(self::$validkeys[$name])) {
+                unset($this->settings[$name]);
+            }
+        }
     }
 
     /**
@@ -101,14 +107,10 @@ class db_config {
      * Provides the value of the root setting name.
      *
      * @param string $name root setting name.
-     * @return mixed If $name is not a valid key, it will return null.
-     *  If the $name is not set yet, it will return null.
+     * @return mixed If $name is not a valid key or is not set yet, it will return null.
      *  Finally, when matches, it returns the given value.
      */
     public function __get(string $name): mixed {
-        if (!isset(self::$validkeys[$name])) {
-            return null;
-        }
         if (!isset($this->settings[$name])) {
             return null;
         }
@@ -123,12 +125,7 @@ class db_config {
      * @return bool true when there is no valid setting name set; false otherwise.
      */
     public function empty(): bool {
-        foreach (self::$validkeys as $name) {
-            if (isset($this->settings[$name])) {
-                return false;
-            }
-        }
-        return true;
+        return empty($this->settings);
     }
 
     /**
@@ -139,5 +136,14 @@ class db_config {
      * @return void
      */
     public function __set(string $name, mixed $value): void {
+    }
+
+    /**
+     * Tells the JSON representation of these settings.
+     *
+     * @return string the JSON representation of these settings.
+     */
+    public function to_json(): string {
+        return jsonizer::to_json($this->settings);
     }
 }

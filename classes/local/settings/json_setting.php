@@ -95,7 +95,7 @@ class json_setting extends admin_setting_configtextarea {
         }
 
         // Ensure that content is always human-readable.
-        if (empty($data)) {
+        if (empty($data) || $data == '{}') {
             // Allow administrators save this setting empty, to reset it without "Syntax error"s.
             $data = '{}';
         } else {

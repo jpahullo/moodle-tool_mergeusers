@@ -1,5 +1,10 @@
 # Release notes
 
+## 2025090400
+
+1. 2025-09-04: fix: #367: database settings tab did no show properly
+   the default nor calculated settings.
+
 ## 2025082301
 
 1. 2025-08-23: improvement: #360: new class added to manage session-based
