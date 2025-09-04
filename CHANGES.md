@@ -1,9 +1,11 @@
 # Release notes
 
-## 2025090400
+## 2025090401
 
 1. 2025-09-04: fix: #367: database settings tab did no show properly
    the default nor calculated settings.
+2. 2025-09-04: fix: #369: add PHP attributes to hook.
+
 
 ## 2025082301
 
