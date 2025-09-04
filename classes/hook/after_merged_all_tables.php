@@ -30,6 +30,8 @@
 namespace tool_mergeusers\hook;
 
 // phpcs:disable moodle.Commenting.MissingDocblock
+use core\attribute\label;
+use core\attribute\tags;
 
 /**
  * Hook to address operations after all tables have been merged.
@@ -43,6 +45,8 @@ namespace tool_mergeusers\hook;
  * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+#[label('Actions to do after all database tables are merged, and before events are triggered')]
+#[tags('tool_mergeusers', 'concluding_merge')]
 class after_merged_all_tables {
     /** @var array $logs list of logs where to add logs, if necessary. */
     private array $logs;
