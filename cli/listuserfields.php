@@ -45,8 +45,14 @@ $matchingbykeys = [];
 $nonmatching = [];
 $alluserrelatedcolumns = [];
 $alluserrelatedcolumnswithtable = [];
+$omittedtables = [];
 foreach ($tables as $table) {
     $columns = $DB->get_columns($table, false);
+    $schematable = $schema->getTable($table);
+    if (!$schematable) {
+        $omittedtables[$table] = $table;
+        continue;
+    }
     $tablekeys = $schema->getTable($table)->getKeys();
     $userrelatedbykeys = array_filter(
         array_map(
@@ -138,6 +144,21 @@ foreach ($alluserrelatedcolumns as $column => $appearances) {
         ),
         2,
     );
+}
+if (count($omittedtables) <= 0) {
+    $log->output('INFO: There were no omitted tables: your database tables and XML definition are consistent.', 1);
+} else {
+    $log->output(sprintf('INFO: Omitted tables (no XML definition found for %d tables):', count($omittedtables)), 1);
+    foreach ($omittedtables as $table) {
+        $log->output($table, 2);
+    }
+    $log->output('');
+    $log->output('Omitted tables can come for several reasons and they talk about your Moodle and database consistency:', 2);
+    $log->output('1. Uninstalled plugins, with kept database tables.', 3);
+    $log->output('2. Plugins without a proper install.xml definition.', 3);
+    $log->output('3. Manually created database tables, or other reasons.', 3);
+    $log->output('Recommendation: Double check these omitted tables to be sure they should exist and take the action ' .
+        'that fits better.', 1);
 }
 $log->finished();
 cli_writeln('End!');
