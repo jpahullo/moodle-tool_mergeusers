@@ -19,7 +19,6 @@ namespace tool_mergeusers;
 use advanced_testcase;
 use tool_mergeusers\local\last_merge;
 use tool_mergeusers\local\user_merger;
-use tool_mergeusers_renderer;
 
 /**
  * Testing last_merge API.

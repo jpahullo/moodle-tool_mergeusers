@@ -45,6 +45,8 @@ final class assign_test extends advanced_testcase {
      * has no.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign
+     * @group tool_mergeusers_reaggregate
+     * @group tool_mergeusers_regrade
      */
     public function test_merge_non_conflicting_assign_grades(): void {
         global $DB;
@@ -68,7 +70,27 @@ final class assign_test extends advanced_testcase {
         // Merge student 1 into student 0.
         $mut = new user_merger();
         // This merge already invokes the callback for regrading.
-        $mut->merge($student1->id, $student2->id);
+        [$success, $logs, $logid] = $mut->merge($student1->id, $student2->id);
+
+        // Check that logs contain regrading log lines.
+        $this->assertTrue($success);
+        $found = '';
+        foreach ($logs as $logline) {
+            $found = strstr($logline, 'Regraded grade item with id');
+            if (!empty($found)) {
+                break;
+            }
+        }
+        $this->assertNotEmpty($found);
+        // Check that there is no reaggregation of course completion.
+        $found = '';
+        foreach ($logs as $logline) {
+            $found = strstr($logline, 'Course completion reaggregation asked for no courses.');
+            if (!empty($found)) {
+                break;
+            }
+        }
+        $this->assertNotEmpty($found);
 
         // Student 0 should now have a grade of 75.00.
         $this->assertEquals(true, $assign->testable_is_graded($student1->id));

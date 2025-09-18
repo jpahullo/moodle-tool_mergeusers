@@ -25,6 +25,7 @@
 
 namespace tool_mergeusers\local\callbacks;
 
+use coding_exception;
 use dml_exception;
 use tool_mergeusers\hook\after_merged_all_tables;
 
@@ -43,22 +44,51 @@ class update_completion_after_merged_callback {
      * This makes Moodle core updating course completions for the user to keep.
      * Moodle internals updates the course's completion status in short.
      *
+     * This version of the course completion is inspired by the completionlib_test.php::test_aggregate_completions().
+     *
      * @param after_merged_all_tables $hook
      * @return void
      * @throws dml_exception
+     * @throws coding_exception
      */
     public static function update_completion(after_merged_all_tables $hook): void {
-        global $DB;
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/completionlib.php');
 
-        $DB->execute(
-            'UPDATE {course_completions}
-                    SET reaggregate = :now
-                  WHERE userid = :toid
-                    AND (timecompleted IS NULL OR timecompleted = 0)',
-            [
-                'now' => time(),
-                'toid' => $hook->toid,
-            ],
+        $now = time() - 2; // MDL-33320: for instant completions we need aggregate to work in a single run.
+        $params = [
+            'toid' => $hook->toid,
+            'notime' => 0,
+        ];
+        $courseids = $DB->get_fieldset_sql(
+            'SELECT course
+                  FROM {course_completions}
+                 WHERE userid = :toid
+                  AND (timecompleted IS NULL OR timecompleted = :notime)',
+            $params,
         );
+        $ncourses = count($courseids);
+        if ($ncourses <= 0) {
+            $hook->add_log('Course completion reaggregation asked for no courses.');
+            return;
+        }
+        // Look for courses to reaggregate course completion.
+        $cc = [
+            'userid' => $hook->toid,
+        ];
+        foreach ($courseids as $courseid) {
+            $cc['course'] = $courseid;
+            $ccompletion = new \completion_completion($cc);
+            $completion = $ccompletion->mark_inprogress($now);
+            // Just aggregate this course completion for this user.
+            aggregate_completions($completion);
+        }
+        // With this version of the updating process, the course completion reaggregation is included into the merge process.
+        $hook->add_log(sprintf(
+            'Course completion reaggregated for user %d and these %d courses: %s.',
+            $hook->toid,
+            $ncourses,
+            implode(',', $courseids),
+        ));
     }
 }

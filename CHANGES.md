@@ -1,5 +1,16 @@
 # Release notes
 
+## 2025092100
+
+1. 2025-09-21: improvement: #372: add output from last steps of regrading and reaggregation of course completions.
+   Also, reaggregation of course completion now happens inside the time of the merge process, and not after as before.
+
+
+## 2025091800
+
+1. 2025-09-18: fix: #371: listuserfields.php CLI scripts supports tables that does not exist on the XML database schema.
+
+
 ## 2025090401
 
 1. 2025-09-04: fix: #367: database settings tab did no show properly

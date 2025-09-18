@@ -90,7 +90,20 @@ class regrading_after_merged_callback {
             $activity->modname    = $iteminstance->itemmodule;
             $activity->cmidnumber = $cm->idnumber;
 
+            ob_start();
             grade_update_mod_grades($activity, $hook->toid);
+            $regradeoutput = ob_get_clean();
+            $hook->add_log(sprintf(
+                'Regraded grade item with id "%s" from module type "%s" and instance "%s" from course "%s".',
+                $iteminstance->id,
+                $iteminstance->itemmodule,
+                $iteminstance->iteminstance,
+                $iteminstance->courseid,
+            ));
+            if (!empty($regradeoutput)) {
+                // Convert potential HTML returned to HTML entities to prevent formatting errors on merge logs.
+                $hook->add_log(htmlspecialchars($regradeoutput));
+            }
         }
     }
 }
