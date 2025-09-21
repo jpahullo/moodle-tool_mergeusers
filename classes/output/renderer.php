@@ -136,7 +136,6 @@ class renderer extends plugin_renderer_base
                 $output .= $this->moodleform($mform);
                 // Render user select table if available.
                 if ($ust !== null) {
-                    $this->page->requires->js_init_call('M.tool_mergeusers.init_select_table', []);
                     $output .= $this->render_user_select_table($ust);
                 }
                 break;

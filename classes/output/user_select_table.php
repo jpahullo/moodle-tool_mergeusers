@@ -76,7 +76,6 @@ class user_select_table extends html_table implements renderable {
         $this->attributes['class'] = 'generaltable boxaligncenter';
 
         $columns = [
-            'col_reset' => get_string('reset'),
             'col_select_olduser' => get_string('olduser', 'tool_mergeusers'),
             'col_master_newuser' => get_string('newuser', 'tool_mergeusers'),
             'col_userid' => 'Id',
@@ -92,22 +91,25 @@ class user_select_table extends html_table implements renderable {
         foreach ($users as $userid => $user) {
             $row = [];
             $spanclass = ($user->suspended) ? ('usersuspended') : ('');
-            $row[] = html_writer::tag(
-                'a',
-                $reset,
+            $row[] = html_writer::empty_tag(
+                'input',
                 [
-                    'href' => "javascript:rbo=document.getElementById('olduser$userid'); " .
-                        "rbn=document.getElementById('newuser$userid'); " .
-                        "rbo.checked=false; rbn.checked=false; rbo.disabled=false; rbn.disabled=false;",
+                    'type' => 'radio',
+                    'name' => 'olduser',
+                    'value' => $userid,
+                    'id' => 'olduser' . $userid,
+                    'onClick' => "document.getElementsByName('selectedolduser')[0].value = this.value;",
                 ],
             );
             $row[] = html_writer::empty_tag(
                 'input',
-                ['type' => 'radio', 'name' => 'olduser', 'value' => $userid, 'id' => 'olduser' . $userid],
-            );
-            $row[] = html_writer::empty_tag(
-                'input',
-                ['type' => 'radio', 'name' => 'newuser', 'value' => $userid, 'id' => 'newuser' . $userid],
+                [
+                    'type' => 'radio',
+                    'name' => 'newuser',
+                    'value' => $userid,
+                    'id' => 'newuser' . $userid,
+                    'onClick' => "document.getElementsByName('selectednewuser')[0].value = this.value;",
+                ],
             );
             $row[] = html_writer::tag('span', $user->id, ['class' => $spanclass]);
             $row[] = $this->renderer->show_user($user->id, $user);

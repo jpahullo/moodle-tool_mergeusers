@@ -4,6 +4,7 @@
 
 1. 2025-09-21: improvement: #372: add output from last steps of regrading and reaggregation of course completions.
    Also, reaggregation of course completion now happens inside the time of the merge process, and not after as before.
+2. 2025-09-21: task: #362: remove YUI code. Simplified javascript code to the maximum.
 
 
 ## 2025091800
