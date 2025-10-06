@@ -168,6 +168,13 @@ if ($ADMIN->fulltree) {
         1
     ));
 
+    $generalsettings->add(new admin_setting_configcheckbox(
+        'tool_mergeusers/enableadhocmerge',
+        get_string('enableadhocmerge', 'tool_mergeusers'),
+        get_string('enableadhocmerge_desc', 'tool_mergeusers'),
+        0
+    ));
+
     $fields = tool_mergeusers_inform_about_pending_user_profile_fields();
     if ($fields->exists) {
         $generalsettings->add(new admin_setting_description(
