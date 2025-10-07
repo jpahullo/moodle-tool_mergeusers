@@ -17,6 +17,14 @@ plugin table is missing. Thanks to @terryaulenbach for reporting the issue.
 2. fix: #405: remove execution permissions for db/install.xml and db/upgrade.php.
 3. fix: #399: fix suspended image path. Thanks @matheus1002 for reporting.
 
+## 2025102200
+
+1. 2025-10-07: improvement: #378: add support for asynchronous user merging via adhoc task.
+   1. New adhoc task `merge_users_task` allows queuing merge operations to run during cron execution.
+   2. New setting `enableadhocmerge` to enable/disable adhoc task-based merging from web interface.
+   3. When adhoc merge is enabled, web-based merges are queued and processed asynchronously,
+      reducing timeout risks for large merge operations.
+
 ## 2025102100
 
 1. bug: #379: remove table lines for >= Moodle 5.0 and Bootstrap 5.0. Thanks @lucaboesch.
