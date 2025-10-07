@@ -1,5 +1,13 @@
 # Release notes
 
+## 2025100700
+
+1. 2025-10-07: improvement: add support for asynchronous user merging via adhoc task.
+   - New adhoc task `merge_users_task` allows queuing merge operations to run during cron execution.
+   - New setting `enableadhocmerge` to enable/disable adhoc task-based merging from web interface.
+   - When adhoc merge is enabled, web-based merges are queued and processed asynchronously,
+     reducing timeout risks for large merge operations.
+
 ## 2025092100
 
 1. 2025-09-21: improvement: #372: add output from last steps of regrading and reaggregation of course completions.
