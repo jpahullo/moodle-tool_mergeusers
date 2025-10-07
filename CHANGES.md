@@ -29,15 +29,18 @@ plugin table is missing. Thanks to @terryaulenbach for reporting the issue.
 
 1. bug: #379: remove table lines for >= Moodle 5.0 and Bootstrap 5.0. Thanks @lucaboesch.
 
+
 ## 2025101701
 
 1. task: #383: Moodle 5.1 compatible.
+
 
 ## 2025101700
 
 1. fix: #381: add all user-related compound indexes into default plugin settings.
    1. default_db_config.php updated manually with structured section about compound indexes.
    2. listuserfields.php CLI script improved to list all user-related compound indexes. This script must help administrators to identify other compound indexes that affect their Moodle instances.
+
 
 ## 2025101400
 
