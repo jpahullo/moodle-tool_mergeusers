@@ -71,6 +71,7 @@ $string['mergeusers:mergeusers'] = 'Merge user accounts';
 $string['mergeusers:view'] = 'Merge User Accounts';
 $string['mergeusers:viewlog'] = 'View merge logs';
 $string['mergeusers_confirm'] = 'After confirming the merge process will start. <br /><strong>This will not be reversible!</strong> Are you sure you want to continue?';
+$string['mergeusersqueued'] = 'Merge between {$a->fromuser} and {$a->touser} has been queued. It will run during the next cron execution.';
 $string['mergeusersadvanced'] = '<strong>Direct user input</strong>';
 $string['mergeusersadvanced_help'] = 'Here you can enter the below fields if you know exactly what users that you want to merge.<br /><br /> Click the "search" button in order to verify/confirm that the input entered are in fact users.';
 $string['merging'] = 'Merged';
