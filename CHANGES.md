@@ -1,17 +1,29 @@
 # Release notes
 
+## 2025102101
+
+1. 2025-10-07: improvement: add support for asynchronous user merging via adhoc task.
+   - New adhoc task `merge_users_task` allows queuing merge operations to run during cron execution.
+   - New setting `enableadhocmerge` to enable/disable adhoc task-based merging from web interface.
+   - When adhoc merge is enabled, web-based merges are queued and processed asynchronously,
+     reducing timeout risks for large merge operations.
+
+
 ## 2025102100
 
 1. 2025-10-21: bug: #379: remove table lines for >= Moodle 5.0 and Bootstrap 5.0. Thanks @lucaboesch.
+
 
 ## 2025101701
 
 1. 2025-10-17: task: #383: Moodle 5.1 compatible.
 
+
 ## 2025101700
 1. 2025-10-17: fix: #381: add all user-related compound indexes into default plugin settings.
    1. default_db_config.php updated manually with structured section about compound indexes.
    2. listuserfields.php CLI script improved to list all user-related compound indexes. This script must help administrators to identify other compound indexes that affect their Moodle instances.
+
 
 ## 2025101400
 1. 2025-10-14: fix: #382: ensure grade_grades table is merged properly. Thanks Daniel Tomé.
