@@ -87,6 +87,10 @@ final class merge_users_task extends adhoc_task {
             $merger = new user_merger();
             [$success] = $merger->merge($toid, $fromid, $logid);
 
+            // Get user records for notification.
+            $touser = $DB->get_record('user', ['id' => $toid]);
+            $fromuser = $DB->get_record('user', ['id' => $fromid]);
+
             if ($success) {
                 mtrace("tool_mergeusers: merged user $fromid into $toid.");
                 $this->send_notification($touser, $fromuser, true);
