@@ -369,6 +369,23 @@ class renderer extends plugin_renderer_base {
             $rows = [];
             foreach ($logs as $i => $log) {
                 $row = new html_table_row();
+
+                // Determine status display.
+                if (!empty($log->status)) {
+                    $statusbadgeclass = match ($log->status) {
+                        'pending' => 'badge-warning',
+                        'in_progress' => 'badge-info',
+                        'success' => 'badge-success',
+                        'error' => 'badge-danger',
+                        default => 'badge-secondary',
+                    };
+                    $statusstring = get_string('status:' . $log->status, 'tool_mergeusers');
+                    $statusdisplay = html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
+                } else {
+                    // Legacy logs without status field - show based on success field.
+                    $statusdisplay = $flags[$log->success];
+                }
+
                 $row->cells = [
                     ($log->from)
                         ? $this->show_user($log->fromuserid, $log->from)
@@ -380,7 +397,7 @@ class renderer extends plugin_renderer_base {
                         ? $this->show_user($log->mergedbyuserid, $log->mergedby)
                         : get_string('nomergedby', 'tool_mergeusers'),
                     userdate($log->timemodified, get_string('strftimedaydatetime', 'langconfig')),
-                    $flags[$log->success],
+                    $statusdisplay,
                     html_writer::link(
                         new moodle_url(
                             '/' . $CFG->admin . '/tool/mergeusers/log.php',

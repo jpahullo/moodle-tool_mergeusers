@@ -13,6 +13,7 @@
         <FIELD NAME="mergedbyuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time stamp when the merging action took place."/>
         <FIELD NAME="log" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="List of actions performed if success, or errors on merging failure."/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Status of the merge: pending, in_progress, success, error. NULL for legacy logs."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -22,6 +23,7 @@
         <INDEX NAME="mdl_toolmerg_fru_ix" UNIQUE="false" FIELDS="fromuserid" COMMENT="index for fromuserid field."/>
         <INDEX NAME="mdl_toolmerg_suc_ix" UNIQUE="false" FIELDS="success" COMMENT="Was the merging action ok?"/>
         <INDEX NAME="mdl_toolmerg_tfs_ix" UNIQUE="false" FIELDS="touserid, fromuserid, success" COMMENT="Index enabling fast looking for merging actions for given pair of users."/>
+        <INDEX NAME="mdl_toolmerg_sta_ix" UNIQUE="false" FIELDS="status" COMMENT="Index for filtering by merge status."/>
       </INDEXES>
     </TABLE>
   </TABLES>

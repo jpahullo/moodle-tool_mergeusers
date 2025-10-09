@@ -60,9 +60,16 @@ final class merge_users_task extends adhoc_task {
         $data = $this->get_custom_data();
         $toid = isset($data->toid) ? (int) $data->toid : 0;
         $fromid = isset($data->fromid) ? (int) $data->fromid : 0;
+        $logid = isset($data->logid) ? (int) $data->logid : 0;
 
         if (empty($toid) || empty($fromid)) {
             mtrace('tool_mergeusers: merge_users_task missing user identifiers, skipping execution.');
+
+            return;
+        }
+
+        if (empty($logid)) {
+            mtrace('tool_mergeusers: merge_users_task missing log id, skipping execution.');
 
             return;
         }
@@ -71,9 +78,14 @@ final class merge_users_task extends adhoc_task {
         $touser = $DB->get_record('user', ['id' => $toid]);
         $fromuser = $DB->get_record('user', ['id' => $fromid]);
 
+        $logger = new \tool_mergeusers\local\logger();
+
+        // Mark as in progress.
+        $logger->update_log_status($logid, 'in_progress', false, []);
+
         try {
             $merger = new user_merger();
-            [$success] = $merger->merge($toid, $fromid);
+            [$success] = $merger->merge($toid, $fromid, $logid);
 
             if ($success) {
                 mtrace("tool_mergeusers: merged user $fromid into $toid.");
@@ -86,6 +98,9 @@ final class merge_users_task extends adhoc_task {
             $this->send_notification($touser, $fromuser, false);
         } catch (Throwable $e) {
             mtrace('tool_mergeusers: merge_users_task failed - ' . $e->getMessage());
+
+            // Update log with error status.
+            $logger->update_log_status($logid, 'error', false, ['Exception: ' . $e->getMessage()]);
 
             if ($touser && $fromuser) {
                 $this->send_notification($touser, $fromuser, false);

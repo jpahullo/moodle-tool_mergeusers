@@ -79,5 +79,27 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
     }
 
+    if ($oldversion < 2025102202) {
+
+        // Define field status to be added to tool_mergeusers.
+        $table = new xmldb_table('tool_mergeusers');
+        $field = new xmldb_field('status', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'log');
+
+        // Conditionally launch add field status.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $index = new xmldb_index('mdl_toolmerg_sta_ix', XMLDB_INDEX_NOTUNIQUE, ['status']);
+
+        // Conditionally launch add index mdl_toolmerg_sta_ix.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2025102202, 'tool', 'mergeusers');
+    }
+
     return true;
 }

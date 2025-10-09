@@ -200,6 +200,7 @@ final class user_merger {
      *
      * @param int $toid The user inheriting the data
      * @param int $fromid The user being replaced
+     * @param int|null $logid Optional existing log id to update instead of creating new log
      * @return array An array(bool, array, int) having the following cases: if array(true, log, id)
      * users' merging was successful and log contains all actions done; if array(false, errors, id)
      * means users' merging was aborted and errors contain the list of errors.
@@ -208,16 +209,24 @@ final class user_merger {
      * @throws coding_exception
      * @throws moodle_exception
      */
-    public function merge(int $toid, int $fromid): array {
+    public function merge(int $toid, int $fromid, ?int $logid = null): array {
         [$success, $logs] = $this->merge_users($toid, $fromid);
 
         if ($success) {
             $eventname = user_merged_success::class;
+            $status = 'success';
         } else {
             $eventname = user_merged_failure::class;
+            $status = 'error';
         }
 
-        $logid = $this->logger->log($toid, $fromid, $success, $logs);
+        if ($logid !== null) {
+            // Update existing log.
+            $this->logger->update_log_status($logid, $status, $success, $logs);
+        } else {
+            // Create new log.
+            $logid = $this->logger->log($toid, $fromid, $success, $logs, $status);
+        }
 
         $event = $eventname::create([
             'context' => context_system::instance(),

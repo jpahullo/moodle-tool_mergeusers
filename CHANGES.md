@@ -17,7 +17,7 @@ plugin table is missing. Thanks to @terryaulenbach for reporting the issue.
 2. fix: #405: remove execution permissions for db/install.xml and db/upgrade.php.
 3. fix: #399: fix suspended image path. Thanks @matheus1002 for reporting.
 
-## 2025102201
+## 2025102202
 
 1. 2025-10-07: improvement: #378: add support for asynchronous user merging via adhoc task.
    1. New adhoc task `merge_users_task` allows queuing merge operations to run during cron execution.
