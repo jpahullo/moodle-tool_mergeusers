@@ -134,10 +134,20 @@ if (!empty($option)) {
             if ($adhocenabled) {
                 global $USER;
 
+                // Create pending log entry first.
+                $logger = new \tool_mergeusers\local\logger();
+                $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id);
+
+                if (!$logid) {
+                    $renderer->mu_error(get_string('error_log_creation_failed', 'tool_mergeusers'));
+                    break;
+                }
+
                 $task = new merge_users_task();
                 $task->set_custom_data([
                     'toid' => $touser->id,
                     'fromid' => $fromuser->id,
+                    'logid' => $logid,
                 ]);
                 if (!empty($USER->id)) {
                     $task->set_userid($USER->id);

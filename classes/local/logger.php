@@ -57,7 +57,7 @@ final class logger {
      * @return bool|int false when could not insert the record; the log id when success.
      * @throws moodle_exception when log record cannot be inserted.
      */
-    public function log(int $touserid, int $fromuserid, bool $success, array $log): bool|int {
+    public function log(int $touserid, int $fromuserid, bool $success, array $log, ?string $status = null): bool|int {
         global $DB, $USER;
 
         $record = new stdClass();
@@ -65,8 +65,14 @@ final class logger {
         $record->fromuserid = $fromuserid;
         $record->timemodified = time();
         $record->mergedbyuserid = $USER->id;
-        $record->success = (int)$success;
+        $record->success = (int) $success;
         $record->log = json_encode($log);
+
+        if ($status === null) {
+            $record->status = $success ? 'success' : 'error';
+        } else {
+            $record->status = $status;
+        }
 
         try {
             return $DB->insert_record('tool_mergeusers', $record, true);
@@ -84,6 +90,69 @@ final class logger {
             }
         }
         return false;
+    }
+
+    /**
+     * Creates a pending log entry for a merge operation.
+     *
+     * @param int $touserid       user.id where all data from $fromuserid will be merged into.
+     * @param int $fromuserid     user.id moving all data into $touserid.
+     * @param int $mergedbyuserid user.id of the user initiating the merge.
+     *
+     * @return bool|int false when could not insert the record; the log id when success.
+     */
+    public function create_pending_log(int $touserid, int $fromuserid, int $mergedbyuserid): bool|int {
+        global $DB;
+
+        $record = new stdClass();
+        $record->touserid = $touserid;
+        $record->fromuserid = $fromuserid;
+        $record->timemodified = time();
+        $record->mergedbyuserid = $mergedbyuserid;
+        $record->success = 0;
+        $record->log = json_encode([]);
+        $record->status = 'pending';
+
+        try {
+            return $DB->insert_record('tool_mergeusers', $record, true);
+        } catch (Exception $e) {
+            $msg = __METHOD__ . ' : Cannot insert pending log record. Reason: "' . $DB->get_last_error() .
+                '". Message: "' . $e->getMessage() . '". Trace' . $e->getTraceAsString();
+            if (CLI_SCRIPT) {
+                cli_error($msg);
+            } else {
+                throw new moodle_exception(
+                    $msg,
+                    'tool_mergeusers',
+                    new moodle_url('/admin/tool/mergeusers/index.php'),
+                );
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Updates an existing log entry with status and log content.
+     *
+     * @param int $logid     the id of the log entry to update.
+     * @param string $status the status: pending, in_progress, success, error.
+     * @param bool $success  true if merging action was ok; false otherwise.
+     * @param array $log     list of actions performed for a successful merging; or errors on failure.
+     *
+     * @return bool true on success, false otherwise.
+     */
+    public function update_log_status(int $logid, string $status, bool $success, array $log): bool {
+        global $DB;
+
+        $record = new stdClass();
+        $record->id = $logid;
+        $record->status = $status;
+        $record->success = (int) $success;
+        $record->log = json_encode($log);
+        $record->timemodified = time();
+
+        return $DB->update_record('tool_mergeusers', $record);
     }
 
     /**
@@ -108,7 +177,7 @@ final class logger {
             'tool_mergeusers',
             $filter,
             $sort,
-            'id, touserid, fromuserid, mergedbyuserid, success, timemodified',
+            'id, touserid, fromuserid, mergedbyuserid, success, timemodified, status',
             $limitfrom,
             $limitnum,
         );
