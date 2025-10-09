@@ -67,13 +67,13 @@ final class merge_users_task extends adhoc_task {
             return;
         }
 
+        // Get user records for notification.
+        $touser = $DB->get_record('user', ['id' => $toid]);
+        $fromuser = $DB->get_record('user', ['id' => $fromid]);
+
         try {
             $merger = new user_merger();
             [$success] = $merger->merge($toid, $fromid);
-
-            // Get user records for notification.
-            $touser = $DB->get_record('user', ['id' => $toid]);
-            $fromuser = $DB->get_record('user', ['id' => $fromid]);
 
             if ($success) {
                 mtrace("tool_mergeusers: merged user $fromid into $toid.");
@@ -86,7 +86,12 @@ final class merge_users_task extends adhoc_task {
             $this->send_notification($touser, $fromuser, false);
         } catch (Throwable $e) {
             mtrace('tool_mergeusers: merge_users_task failed - ' . $e->getMessage());
-            throw $e;
+
+            if ($touser && $fromuser) {
+                $this->send_notification($touser, $fromuser, false);
+            }
+
+            // Do not rethrow - adhoc tasks should always complete to prevent infinite requeueing.
         }
     }
 
