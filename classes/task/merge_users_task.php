@@ -27,6 +27,7 @@
 namespace tool_mergeusers\task;
 
 use core\task\adhoc_task;
+use core_user;
 use Throwable;
 use tool_mergeusers\local\user_merger;
 
@@ -54,6 +55,8 @@ final class merge_users_task extends adhoc_task {
      * Executes the merge.
      */
     public function execute(): void {
+        global $DB;
+
         $data = $this->get_custom_data();
         $toid = isset($data->toid) ? (int) $data->toid : 0;
         $fromid = isset($data->fromid) ? (int) $data->fromid : 0;
@@ -68,17 +71,72 @@ final class merge_users_task extends adhoc_task {
             $merger = new user_merger();
             [$success] = $merger->merge($toid, $fromid);
 
+            // Get user records for notification.
+            $touser = $DB->get_record('user', ['id' => $toid]);
+            $fromuser = $DB->get_record('user', ['id' => $fromid]);
+
             if ($success) {
                 mtrace("tool_mergeusers: merged user $fromid into $toid.");
+                $this->send_notification($touser, $fromuser, true);
 
                 return;
             }
 
             mtrace("tool_mergeusers: merge $fromid -> $toid completed with errors. Review merge logs for details.");
+            $this->send_notification($touser, $fromuser, false);
         } catch (Throwable $e) {
             mtrace('tool_mergeusers: merge_users_task failed - ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Send notification to the user who initiated the merge.
+     *
+     * @param object $touser   The user to keep.
+     * @param object $fromuser The user to remove.
+     * @param bool $success    Whether the merge was successful.
+     */
+    private function send_notification(object $touser, object $fromuser, bool $success): void {
+        $userid = $this->get_userid();
+
+        if (empty($userid)) {
+            return;
+        }
+
+        $user = core_user::get_user($userid);
+        if (!$user) {
+            return;
+        }
+
+        $message = new \core\message\message();
+        $message->component = 'tool_mergeusers';
+        $message->name = 'mergeusers_completion';
+        $message->userfrom = core_user::get_noreply_user();
+        $message->userto = $user;
+        $message->notification = 1;
+
+        $messagedata = new \stdClass();
+        $messagedata->fromuser = fullname($fromuser);
+        $messagedata->touser = fullname($touser);
+        $messagedata->fromuserid = $fromuser->id;
+        $messagedata->touserid = $touser->id;
+
+        if ($success) {
+            $message->subject = get_string('message:mergeusers_success_subject', 'tool_mergeusers');
+            $message->fullmessage = get_string('message:mergeusers_success_body', 'tool_mergeusers', $messagedata);
+            $message->fullmessageformat = FORMAT_PLAIN;
+            $message->fullmessagehtml = get_string('message:mergeusers_success_body', 'tool_mergeusers', $messagedata);
+            $message->smallmessage = get_string('message:mergeusers_success_subject', 'tool_mergeusers');
+        } else {
+            $message->subject = get_string('message:mergeusers_error_subject', 'tool_mergeusers');
+            $message->fullmessage = get_string('message:mergeusers_error_body', 'tool_mergeusers', $messagedata);
+            $message->fullmessageformat = FORMAT_PLAIN;
+            $message->fullmessagehtml = get_string('message:mergeusers_error_body', 'tool_mergeusers', $messagedata);
+            $message->smallmessage = get_string('message:mergeusers_error_subject', 'tool_mergeusers');
+        }
+
+        message_send($message);
     }
 
 }
