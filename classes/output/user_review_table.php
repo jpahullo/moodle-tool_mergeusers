@@ -48,8 +48,7 @@ use tool_mergeusers\local\selected_users_to_merge;
  * @copyright Univeristy of Wisconsin - Madison
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class user_review_table extends html_table implements renderable
-{
+class user_review_table extends html_table implements renderable {
     /** @var stdClass $olduser The olduser db object */
     protected stdClass $olduser;
 

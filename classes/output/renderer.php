@@ -55,8 +55,7 @@ require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/mergeusers/lib.php');
  * @copyright 2013 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class renderer extends plugin_renderer_base
-{
+class renderer extends plugin_renderer_base {
     /** On index page, show only the search form. */
     const INDEX_PAGE_SEARCH_STEP = 1;
     /** On index page, show both search and select forms. */

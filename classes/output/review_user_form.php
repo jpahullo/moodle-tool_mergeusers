@@ -49,8 +49,7 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright Univeristy of Wisconsin - Madison
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class review_user_form extends moodleform
-{
+class review_user_form extends moodleform {
     /** @var user_review_table Table to select users. */
     protected user_review_table $urt;
     /** @var renderer_base renderer */
