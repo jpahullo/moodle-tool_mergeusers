@@ -23,10 +23,10 @@ ifndef docker-with-xdebug:
 docker-with-xdebug := docker exec -e XDEBUG_SESSION=1 -it $(container_name)
 endif
 ifndef phpcs:
-phpcs := $(docker) local/codechecker/vendor/bin/phpcs
+phpcs := $(docker) php local/codechecker/vendor/bin/phpcs
 endif
 ifndef phpcbf:
-phpcbf := $(docker) local/codechecker/vendor/bin/phpcbf
+phpcbf := $(docker) php local/codechecker/vendor/bin/phpcbf
 endif
 
 .PHONY: start
