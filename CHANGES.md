@@ -1,5 +1,12 @@
 # Release notes
 
+## 2025101400
+1. 2025-10-14: fix: #382: ensure grade_grades table is merged properly. Thanks Daniel Tomé.
+   1. Added tests for the new grade_grades table merger.
+   2. Improved some existing tests.
+   3. Improve Makefile to let run phpcs/phpcbf more easily.
+
+
 ## 2025092100
 
 1. 2025-09-21: improvement: #372: add output from last steps of regrading and reaggregation of course completions.
@@ -48,11 +55,11 @@
 When upgrading to this version, you have to choose one of these paths:
 
 1. **In case you have local plugin customizations:** you must check twice
-   the new plugin structure since there has been a major refactor 
-   of the whole plugin. The `lib/` directory was removed, and 
+   the new plugin structure since there has been a major refactor
+   of the whole plugin. The `lib/` directory was removed, and
    most of the plugin classes were moved inside the `classes/` directory
    for a better code organization and with the benefit of autoloading.
-   Also, we removed the vast majority of functions from the `lib.php`, 
+   Also, we removed the vast majority of functions from the `lib.php`,
    leaving there only the necessary Moodle callbacks.
    Update your local customizations appropriately according to new
    classes and file structure.
@@ -74,9 +81,9 @@ When upgrading to this version, you have to choose one of these paths:
       and table mergers processed the merge with success till now.
    2. The callbacks for this hook are meant to process any kind of operations
       from Moodle internals or plugin specific tasks, that are transversal,
-      (operations not specific for a single table) or any kind of 
+      (operations not specific for a single table) or any kind of
       aggregation operation, not updated by the table mergers.
-   3. To provide you an example, we have moved the regrading of the users and 
+   3. To provide you an example, we have moved the regrading of the users and
       the course recompletions into callbacks for this hook.
    4. We think this hook will help Moodle and plugin developers to adjust the
       merge users tool to better fit any Moodle instance (with a variable
@@ -90,7 +97,7 @@ Moodle core (subsystems, and so) and plugins really know how user's
 information is managed. So, their maintainers have the full knowledge
 and they can provide callbacks for both hooks:
 1. Callbacks for `add_settings_before_merging` hook may help providing specific
- database-related settings: mainly table mergers (setting `tablemergers`), 
+ database-related settings: mainly table mergers (setting `tablemergers`),
  compound indexes (setting `compoundindexes`) or user-related table columns
  (setting `userfieldnames`).
 2. Callbacks for `after_merged_all_tables` hook may help providing specific
@@ -100,7 +107,7 @@ and they can provide callbacks for both hooks:
 **Just as a clarification:** The inclusion of the hooks does not alter the
 way of using this plugin at all. It will behave as it did.
 
-However, these two hooks provide you as a developer and maintainer of your 
+However, these two hooks provide you as a developer and maintainer of your
 plugin or Moodle instance powerful tools to customize the behaviour of the merge,
 just placing the necessary callbacks and related stuff in your own
 code, to ensure merge users is processed properly.
@@ -110,18 +117,18 @@ code, to ensure merge users is processed properly.
 1. 2025-08-18: improvement: #348: added hook to load database-related settings.
    1. This is though to help Moodle and plugin developers to adjust their code to help
       this plugin merge users properly.
-   2. The settings that are loaded by this hook are those populated on the old 
+   2. The settings that are loaded by this hook are those populated on the old
       `config/config.php` and `config/config.local.php` files. These files are not supported any more.
    3. The content of the old `config/config.php` is now placed on `classes/local/default_db_config.php`.
       This must help this plugin maintainers to keep in a single place the default behaviour.
    4. Added tests to ensure the database-related settings are kept properly.
    5. Priority of the settings (more priority settings are kept, in front of subsequent settings):
-      1. Custom admin setting: the set of settings with the highest priority. 
+      1. Custom admin setting: the set of settings with the highest priority.
          This must let administrators adjusting plugin behaviour at any time.
       2. Hook settings: settings populated from this hook's callbacks are the second set of
          settings in priority.
       3. Default settings: the plugin's default settings are kept as with the lowest priority.
-         Any existing setting from hooks and custom settings will replace default ones. 
+         Any existing setting from hooks and custom settings will replace default ones.
 
 ## 2025081700
 
@@ -134,7 +141,7 @@ code, to ensure merge users is processed properly.
 
 ## 2025081603
 
-1. 2025-0816: improvement: #244: allow resetting web user selection. Unified search and review tables. 
+1. 2025-0816: improvement: #244: allow resetting web user selection. Unified search and review tables.
  Added extra column on search table to show whether a user is already suspended (probably already merged).
 2. 2025-08-16: improvement: #345: move config.local.php into a new admin setting, in JSON format, for being human-readable.
    1. Also, consider that setting with name `alwaysRollback` was renamed to `alwaysrollback` to unify the case insensitiveness
@@ -143,13 +150,13 @@ code, to ensure merge users is processed properly.
 ### UPGRADING
 
 **Recommendation when upgrading:** Keep your `config/config.local.php` in place. It will help
-updating the value of the new admin setting  `tool_mergeusers/customdbsettings` **automatically**, 
-without the need to convert your old `config/config.local.php` to JSON. 
+updating the value of the new admin setting  `tool_mergeusers/customdbsettings` **automatically**,
+without the need to convert your old `config/config.local.php` to JSON.
 But, it is only a recommendation.
 
-Otherwise, you will have to update that admin setting manually with the content of your previous 
-`config/config.local.php` on the new admin setting. To help you, you can use the 
-`tool_mergeusers\local\jsonizer::to_json($customsettings)` with an array with all your 
+Otherwise, you will have to update that admin setting manually with the content of your previous
+`config/config.local.php` on the new admin setting. To help you, you can use the
+`tool_mergeusers\local\jsonizer::to_json($customsettings)` with an array with all your
 `$customsettings`, and it will provide you the JSON content to place.
 
 If you did not have any customization or file on `config/config.local.php`, you have to do nothing
@@ -208,7 +215,7 @@ this new API.
 
 ## 2025020502
 
-1. 2025-02-05 #295 - fix: remove deprecation warning on CLIGathering, related to Iterator. Thanks to @CatSema. 
+1. 2025-02-05 #295 - fix: remove deprecation warning on CLIGathering, related to Iterator. Thanks to @CatSema.
 
 ## 2025020501
 
@@ -234,10 +241,10 @@ this new API.
 2. 2025-01-22 #292 - Bump plugin version and requires Moodle 4.5 onwards.
    1. CI passes on green, as before, for PHP 8.1, 8.2 and 8.3 only for core MOODLE_405_STABLE.
    2. version.php updated.
-   3. Improve type detection on IDE. 
+   3. Improve type detection on IDE.
    4. Uses new trait on the assign_test class.
 3. 2025-01-17 #291 - Make web administration work on merge users.
-   1. Removed lines requiring "lib/outputcomponents.php" from two files. 
+   1. Removed lines requiring "lib/outputcomponents.php" from two files.
 
 ## 2024060300
 
