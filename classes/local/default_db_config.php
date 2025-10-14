@@ -29,6 +29,7 @@ use tool_mergeusers\local\cli\cli_gathering;
 use tool_mergeusers\local\merger\assign_submission_table_merger;
 use tool_mergeusers\local\merger\generic_table_merger;
 use tool_mergeusers\local\merger\quiz_attempts_table_merger;
+use tool_mergeusers\local\merger\grade_grades_table_merger;
 
 /**
  * Default database-related configuration.
@@ -197,6 +198,7 @@ class default_db_config {
             'default' => generic_table_merger::class,
             'quiz_attempts' => quiz_attempts_table_merger::class,
             'assign_submission' => assign_submission_table_merger::class,
+            'grade_grades' => grade_grades_table_merger::class,
         ],
 
         'alwaysrollback' => false,
