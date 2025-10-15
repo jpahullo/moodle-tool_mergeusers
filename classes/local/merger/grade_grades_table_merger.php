@@ -79,17 +79,24 @@ class grade_grades_table_merger extends generic_table_merger {
         $gradeitemtoidismanual = $this->grade_item_is_manual($result[$conflictingrecords[$data['toid']]]->itemtype);
         $gradeitemfromidismanual = $this->grade_item_is_manual($result[$conflictingrecords[$data['fromid']]]->itemtype);
 
+        $useridtoremove = $this->get_user_id_to_delete_on_conflicts($data['toid'], $data['fromid']);
+        $useridtokeep = $this->get_user_id_to_keep_on_conflicts($data['toid'], $data['fromid']);
+        // Process non-manual grade items.
         if (!$gradeitemtoidismanual && !$gradeitemfromidismanual) {
-            $idstoremove[$conflictingrecords[$data['fromid']]] = $conflictingrecords[$data['fromid']];
+            $idstoremove[$conflictingrecords[$useridtoremove]] = $conflictingrecords[$useridtoremove];
             return;
         }
 
-        $finalgradetoid = $result[$conflictingrecords[$data['toid']]]->finalgrade;
+        // Process manual grade items.
+        $finalgradetokeep = $result[$conflictingrecords[$useridtokeep]]->finalgrade;
 
-        if ($finalgradetoid != null) {
-            $idstoremove[$conflictingrecords[$data['fromid']]] = $conflictingrecords[$data['fromid']];
+        if ($finalgradetokeep != null) {
+            // Whenever there is a grade for the user to keep, we keep it.
+            $idstoremove[$conflictingrecords[$useridtoremove]] = $conflictingrecords[$useridtoremove];
         } else {
-            $idstoremove[$conflictingrecords[$data['toid']]] = $conflictingrecords[$data['toid']];
+            // Otherwise, we keep the grade from the user to remove.
+            // Both grades can be null, in which case we would have to delete always a record.
+            $idstoremove[$conflictingrecords[$useridtokeep]] = $conflictingrecords[$useridtokeep];
         }
     }
 

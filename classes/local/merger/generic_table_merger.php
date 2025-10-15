@@ -408,8 +408,20 @@ class generic_table_merger implements table_merger {
      * @param int $fromid user.id from user to remove.
      * @return int user.id from which records have to be deleted.
      */
-    private function get_user_id_to_delete_on_conflicts(int $toid, int $fromid): int {
+    protected function get_user_id_to_delete_on_conflicts(int $toid, int $fromid): int {
         return $this->newidtomaintain ? $fromid : $toid;
+    }
+
+    /**
+     * Informs the user.id from which records have to be kept when conflicting
+     * records arises.
+     *
+     * @param int $toid user.id from user to keep.
+     * @param int $fromid user.id from user to remove.
+     * @return int user.id from which records have to be kept.
+     */
+    protected function get_user_id_to_keep_on_conflicts(int $toid, int $fromid): int {
+        return $this->newidtomaintain ? $toid : $fromid;
     }
 
     /**
