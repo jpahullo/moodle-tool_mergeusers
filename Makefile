@@ -40,11 +40,11 @@ stop:
 .PHONY: pass-tests
 pass-tests: options =
 pass-tests:
-	$(docker) vendor/bin/phpunit -c admin/tool/mergeusers --testdox $(options)
+	$(docker) php vendor/bin/phpunit -c admin/tool/mergeusers --testdox $(options)
 
 .PHONY: pass-tests-with-xdebug
 pass-tests-with-xdebug:
-	$(docker-with-xdebug) vendor/bin/phpunit -c admin/tool/mergeusers --testdox $(options)
+	$(docker-with-xdebug) php vendor/bin/phpunit -c admin/tool/mergeusers --testdox $(options)
 
 .PHONY: build-phpunit-xml
 build-phpunit-xml:
