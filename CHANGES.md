@@ -1,5 +1,10 @@
 # Release notes
 
+## 2025101700
+1. 2025-10-17: fix: #381: add all user-related compound indexes into default plugin settings.
+   1. default_db_config.php updated manually with structured section about compound indexes.
+   2. listuserfields.php CLI script improved to list all user-related compound indexes. This script must help administrators to identify other compound indexes that affect their Moodle instances.
+
 ## 2025101400
 1. 2025-10-14: fix: #382: ensure grade_grades table is merged properly. Thanks Daniel Tomé.
    1. Added tests for the new grade_grades table merger.
