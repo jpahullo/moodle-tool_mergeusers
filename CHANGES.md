@@ -1,5 +1,9 @@
 # Release notes
 
+## 2025101701
+
+1. 2025-10-17: task: #383: Moodle 5.1 compatible.
+
 ## 2025101700
 1. 2025-10-17: fix: #381: add all user-related compound indexes into default plugin settings.
    1. default_db_config.php updated manually with structured section about compound indexes.
