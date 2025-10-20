@@ -113,7 +113,7 @@ class CLIGathering implements Gathering {
      * Gets the current pair of users to merge.
      * @return stdClass object with fromid and toid fields
      */
-    public function current(): mixed
+    public function current(): stdClass
     {
         return $this->current;
     }
@@ -122,7 +122,7 @@ class CLIGathering implements Gathering {
      * Gets current int zero-based index.
      * @return int zero-based index value
      */
-    public function key(): mixed
+    public function key(): int
     {
         return $this->index;
     }
