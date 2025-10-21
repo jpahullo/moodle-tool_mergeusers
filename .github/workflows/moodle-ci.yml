@@ -10,7 +10,5 @@ jobs:
     # secrets:
       # moodle_org_token: ${{ secrets.MOODLE_ORG_TOKEN }}
     with:
-      disable_phpcs: true
-      disable_phpdoc: true
       disable_grunt: true
 
