@@ -79,7 +79,7 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
     }
 
-    if ($oldversion < 2025100900) {
+    if ($oldversion < 2025102102) {
 
         // Define field status to be added to tool_mergeusers.
         $table = new xmldb_table('tool_mergeusers');
@@ -98,7 +98,7 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         }
 
         // Mergeusers savepoint reached.
-        upgrade_plugin_savepoint(true, 2025100900, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2025102102, 'tool', 'mergeusers');
     }
 
     return true;

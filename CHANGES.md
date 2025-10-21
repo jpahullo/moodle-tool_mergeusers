@@ -1,12 +1,13 @@
 # Release notes
 
-## 2025102101
+## 2025102102
 
-1. 2025-10-07: improvement: add support for asynchronous user merging via adhoc task.
-   - New adhoc task `merge_users_task` allows queuing merge operations to run during cron execution.
-   - New setting `enableadhocmerge` to enable/disable adhoc task-based merging from web interface.
-   - When adhoc merge is enabled, web-based merges are queued and processed asynchronously,
+1. 2025-10-07: improvement: #378: supports asynchronous merges using adhoc task.
+   - New adhoc task `merge_users_task` allows queuing merge requests and run them from the Moodle cron.
+   - A new setting `enableadhocmerge` enables/disables adhoc task-based merges from web interface.
+   - When adhoc task for merge users is enabled, only web-based merges are queued and processed asynchronously,
      reducing timeout risks for large merge operations.
+   - Thanks to @nihaalshaikh and @luukverhoeven.
 
 
 ## 2025102100
