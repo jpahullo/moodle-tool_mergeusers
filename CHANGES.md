@@ -24,6 +24,7 @@ plugin table is missing. Thanks to @terryaulenbach for reporting the issue.
    2. New setting `enableadhocmerge` to enable/disable adhoc task-based merging from web interface.
    3. When adhoc merge is enabled, web-based merges are queued and processed asynchronously,
       reducing timeout risks for large merge operations.
+   4. Thanks to @nihaalshaikh and @luukverhoeven.
 
 ## 2025102100
 
