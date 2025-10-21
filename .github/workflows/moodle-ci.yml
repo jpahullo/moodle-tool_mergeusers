@@ -11,4 +11,5 @@ jobs:
       # moodle_org_token: ${{ secrets.MOODLE_ORG_TOKEN }}
     with:
       disable_grunt: true
-
+      disable_release: true
+      ignore_paths: tests/
