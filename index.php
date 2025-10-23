@@ -158,8 +158,9 @@ if (!empty($option)) {
 
                 $redirecturl = new moodle_url('/admin/tool/mergeusers/index.php');
                 $message = get_string('mergeusersqueued', 'tool_mergeusers', (object)[
-                    'fromuser' => fullname($fromuser),
-                    'touser' => fullname($touser),
+                    'fromuser' => $renderer->show_user($fromuser->id, $fromuser),
+                    'touser' => $renderer->show_user($touser->id, $touser),
+                    'logid' => $renderer->render_logid($logid),
                 ]);
                 redirect($redirecturl, $message, 0, \core\output\notification::NOTIFY_SUCCESS);
             }
@@ -173,7 +174,7 @@ if (!empty($option)) {
             $currentuserselection->clear_users_selection();
 
             // Render results page.
-            echo $renderer->results_page($touser, $fromuser, $success, $log, $logid);
+            echo $renderer->results_page($touser, $fromuser, $success ? 'success' : 'error', $log, $logid);
             break;
 
         // We have both users to merge selected, but we want to change any of them.
