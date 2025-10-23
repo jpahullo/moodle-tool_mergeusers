@@ -80,7 +80,6 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025102202) {
-
         // Define field status to be added to tool_mergeusers.
         $table = new xmldb_table('tool_mergeusers');
         $field = new xmldb_field('status', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'log');
@@ -99,6 +98,19 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
 
         // Mergeusers savepoint reached.
         upgrade_plugin_savepoint(true, 2025102202, 'tool', 'mergeusers');
+    }
+
+    if ($oldversion < 2025102300) {
+        // Migrate success field into status field.
+        $records = $DB->execute("UPDATE {tool_mergeusers} SET status =
+            CASE
+                WHEN success = 1 THEN 'success'
+                WHEN success = 0 THEN 'error'
+            END
+            WHERE status IS NULL OR status = ''");
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2025102300, 'tool', 'mergeusers');
     }
 
     return true;

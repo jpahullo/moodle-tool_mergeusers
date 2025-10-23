@@ -69,4 +69,4 @@ if (!$to) {
     $to->deleted = 1;
 }
 
-echo $renderer->results_page($to, $from, $log->success, $log->log, $log->id);
+echo $renderer->results_page($to, $from, $log->status, $log->log, $log->id);

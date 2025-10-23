@@ -204,25 +204,37 @@ class renderer extends plugin_renderer_base {
      *
      * @param object $to stdClass with at least id and username fields.
      * @param object $from stdClass with at least id and username fields.
-     * @param bool $success true if merging was ok; false otherwise.
+     * @param string $status status of the merging process.
      * @param array $data logs of actions done if success, or list of errors on failure.
      * @param int $logid id of the record with the whole detail of this merging action.
      * @return string html with the results.
      * @throws \coding_exception
      * @throws \ReflectionException
      */
-    public function results_page(object $to, object $from, bool $success, array $data, int $logid): string {
-        if ($success) {
-            $resulttype = 'ok';
-            $dbmessage = 'dbok';
-            $notifytype = 'notifysuccess';
-        } else {
-            $dbmessage = (database_transactions::are_supported()) ?
+    public function results_page(object $to, object $from, string $status, array $data, int $logid): string {
+        switch ($status) {
+            case 'pending':
+                $resulttype = '';
+                $dbmessage = "dbpending";
+                $notifytype = 'info';
+                break;
+            case 'in_progress':
+                $resulttype = '';
+                $dbmessage = "dbinprogress";
+                $notifytype = 'info';
+                break;
+            case 'success':
+                $resulttype = 'logok';
+                $dbmessage = 'dbok';
+                $notifytype = $status;
+                break;
+            case 'error':
+                $resulttype = 'logko';
+                $dbmessage = (database_transactions::are_supported()) ?
                     'dbko_transactions' :
                     'dbko_no_transactions';
-
-            $resulttype = 'ko';
-            $notifytype = 'notifyproblem';
+                $notifytype = $status;
+                break;
         }
 
         $output = $this->header();
@@ -247,9 +259,11 @@ class renderer extends plugin_renderer_base {
         $output .= get_string('usermergingheader', 'tool_mergeusers', $toheader);
 
         $output .= html_writer::empty_tag('br') . html_writer::empty_tag('br');
-        $output .= get_string('logid', 'tool_mergeusers', $logid);
-        $output .= html_writer::empty_tag('br');
-        $output .= get_string('log' . $resulttype, 'tool_mergeusers');
+        $output .= get_string('logline', 'tool_mergeusers', $this->render_logid($logid));
+        if (!empty($resulttype)) {
+            $output .= html_writer::empty_tag('br');
+            $output .= get_string($resulttype, 'tool_mergeusers');
+        }
         $output .= html_writer::end_tag('div');
         $output .= html_writer::empty_tag('br');
 
@@ -271,6 +285,19 @@ class renderer extends plugin_renderer_base {
         $output .= $this->footer();
 
         return $output;
+    }
+
+    /**
+     * Renders a log id as a link to the log details page.
+     * @param int $logid
+     * @return string HTML link to the log details page.
+     */
+    public function render_logid(int $logid): string {
+        $logurl = new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]);
+        return get_string('logidurl', 'tool_mergeusers', (object)[
+            'id' => $logid,
+            'url' => $logurl->out(false),
+        ]);
     }
 
     /**
@@ -343,13 +370,6 @@ class renderer extends plugin_renderer_base {
             $output .= get_string('nologs', 'tool_mergeusers');
         } else {
             $output .= html_writer::tag('div', get_string('loglist', 'tool_mergeusers'), ['class' => 'title']);
-
-            $flags = [];
-            // Prepare failure icon.
-            $flags[] = $this->pix_icon('i/invalid', get_string('eventusermergedfailure', 'tool_mergeusers'));
-            // Prepare success icon.
-            $flags[] = $this->pix_icon('i/valid', get_string('eventusermergedsuccess', 'tool_mergeusers'));
-
             $output .= html_writer::link(
                 new moodle_url('/admin/tool/mergeusers/view.php', ['export' => 1]),
                 get_string('exportlogs', 'tool_mergeusers')
@@ -371,20 +391,15 @@ class renderer extends plugin_renderer_base {
                 $row = new html_table_row();
 
                 // Determine status display.
-                if (!empty($log->status)) {
-                    $statusbadgeclass = match ($log->status) {
-                        'pending' => 'badge-warning',
-                        'in_progress' => 'badge-info',
-                        'success' => 'badge-success',
-                        'error' => 'badge-danger',
-                        default => 'badge-secondary',
-                    };
-                    $statusstring = get_string('status:' . $log->status, 'tool_mergeusers');
-                    $statusdisplay = html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
-                } else {
-                    // Legacy logs without status field - show based on success field.
-                    $statusdisplay = $flags[$log->success];
-                }
+                $statusbadgeclass = match ($log->status) {
+                    'pending' => 'badge-warning',
+                    'in_progress' => 'badge-info',
+                    'success' => 'badge-success',
+                    'error' => 'badge-danger',
+                    default => 'badge-secondary',
+                };
+                $statusstring = get_string('status:' . $log->status, 'tool_mergeusers');
+                $statusdisplay = html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
 
                 $row->cells = [
                     ($log->from)
