@@ -74,9 +74,9 @@ final class merge_users_task extends adhoc_task {
             return;
         }
 
-        // Get user records for notification.
-        $touser = $DB->get_record('user', ['id' => $toid]);
-        $fromuser = $DB->get_record('user', ['id' => $fromid]);
+        // Get user records. They must exist and do not be deleted.
+        $touser = $DB->get_record('user', ['id' => $toid, 'deleted' => 0], '*', MUST_EXIST);
+        $fromuser = $DB->get_record('user', ['id' => $fromid, 'deleted' => 0], '*', MUST_EXIST);
 
         $logger = new \tool_mergeusers\local\logger();
 
@@ -93,13 +93,13 @@ final class merge_users_task extends adhoc_task {
 
             if ($success) {
                 mtrace("tool_mergeusers: merged user $fromid into $toid.");
-                $this->send_notification($touser, $fromuser, true);
+                $this->send_notification($touser, $fromuser, true, $logid);
 
                 return;
             }
 
             mtrace("tool_mergeusers: merge $fromid -> $toid completed with errors. Review merge logs for details.");
-            $this->send_notification($touser, $fromuser, false);
+            $this->send_notification($touser, $fromuser, false, $logid);
         } catch (Throwable $e) {
             mtrace('tool_mergeusers: merge_users_task failed - ' . $e->getMessage());
 
@@ -107,7 +107,7 @@ final class merge_users_task extends adhoc_task {
             $logger->update_log_status($logid, 'error', false, ['Exception: ' . $e->getMessage()]);
 
             if ($touser && $fromuser) {
-                $this->send_notification($touser, $fromuser, false);
+                $this->send_notification($touser, $fromuser, false, $logid);
             }
 
             // Do not rethrow - adhoc tasks should always complete to prevent infinite requeueing.
@@ -120,8 +120,9 @@ final class merge_users_task extends adhoc_task {
      * @param object $touser   The user to keep.
      * @param object $fromuser The user to remove.
      * @param bool $success    Whether the merge was successful.
+     * @param int $logid       The log ID of the merge.
      */
-    private function send_notification(object $touser, object $fromuser, bool $success): void {
+    private function send_notification(object $touser, object $fromuser, bool $success, int $logid): void {
         $userid = $this->get_userid();
 
         if (empty($userid)) {
@@ -140,28 +141,34 @@ final class merge_users_task extends adhoc_task {
         $message->userto = $user;
         $message->notification = 1;
 
-        $messagedata = new \stdClass();
-        $messagedata->fromuser = fullname($fromuser);
-        $messagedata->touser = fullname($touser);
-        $messagedata->fromuserid = $fromuser->id;
-        $messagedata->touserid = $touser->id;
+        global $PAGE;
+        //phpcs:disable
+        /** @var \tool_mergeusers\output\renderer $renderer */
+        $renderer = $PAGE->get_renderer('tool_mergeusers');
+        //phpcs:enable
 
+        $messagedata = new \stdClass();
+        $messagedata->fromuser = $renderer->show_user($fromuser->id, $fromuser);
+        $messagedata->touser = $renderer->show_user($touser->id, $touser);
+        $messagedata->logid = $renderer->render_logid($logid);
+
+        // Prepare content for the notifications.
         if ($success) {
-            $message->subject = get_string('message:mergeusers_success_subject', 'tool_mergeusers');
-            $message->fullmessage = get_string('message:mergeusers_success_body', 'tool_mergeusers', $messagedata);
-            $message->fullmessageformat = FORMAT_PLAIN;
-            $message->fullmessagehtml = get_string('message:mergeusers_success_body', 'tool_mergeusers', $messagedata);
-            $message->smallmessage = get_string('message:mergeusers_success_subject', 'tool_mergeusers');
+            $subject = get_string('message:mergeusers_success_subject', 'tool_mergeusers');
+            $body = get_string('message:mergeusers_success_body', 'tool_mergeusers', $messagedata);
         } else {
-            $message->subject = get_string('message:mergeusers_error_subject', 'tool_mergeusers');
-            $message->fullmessage = get_string('message:mergeusers_error_body', 'tool_mergeusers', $messagedata);
-            $message->fullmessageformat = FORMAT_PLAIN;
-            $message->fullmessagehtml = get_string('message:mergeusers_error_body', 'tool_mergeusers', $messagedata);
-            $message->smallmessage = get_string('message:mergeusers_error_subject', 'tool_mergeusers');
+            $subject = get_string('message:mergeusers_error_subject', 'tool_mergeusers');
+            $body = get_string('message:mergeusers_error_body', 'tool_mergeusers', $messagedata);
         }
+
+        // Populate the message with the content.
+        $message->subject = $subject;
+        $message->fullmessage = $body;
+        $message->fullmessagehtml = $body;
+        $message->fullmessageformat = FORMAT_PLAIN;
+        $message->smallmessage = $subject;
 
         message_send($message);
     }
-
 }
 
