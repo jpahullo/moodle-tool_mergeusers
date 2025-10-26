@@ -98,7 +98,13 @@ class review_user_form extends moodleform {
         if ($this->reviewstep) {
             $mergeurl->param('option', 'mergeusers');
             $mergeusersbutton = new single_button($mergeurl, get_string('mergeusers', 'tool_mergeusers'));
-            $mergeusersbutton->add_confirm_action(get_string('mergeusers_confirm', 'tool_mergeusers'));
+            $adhocenabled = (bool)(int)get_config('tool_mergeusers', 'enableadhocmerge');
+            if ($adhocenabled) {
+                $confirmmessage = get_string('mergeusers_confirm_adhoc', 'tool_mergeusers');
+            } else {
+                $confirmmessage = get_string('mergeusers_confirm', 'tool_mergeusers');
+            }
+            $mergeusersbutton->add_confirm_action($confirmmessage);
             $buttonarray[0][] = $this->output->render($mergeusersbutton);
         } else if (count($this->urt->data) === 2) {
             $mergeurl->param('option', 'continueselection');

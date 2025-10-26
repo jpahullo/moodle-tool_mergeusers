@@ -130,7 +130,7 @@ if (!empty($option)) {
                 break; // Break execution for error.
             }
 
-            $adhocenabled = (bool)get_config('tool_mergeusers', 'enableadhocmerge');
+            $adhocenabled = (bool)(int)get_config('tool_mergeusers', 'enableadhocmerge');
             if ($adhocenabled) {
                 global $USER;
 
