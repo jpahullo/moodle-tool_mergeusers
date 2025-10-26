@@ -196,8 +196,8 @@ class generic_table_merger implements table_merger {
      * @param array $itemarr The grouped records from the compound index for a specific combination of other fields.
      * @param array $result The records retrieved from the database.
      * @param array $data The merging operation details, including `fromid`, `toid`, and table name.
-     * @param array &$recordstomodify Array to store the IDs of records that need to be updated.
-     * @param array &$idstoremove Array to store the IDs of records that need to be removed.
+     * @param array $recordstomodify Array to store the IDs of records that need to be updated.
+     * @param array $idstoremove Array to store the IDs of records that need to be removed.
      * @return void
      */
     protected function find_ids_to_update_and_remove(
@@ -238,8 +238,8 @@ class generic_table_merger implements table_merger {
      * @param array $conflictingrecords The grouped records from the compound index for a specific combination of other fields.
      * @param array $result The records retrieved from the database.
      * @param array $data The merging operation details, including `fromid`, `toid`, and table name.
-     * @param array &$recordstomodify Array to store the IDs of records that need to be updated.
-     * @param array &$idstoremove Array to store the IDs of records that need to be removed.
+     * @param array $recordstomodify Array to store the IDs of records that need to be updated.
+     * @param array $idstoremove Array to store the IDs of records that need to be removed.
      * @return void
      */
     protected function process_duplicated_records_for_compound_index(
@@ -452,7 +452,7 @@ class generic_table_merger implements table_merger {
      * List the records candidate for being updated.
      *
      * @param array $data detail of merging
-     * @param string $fieldName field name to look for the user.id from the user to remove.
+     * @param string $fieldname field name to look for the user.id from the user to remove.
      * @return array list of matching records' ids.
      * @throws dml_exception
      */
