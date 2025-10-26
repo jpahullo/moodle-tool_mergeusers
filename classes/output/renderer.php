@@ -218,7 +218,7 @@ class renderer extends plugin_renderer_base {
                 $dbmessage = "dbpending";
                 $notifytype = 'info';
                 break;
-            case 'in_progress':
+            case 'inprogress':
                 $resulttype = '';
                 $dbmessage = "dbinprogress";
                 $notifytype = 'info';
@@ -437,7 +437,7 @@ class renderer extends plugin_renderer_base {
     public function render_status(string $status): string {
         $statusbadgeclass = match ($status) {
             'pending' => 'badge-warning',
-            'in_progress' => 'badge-info',
+            'inprogress' => 'badge-info',
             'success' => 'badge-success',
             'error' => 'badge-danger',
             default => 'badge-secondary',

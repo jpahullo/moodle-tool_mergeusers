@@ -136,7 +136,7 @@ final class logger {
      * Updates an existing log entry with status and log content.
      *
      * @param int $logid     the id of the log entry to update.
-     * @param string $status the status: pending, in_progress, success, error.
+     * @param string $status the status: pending, inprogress, success, error.
      * @param bool $success  true if merging action was ok; false otherwise.
      * @param array $log     list of actions performed for a successful merging; or errors on failure.
      *

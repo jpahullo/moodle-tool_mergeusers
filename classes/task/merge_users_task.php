@@ -81,7 +81,7 @@ final class merge_users_task extends adhoc_task {
         $logger = new \tool_mergeusers\local\logger();
 
         // Mark as in progress.
-        $logger->update_log_status($logid, 'in_progress', false, []);
+        $logger->update_log_status($logid, 'inprogress', false, []);
 
         try {
             $merger = new user_merger();
