@@ -246,7 +246,7 @@ class renderer extends plugin_renderer_base {
         $output .= html_writer::empty_tag('br');
         $output .= html_writer::start_tag('div', ['class' => 'result']);
         $output .= html_writer::start_tag('div', ['class' => 'title']);
-        $output .= html_writer::tag('span', html_writer::tag('center', $this->render_status($status)));;
+        $output .= html_writer::tag('span', html_writer::tag('center', $this->render_status($status)));
         $output .= get_string('merging', 'tool_mergeusers') . ' ';
 
         $fromheader = (object)[
