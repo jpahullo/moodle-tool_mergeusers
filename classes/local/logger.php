@@ -54,6 +54,7 @@ final class logger {
      * @param bool $success true if merging action was ok; false otherwise.
      * @param array $log list of actions performed for a successful merging;
      * or a problem description if merging failed.
+     * @param string|null $status the status: pending, inprogress, success, error. When null, it will be derived from $success.
      * @return bool|int false when could not insert the record; the log id when success.
      * @throws moodle_exception when log record cannot be inserted.
      */

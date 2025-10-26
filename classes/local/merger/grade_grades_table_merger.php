@@ -59,11 +59,12 @@ class grade_grades_table_merger extends generic_table_merger {
      * Handles the case where both the current user and the new user have records in the compound index.
      * In such cases, the record associated with the current user is marked for removal to avoid conflicts.
      *
-     * @param array $otherinfo The grouped records from the compound index for a specific combination of other fields.
-     * @param array $gradedata The records retrieved from the database.
+     * @param array $conflictingrecords The grouped records from the compound index for a specific combination of other fields.
+     * @param array $result The records retrieved from the database.
      * @param array $data The merging operation details, including `fromid`, `toid`, and table name.
-     * @param array &$recordstomodify Array to store the IDs of records that need to be updated.
-     * @param array &$idstoremove Array to store the IDs of records that need to be removed.
+     * @param array $recordstomodify Array to store the IDs of records that need to be updated.
+     * @param array $idstoremove Array to store the IDs of records that need to be removed.
+     * @return void
      */
     protected function process_duplicated_records_for_compound_index(
         array $conflictingrecords,
