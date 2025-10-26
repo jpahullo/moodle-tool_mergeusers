@@ -69,7 +69,7 @@ final class logger {
         $record->log = json_encode($log);
 
         if ($status === null) {
-            $record->status = $success ? 'success' : 'error';
+            $record->status = status::from_success($success)->value;
         } else {
             $record->status = $status;
         }
@@ -111,7 +111,7 @@ final class logger {
         $record->mergedbyuserid = $mergedbyuserid;
         $record->success = 0;
         $record->log = json_encode([]);
-        $record->status = 'pending';
+        $record->status = status::PENDING->value;
 
         try {
             return $DB->insert_record('tool_mergeusers', $record, true);

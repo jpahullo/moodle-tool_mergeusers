@@ -212,12 +212,11 @@ final class user_merger {
     public function merge(int $toid, int $fromid, ?int $logid = null): array {
         [$success, $logs] = $this->merge_users($toid, $fromid);
 
+        $status = status::from_success($success)->value;
         if ($success) {
             $eventname = user_merged_success::class;
-            $status = 'success';
         } else {
             $eventname = user_merged_failure::class;
-            $status = 'error';
         }
 
         if ($logid !== null) {
