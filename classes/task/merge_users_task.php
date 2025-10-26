@@ -42,7 +42,6 @@ use tool_mergeusers\local\user_merger;
  * @author      Nihaal Shaikh
  */
 final class merge_users_task extends adhoc_task {
-
     /**
      * Get the component name.
      *
@@ -172,4 +171,3 @@ final class merge_users_task extends adhoc_task {
         message_send($message);
     }
 }
-

@@ -37,6 +37,7 @@ final class grade_grades_table_merger_test extends \advanced_testcase {
     private $usertobemaintained;
 
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
 
         $category = $this->getDataGenerator()->create_category(['name' => 'Merge Users']);

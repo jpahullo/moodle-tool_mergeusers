@@ -36,7 +36,6 @@ use tool_mergeusers\hook\add_settings_before_merging;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class add_empty_settings_before_merging_callbacks {
-
     /**
      * Does nothing. Emulates there is no hook implementation for adding settings.
      *
