@@ -14,25 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_mergeusers\local;
+
 /**
- * Version information.
+ * Status enum for user merging process.
  *
  * @package   tool_mergeusers
- * @author    Nicolas Dunand <Nicolas.Dunand@unil.ch>
- * @author    Mike Holzer
- * @author    Forrest Gaston
- * @author    Juan Pablo Torres Herrera
- * @author    Jordi Pujol-Ahulló, SREd, Universitat Rovira i Virgili
- * @author    John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
- * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
+ * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+enum status: string {
+    case PENDING = 'pending';
+    case INPROGRESS = 'inprogress';
+    case SUCCESS = 'success';
+    case ERROR = 'error';
 
-defined('MOODLE_INTERNAL') || die;
-
-$plugin->version = 2026052709;
-$plugin->release = '(2026052709: Focus on stability and extensibility)';
-$plugin->requires = 2024100700; // Moodle 4.5+, https://moodledev.io/general/releases#moodle-45-lts.
-$plugin->component = 'tool_mergeusers';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [405, 502];
+    /**
+     * Returns the status based on the success flag: either SUCCESS or ERROR statuses.
+     *
+     * @param bool $success true if merge was successful, false otherwise.
+     * @return self
+     */
+    public static function from_success(bool $success): self {
+        return $success ? self::SUCCESS : self::ERROR;
+    }
+}

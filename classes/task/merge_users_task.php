@@ -29,9 +29,8 @@ namespace tool_mergeusers\task;
 use core\task\adhoc_task;
 use core_user;
 use Throwable;
+use tool_mergeusers\local\status;
 use tool_mergeusers\local\user_merger;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Processes a queued merge request in the adhoc task queue.
@@ -45,7 +44,9 @@ defined('MOODLE_INTERNAL') || die();
 final class merge_users_task extends adhoc_task {
 
     /**
-     * @return string
+     * Get the component name.
+     *
+     * @return string The component name.
      */
     public function get_component(): string {
         return 'tool_mergeusers';
@@ -81,7 +82,7 @@ final class merge_users_task extends adhoc_task {
         $logger = new \tool_mergeusers\local\logger();
 
         // Mark as in progress.
-        $logger->update_log_status($logid, 'inprogress', false, []);
+        $logger->update_log_status($logid, status::INPROGRESS->value, false, []);
 
         try {
             $merger = new user_merger();

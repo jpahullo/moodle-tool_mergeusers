@@ -41,6 +41,7 @@ use single_button;
 use stdClass;
 use tool_mergeusers\local\database_transactions;
 use tool_mergeusers\local\last_merge;
+use tool_mergeusers\local\status;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -212,23 +213,24 @@ class renderer extends plugin_renderer_base {
      * @throws \ReflectionException
      */
     public function results_page(object $to, object $from, string $status, array $data, int $logid): string {
-        switch ($status) {
-            case 'pending':
+        $statusenum = status::from($status);
+        switch ($statusenum) {
+            case status::PENDING:
                 $resulttype = '';
                 $dbmessage = "dbpending";
                 $notifytype = 'info';
                 break;
-            case 'inprogress':
+            case status::INPROGRESS:
                 $resulttype = '';
                 $dbmessage = "dbinprogress";
                 $notifytype = 'info';
                 break;
-            case 'success':
+            case status::SUCCESS:
                 $resulttype = 'logok';
                 $dbmessage = 'dbok';
                 $notifytype = $status;
                 break;
-            case 'error':
+            case status::ERROR:
                 $resulttype = 'logko';
                 $dbmessage = (database_transactions::are_supported()) ?
                     'dbko_transactions' :
@@ -435,11 +437,11 @@ class renderer extends plugin_renderer_base {
      * @return string HTML badge
      */
     public function render_status(string $status): string {
-        $statusbadgeclass = match ($status) {
-            'pending' => 'badge-warning',
-            'inprogress' => 'badge-info',
-            'success' => 'badge-success',
-            'error' => 'badge-danger',
+        $statusbadgeclass = match (status::from($status)) {
+            status::PENDING => 'badge-warning',
+            status::INPROGRESS => 'badge-info',
+            status::SUCCESS => 'badge-success',
+            status::ERROR => 'badge-danger',
             default => 'badge-secondary',
         };
         $statusstring = get_string('status:' . $status, 'tool_mergeusers');
