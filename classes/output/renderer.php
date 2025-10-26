@@ -243,6 +243,7 @@ class renderer extends plugin_renderer_base {
         $output .= html_writer::empty_tag('br');
         $output .= html_writer::start_tag('div', ['class' => 'result']);
         $output .= html_writer::start_tag('div', ['class' => 'title']);
+        $output .= html_writer::tag('span', html_writer::tag('center', $this->render_status($status)));;
         $output .= get_string('merging', 'tool_mergeusers') . ' ';
 
         $fromheader = (object)[
@@ -391,15 +392,7 @@ class renderer extends plugin_renderer_base {
                 $row = new html_table_row();
 
                 // Determine status display.
-                $statusbadgeclass = match ($log->status) {
-                    'pending' => 'badge-warning',
-                    'in_progress' => 'badge-info',
-                    'success' => 'badge-success',
-                    'error' => 'badge-danger',
-                    default => 'badge-secondary',
-                };
-                $statusstring = get_string('status:' . $log->status, 'tool_mergeusers');
-                $statusdisplay = html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
+                $statusdisplay = $this->render_status($log->status);
 
                 $row->cells = [
                     ($log->from)
@@ -433,6 +426,24 @@ class renderer extends plugin_renderer_base {
         $output .= $this->footer();
 
         return $output;
+    }
+
+    /**
+     * Renders a status badge.
+     *
+     * @param string $status
+     * @return string HTML badge
+     */
+    public function render_status(string $status): string {
+        $statusbadgeclass = match ($status) {
+            'pending' => 'badge-warning',
+            'in_progress' => 'badge-info',
+            'success' => 'badge-success',
+            'error' => 'badge-danger',
+            default => 'badge-secondary',
+        };
+        $statusstring = get_string('status:' . $status, 'tool_mergeusers');
+        return html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
     }
 
     /**
