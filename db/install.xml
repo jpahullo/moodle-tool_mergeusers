@@ -9,7 +9,6 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="touserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="User that will remain with data of both users."/>
         <FIELD NAME="fromuserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Data from this user.id will be merged into the touserid."/>
-        <FIELD NAME="success" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false" COMMENT="Was the action concluded ok?"/>
         <FIELD NAME="mergedbyuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time stamp when the merging action took place."/>
         <FIELD NAME="log" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="List of actions performed if success, or errors on merging failure."/>
@@ -21,8 +20,6 @@
       <INDEXES>
         <INDEX NAME="mdl_toolmerg_tou_ix" UNIQUE="false" FIELDS="touserid" COMMENT="index for touserid field."/>
         <INDEX NAME="mdl_toolmerg_fru_ix" UNIQUE="false" FIELDS="fromuserid" COMMENT="index for fromuserid field."/>
-        <INDEX NAME="mdl_toolmerg_suc_ix" UNIQUE="false" FIELDS="success" COMMENT="Was the merging action ok?"/>
-        <INDEX NAME="mdl_toolmerg_tfs_ix" UNIQUE="false" FIELDS="touserid, fromuserid, success" COMMENT="Index enabling fast looking for merging actions for given pair of users."/>
         <INDEX NAME="mdl_toolmerg_sta_ix" UNIQUE="false" FIELDS="status" COMMENT="Index for filtering by merge status."/>
       </INDEXES>
     </TABLE>

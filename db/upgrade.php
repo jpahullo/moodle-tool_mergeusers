@@ -113,5 +113,29 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025102300, 'tool', 'mergeusers');
     }
 
+    if ($oldversion < 2025102301) {
+        $table = new xmldb_table('tool_mergeusers');
+
+        // Drop indexes related to success field.
+        $index = new xmldb_index('mdl_toolmerg_tfs_ix', XMLDB_INDEX_NOTUNIQUE, ['touserid', 'fromuserid', 'success']);
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        $index = new xmldb_index('mdl_toolmerg_suc_ix', XMLDB_INDEX_NOTUNIQUE, ['success']);
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Drop success field.
+        $field = new xmldb_field('success');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2025102301, 'tool', 'mergeusers');
+    }
+
     return true;
 }

@@ -50,7 +50,7 @@ final class renderer_test extends advanced_testcase {
         $dummylog = (object) [
             'fromuserid' => -5,
             'timemodified' => 0,
-            'success' => '1',
+            'status' => 'success',
             'id' => 0,
         ];
         $dummyuser = (object) [
@@ -75,7 +75,7 @@ final class renderer_test extends advanced_testcase {
         $dummylog = (object) [
             'fromuserid' => $user->id,
             'timemodified' => 0,
-            'success' => '1',
+            'status' => 'success',
             'id' => 0,
         ];
         $dummyuser = (object) [

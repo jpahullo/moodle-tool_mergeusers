@@ -66,7 +66,6 @@ final class logger {
         $record->fromuserid = $fromuserid;
         $record->timemodified = time();
         $record->mergedbyuserid = $USER->id;
-        $record->success = (int) $success;
         $record->log = json_encode($log);
 
         if ($status === null) {
@@ -79,7 +78,7 @@ final class logger {
             return $DB->insert_record('tool_mergeusers', $record, true);
         } catch (Exception $e) {
             $msg = __METHOD__ . ' : Cannot insert new record on log. Reason: "' . $DB->get_last_error() .
-                    '". Message: "' . $e->getMessage() . '". Trace' . $e->getTraceAsString();
+                '". Message: "' . $e->getMessage() . '". Trace' . $e->getTraceAsString();
             if (CLI_SCRIPT) {
                 cli_error($msg);
             } else {
@@ -110,7 +109,6 @@ final class logger {
         $record->fromuserid = $fromuserid;
         $record->timemodified = time();
         $record->mergedbyuserid = $mergedbyuserid;
-        $record->success = 0;
         $record->log = json_encode([]);
         $record->status = status::PENDING->value;
 
@@ -138,18 +136,16 @@ final class logger {
      *
      * @param int $logid     the id of the log entry to update.
      * @param string $status the status: pending, inprogress, success, error.
-     * @param bool $success  true if merging action was ok; false otherwise.
      * @param array $log     list of actions performed for a successful merging; or errors on failure.
      *
      * @return bool true on success, false otherwise.
      */
-    public function update_log_status(int $logid, string $status, bool $success, array $log): bool {
+    public function update_log_status(int $logid, string $status, array $log): bool {
         global $DB;
 
         $record = new stdClass();
         $record->id = $logid;
         $record->status = $status;
-        $record->success = (int) $success;
         $record->log = json_encode($log);
         $record->timemodified = time();
 
@@ -178,7 +174,7 @@ final class logger {
             'tool_mergeusers',
             $filter,
             $sort,
-            'id, touserid, fromuserid, mergedbyuserid, success, timemodified, status',
+            'id, touserid, fromuserid, mergedbyuserid, timemodified, status',
             $limitfrom,
             $limitnum,
         );

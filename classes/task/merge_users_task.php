@@ -81,7 +81,7 @@ final class merge_users_task extends adhoc_task {
         $logger = new \tool_mergeusers\local\logger();
 
         // Mark as in progress.
-        $logger->update_log_status($logid, status::INPROGRESS->value, false, []);
+        $logger->update_log_status($logid, status::INPROGRESS->value, []);
 
         try {
             $merger = new user_merger();
@@ -104,7 +104,7 @@ final class merge_users_task extends adhoc_task {
             mtrace('tool_mergeusers: merge_users_task failed - ' . $e->getMessage());
 
             // Update log with error status.
-            $logger->update_log_status($logid, 'error', false, ['Exception: ' . $e->getMessage()]);
+            $logger->update_log_status($logid, 'error', ['Exception: ' . $e->getMessage()]);
 
             if ($touser && $fromuser) {
                 $this->send_notification($touser, $fromuser, false, $logid);
