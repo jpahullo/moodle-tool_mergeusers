@@ -92,15 +92,14 @@ class last_merge {
         // 1. Its account is suspended.
         $deletable = $this->suspended;
         // 2. This account was used as user to be removed and it was successful.
-        $deletable = $deletable && isset($this->fromme->timemodified) && (int)$this->fromme->success;
+        $deletable = $deletable && isset($this->fromme->timemodified) && $this->fromme->status === 'success';
         // 3. Or, in presence of merge as user to be kept, the merge as user to be removed is the last one and successful.
-        $deletable = $deletable ||
+        return $deletable ||
             (   isset($this->tome->timemodified) &&
                 isset($this->fromme->timemodified) &&
-                (int)$this->tome->success &&
+                $this->tome->status === 'success' &&
                 $this->fromme->timemodified > $this->tome->timemodified
             );
-        return $deletable;
     }
 
     /**
@@ -145,7 +144,7 @@ class last_merge {
                         mremove.timemodified
                    FROM (SELECT m.fromuserid,
                                 m.timemodified,
-                                m.success,
+                                m.status,
                                 ROW_NUMBER() OVER (PARTITION BY m.fromuserid ORDER BY m.timemodified DESC) AS rownumber
                            FROM {tool_mergeusers} m
                         ) mremove
@@ -153,7 +152,7 @@ class last_merge {
                   WHERE mremove.rownumber = :rownumber1
                     AND u.deleted = :nodeleted
                     AND u.suspended = :suspended
-                    AND mremove.success = :success1
+                    AND mremove.status = :status1
                   ) mremove2
             LEFT JOIN (SELECT
                            mkeep.touserid,
@@ -161,11 +160,11 @@ class last_merge {
                        FROM (SELECT
                                  m.touserid,
                                  m.timemodified,
-                                 m.success,
+                                 m.status,
                                  ROW_NUMBER() OVER (PARTITION BY m.touserid ORDER BY m.timemodified DESC) AS rownumber
                              FROM {tool_mergeusers} m) mkeep
                        WHERE mkeep.rownumber = :rownumber2
-                         AND mkeep.success = :success2
+                         AND mkeep.status = :status2
             ) mkeep2 ON (mremove2.fromuserid = mkeep2.touserid AND mkeep2.timemodified < mremove2.timemodified)";
 
         $params = [
@@ -173,8 +172,8 @@ class last_merge {
             'rownumber2' => 1,
             'nodeleted' => 0,
             'suspended' => 1,
-            'success1' => 1,
-            'success2' => 1,
+            'status1' => 'success',
+            'status2' => 'success',
         ];
 
         return $DB->get_records_sql($sql, $params);

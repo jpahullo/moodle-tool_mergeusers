@@ -49,11 +49,9 @@ if ($export) {
     require_once($CFG->dirroot . '/lib/csvlib.class.php');
     $csv = new csv_export_writer();
     $logs = $logger->get();
-    $headings = ['id', 'touserid', 'to', 'fromuserid', 'from', 'mergedbyuserid', 'mergedby', 'success', 'timemodified'];
+    $headings = ['id', 'touserid', 'to', 'fromuserid', 'from', 'mergedbyuserid', 'mergedby', 'status', 'timemodified'];
     $csv->add_data($headings);
     foreach ($logs as $log) {
-        $successstringid = $log->success ? 'eventusermergedsuccess' : 'eventusermergedfailure';
-        $successstring = get_string($successstringid, 'tool_mergeusers');
         $exportlog = [
             $log->id,
             $log->touserid,
@@ -62,7 +60,7 @@ if ($export) {
             fullname($log->from),
             $log->mergedbyuserid,
             ($log->mergedby) ? fullname($log->mergedby) : null,
-            $successstring,
+            $log->status,
             userdate($log->timemodified),
         ];
         $csv->add_data($exportlog);

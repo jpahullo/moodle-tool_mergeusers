@@ -221,7 +221,7 @@ final class user_merger {
 
         if ($logid !== null) {
             // Update existing log.
-            $this->logger->update_log_status($logid, $status, $success, $logs);
+            $this->logger->update_log_status($logid, $status, $logs);
         } else {
             // Create new log.
             $logid = $this->logger->log($toid, $fromid, $success, $logs, $status);

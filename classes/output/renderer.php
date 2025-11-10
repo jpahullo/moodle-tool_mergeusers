@@ -455,12 +455,12 @@ class renderer extends plugin_renderer_base {
      * @param int $userid
      * @param int $timemodified the time the merge occurred
      * @param int $logid id of log
-     * @param bool $success whether the merge was successful
+     * @param string $status the merge status: pending, inprogress, success, error
      * @return array Containing profile link, formatted timestamp and log link.
      * @throws coding_exception
      * @throws moodle_exception
      */
-    private function get_merge_detail_data(int $userid, int $timemodified, int $logid, bool $success): array {
+    private function get_merge_detail_data(int $userid, int $timemodified, int $logid, string $status): array {
         $profileuser = core_user::get_user($userid);
         $time = userdate($timemodified);
         $profilelink = !empty($profileuser) ? html_writer::link(
@@ -471,12 +471,11 @@ class renderer extends plugin_renderer_base {
             new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]),
             get_string('openlog', 'tool_mergeusers')
         );
-        $successstring = ($success) ? 'success' : 'error';
         return [
             'profilelink' => $profilelink,
             'time' => $time,
             'loglink' => $loglink,
-            'success' => strtolower(get_string($successstring)),
+            'success' => strtolower(get_string('status:' . $status, 'tool_mergeusers')),
         ];
     }
 
@@ -496,12 +495,12 @@ class renderer extends plugin_renderer_base {
         $tohtml = $tome ? get_string(
             'tomedetail',
             'tool_mergeusers',
-            $this->get_merge_detail_data($tome->fromuserid, $tome->timemodified, $tome->id, (bool)(int)$tome->success)
+            $this->get_merge_detail_data($tome->fromuserid, $tome->timemodified, $tome->id, $tome->status)
         ) : '';
         $fromhtml = $fromme ? get_string(
             'frommedetail',
             'tool_mergeusers',
-            $this->get_merge_detail_data($fromme->touserid, $fromme->timemodified, $fromme->id, (bool)(int)$fromme->success)
+            $this->get_merge_detail_data($fromme->touserid, $fromme->timemodified, $fromme->id, $fromme->status)
         ) : '';
         $output = implode('<br/>', array_filter([$tohtml, $fromhtml]));
 
