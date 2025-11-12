@@ -61,12 +61,28 @@ final class logger {
     public function log(int $touserid, int $fromuserid, bool $success, array $log, ?string $status = null): bool|int {
         global $DB, $USER;
 
+        $currenttime = time();
+
+        // Capture user snapshots.
+        $tosnapshot = $this->capture_user_snapshot($touserid);
+        $fromsnapshot = $this->capture_user_snapshot($fromuserid);
+
+        // Add user snapshots to the log data.
+        $logdata = [
+            'user_snapshots' => [
+                'to_user' => $tosnapshot,
+                'from_user' => $fromsnapshot,
+            ],
+            'actions' => $log,
+        ];
+
         $record = new stdClass();
         $record->touserid = $touserid;
         $record->fromuserid = $fromuserid;
-        $record->timemodified = time();
+        $record->timecreated = $currenttime;
+        $record->timemodified = $currenttime;
         $record->mergedbyuserid = $USER->id;
-        $record->log = json_encode($log);
+        $record->log = json_encode($logdata);
 
         if ($status === null) {
             $record->status = status::from_success($success)->value;
@@ -104,12 +120,28 @@ final class logger {
     public function create_pending_log(int $touserid, int $fromuserid, int $mergedbyuserid): bool|int {
         global $DB;
 
+        $currenttime = time();
+
+        // Capture user snapshots at queue time.
+        $tosnapshot = $this->capture_user_snapshot($touserid);
+        $fromsnapshot = $this->capture_user_snapshot($fromuserid);
+
+        // Store user snapshots in log data.
+        $logdata = [
+            'user_snapshots' => [
+                'to_user' => $tosnapshot,
+                'from_user' => $fromsnapshot,
+            ],
+            'actions' => [],
+        ];
+
         $record = new stdClass();
         $record->touserid = $touserid;
         $record->fromuserid = $fromuserid;
-        $record->timemodified = time();
+        $record->timecreated = $currenttime;
+        $record->timemodified = $currenttime;
         $record->mergedbyuserid = $mergedbyuserid;
-        $record->log = json_encode([]);
+        $record->log = json_encode($logdata);
         $record->status = status::PENDING->value;
 
         try {
@@ -143,10 +175,20 @@ final class logger {
     public function update_log_status(int $logid, string $status, array $log): bool {
         global $DB;
 
+        // Get existing log to preserve user snapshots.
+        $existinglog = $DB->get_record('tool_mergeusers', ['id' => $logid]);
+        $existinglogdata = json_decode($existinglog->log, true);
+
+        // Preserve user snapshots from the original log.
+        $logdata = [
+            'user_snapshots' => $existinglogdata['user_snapshots'] ?? null,
+            'actions' => $log,
+        ];
+
         $record = new stdClass();
         $record->id = $logid;
         $record->status = $status;
-        $record->log = json_encode($log);
+        $record->log = json_encode($logdata);
         $record->timemodified = time();
 
         return $DB->update_record('tool_mergeusers', $record);
@@ -174,7 +216,7 @@ final class logger {
             'tool_mergeusers',
             $filter,
             $sort,
-            'id, touserid, fromuserid, mergedbyuserid, timemodified, status',
+            'id, touserid, fromuserid, mergedbyuserid, timecreated, timemodified, status',
             $limitfrom,
             $limitnum,
         );
@@ -206,5 +248,32 @@ final class logger {
         $log = $DB->get_record('tool_mergeusers', ['id' => $logid], '*', MUST_EXIST);
         $log->log = json_decode($log->log);
         return $log;
+    }
+
+    /**
+     * Captures a snapshot of user data at the current time.
+     *
+     * @param int $userid user.id to capture snapshot of.
+     * @return stdClass|null user snapshot with relevant fields, or null if user not found.
+     */
+    private function capture_user_snapshot(int $userid): ?stdClass {
+        global $DB;
+
+        $user = $DB->get_record('user', ['id' => $userid]);
+        if (!$user) {
+            return null;
+        }
+
+        $snapshot = new stdClass();
+        $snapshot->id = $user->id;
+        $snapshot->username = $user->username;
+        $snapshot->email = $user->email;
+        $snapshot->firstname = $user->firstname;
+        $snapshot->lastname = $user->lastname;
+        $snapshot->idnumber = $user->idnumber;
+        $snapshot->suspended = $user->suspended;
+        $snapshot->deleted = $user->deleted;
+
+        return $snapshot;
     }
 }

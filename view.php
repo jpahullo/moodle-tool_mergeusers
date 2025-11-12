@@ -49,7 +49,7 @@ if ($export) {
     require_once($CFG->dirroot . '/lib/csvlib.class.php');
     $csv = new csv_export_writer();
     $logs = $logger->get();
-    $headings = ['id', 'touserid', 'to', 'fromuserid', 'from', 'mergedbyuserid', 'mergedby', 'status', 'timemodified'];
+    $headings = ['id', 'touserid', 'to', 'fromuserid', 'from', 'mergedbyuserid', 'mergedby', 'status', 'timecreated', 'timemodified'];
     $csv->add_data($headings);
     foreach ($logs as $log) {
         $exportlog = [
@@ -61,6 +61,7 @@ if ($export) {
             $log->mergedbyuserid,
             ($log->mergedby) ? fullname($log->mergedby) : null,
             $log->status,
+            ($log->timecreated) ? userdate($log->timecreated) : '',
             userdate($log->timemodified),
         ];
         $csv->add_data($exportlog);
