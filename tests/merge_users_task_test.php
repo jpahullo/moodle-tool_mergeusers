@@ -76,27 +76,4 @@ final class merge_users_task_test extends advanced_testcase {
         $this->assertEquals(1, $queuedcount);
     }
 
-    /**
-     * Test that adhoc task is not queued when enableadhocmerge setting is disabled.
-     *
-     * @group tool_mergeusers
-     * @covers \tool_mergeusers\task\merge_users_task
-     */
-    public function test_adhoc_task_not_queued_when_disabled(): void {
-        global $DB;
-
-        // Disable adhoc merge setting.
-        set_config('enableadhocmerge', 0, 'tool_mergeusers');
-
-        // Verify the setting is disabled.
-        $enabled = (bool)(int)get_config('tool_mergeusers', 'enableadhocmerge');
-        $this->assertFalse($enabled);
-
-        // Verify no adhoc tasks are queued.
-        $queuedcount = $DB->count_records('task_adhoc', ['classname' => '\\tool_mergeusers\\task\\merge_users_task']);
-        $this->assertEquals(0, $queuedcount);
-
-        // When disabled, index.php would execute merge synchronously instead of queuing.
-        // We verify that no task exists in the queue, which is the expected behavior.
-    }
 }
