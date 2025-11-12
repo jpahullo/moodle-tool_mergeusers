@@ -10,6 +10,7 @@
         <FIELD NAME="touserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="User that will remain with data of both users."/>
         <FIELD NAME="fromuserid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Data from this user.id will be merged into the touserid."/>
         <FIELD NAME="mergedbyuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Time stamp when the merge was queued or initiated."/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time stamp when the merging action took place."/>
         <FIELD NAME="log" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="List of actions performed if success, or errors on merging failure."/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Status of the merge: pending, inprogress, success, error. NULL for legacy logs."/>

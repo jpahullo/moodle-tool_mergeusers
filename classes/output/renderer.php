@@ -204,16 +204,30 @@ class renderer extends plugin_renderer_base {
     /**
      * Shows the result of a merging action.
      *
-     * @param object $to stdClass with at least id and username fields.
-     * @param object $from stdClass with at least id and username fields.
+     * @param object $to stdClass with at least id and username fields (current/dynamic data).
+     * @param object $from stdClass with at least id and username fields (current/dynamic data).
      * @param string $status status of the merging process.
-     * @param array $data logs of actions done if success, or list of errors on failure.
+     * @param array|stdClass $data logs of actions done if success, or list of errors on failure.
      * @param int $logid id of the record with the whole detail of this merging action.
+     * @param int|null $timecreated timestamp when merge was queued/initiated.
+     * @param int|null $timemodified timestamp when merge was executed.
      * @return string html with the results.
      * @throws \coding_exception
      * @throws \ReflectionException
      */
-    public function results_page(object $to, object $from, string $status, array $data, int $logid): string {
+    public function results_page(
+        object $to,
+        object $from,
+        string $status,
+        array|stdClass $data,
+        int $logid,
+        ?int $timecreated = null,
+        ?int $timemodified = null
+    ): string {
+        if (is_object($data)) {
+            $data = json_decode(json_encode($data), true);
+        }
+
         $statusenum = status::from($status);
         switch ($statusenum) {
             case status::PENDING:
@@ -270,6 +284,44 @@ class renderer extends plugin_renderer_base {
         }
         $output .= html_writer::end_tag('div');
         $output .= html_writer::empty_tag('br');
+
+        // Display timestamps if available.
+        if ($timecreated !== null || $timemodified !== null) {
+            $output .= html_writer::start_tag('div', ['class' => 'merge-timestamps']);
+
+            // Check if merge is still pending or in progress.
+            $ispending = ($status === 'pending' || $status === 'inprogress');
+
+            if ($timecreated !== null && $timemodified !== null && $timecreated !== $timemodified) {
+                // Different timestamps: show both queue and execution times.
+                $output .= html_writer::tag('strong', get_string('snapshot_queued', 'tool_mergeusers')) . ' ' . userdate($timecreated);
+                $output .= html_writer::empty_tag('br');
+                $output .= html_writer::tag('strong', get_string('snapshot_executed', 'tool_mergeusers')) . ' ' . userdate($timemodified);
+            } else if ($ispending && $timecreated !== null) {
+                // Pending/in-progress: show as "Queued at".
+                $output .= html_writer::tag('strong', get_string('snapshot_queued', 'tool_mergeusers')) . ' ' . userdate($timecreated);
+            } else if ($timemodified !== null) {
+                // Completed immediately (no adhoc): show as "Executed at".
+                $output .= html_writer::tag('strong', get_string('snapshot_executed', 'tool_mergeusers')) . ' ' . userdate($timemodified);
+            } else if ($timecreated !== null) {
+                // Fallback: just show created time.
+                $output .= html_writer::tag('strong', get_string('snapshot_created', 'tool_mergeusers')) . ' ' . userdate($timecreated);
+            }
+
+            $output .= html_writer::end_tag('div');
+            $output .= html_writer::empty_tag('br');
+        }
+
+        // Display static user snapshots if available.
+        if (is_array($data) && isset($data['user_snapshots'])) {
+            // Convert user snapshot arrays to objects for rendering.
+            $snapshots = (object)[
+                'to_user' => !empty($data['user_snapshots']['to_user']) ? (object)$data['user_snapshots']['to_user'] : null,
+                'from_user' => !empty($data['user_snapshots']['from_user']) ? (object)$data['user_snapshots']['from_user'] : null,
+            ];
+            $output .= $this->render_user_snapshots($snapshots);
+            $data = $data['actions'] ?? [];
+        }
 
         $output .= html_writer::start_tag('div', ['class' => 'resultset' . $resulttype]);
         foreach ($data as $item) {
@@ -397,6 +449,9 @@ class renderer extends plugin_renderer_base {
                 // Determine status display.
                 $statusdisplay = $this->render_status($log->status);
 
+                // Display timecreated if available, otherwise fall back to timemodified.
+                $displaytime = (!empty($log->timecreated)) ? $log->timecreated : $log->timemodified;
+
                 $row->cells = [
                     ($log->from)
                         ? $this->show_user($log->fromuserid, $log->from)
@@ -407,7 +462,7 @@ class renderer extends plugin_renderer_base {
                     ($log->mergedby)
                         ? $this->show_user($log->mergedbyuserid, $log->mergedby)
                         : get_string('nomergedby', 'tool_mergeusers'),
-                    userdate($log->timemodified, get_string('strftimedaydatetime', 'langconfig')),
+                    userdate($displaytime, get_string('strftimedaydatetime', 'langconfig')),
                     $statusdisplay,
                     html_writer::link(
                         new moodle_url(
@@ -519,5 +574,60 @@ class renderer extends plugin_renderer_base {
         $deletablestring = ($lastmerge->is_this_user_deletable()) ? 'deletableuser' : 'nondeletableuser';
 
         return $output . '<br/><br/>' . get_string($deletablestring, 'tool_mergeusers');
+    }
+
+    /**
+     * Renders user snapshots from queue time.
+     *
+     * @param object $snapshots Object containing to_user and from_user snapshots.
+     * @return string HTML output for user snapshots.
+     */
+    private function render_user_snapshots(object $snapshots): string {
+        $output = html_writer::start_tag('div', ['class' => 'user-snapshots', 'style' => 'margin: 15px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px;']);
+        $output .= html_writer::tag('h4', get_string('snapshot_header', 'tool_mergeusers'), ['style' => 'margin-top: 0;']);
+
+        $output .= html_writer::start_tag('div', ['style' => 'display: flex; gap: 20px;']);
+
+        // From user snapshot.
+        if (isset($snapshots->from_user) && $snapshots->from_user) {
+            $output .= $this->render_single_user_snapshot($snapshots->from_user, get_string('olduser', 'tool_mergeusers'));
+        }
+
+        // To user snapshot.
+        if (isset($snapshots->to_user) && $snapshots->to_user) {
+            $output .= $this->render_single_user_snapshot($snapshots->to_user, get_string('newuser', 'tool_mergeusers'));
+        }
+
+        $output .= html_writer::end_tag('div');
+        $output .= html_writer::end_tag('div');
+
+        return $output;
+    }
+
+    /**
+     * Renders a single user snapshot.
+     *
+     * @param object $snapshot User snapshot object.
+     * @param string $label Label for this user.
+     * @return string HTML output.
+     */
+    private function render_single_user_snapshot(object $snapshot, string $label): string {
+        $output = html_writer::start_tag('div', ['style' => 'flex: 1; background-color: white; padding: 10px; border-radius: 3px;']);
+        $output .= html_writer::tag('strong', $label);
+        $output .= html_writer::empty_tag('br');
+        $output .= html_writer::tag('div', get_string('snapshot_username', 'tool_mergeusers') . ' ' . s($snapshot->username ?? 'N/A'));
+        $output .= html_writer::tag('div', get_string('snapshot_email', 'tool_mergeusers') . ' ' . s($snapshot->email ?? 'N/A'));
+        $output .= html_writer::tag('div', get_string('snapshot_name', 'tool_mergeusers') . ' ' . s(($snapshot->firstname ?? '') . ' ' . ($snapshot->lastname ?? '')));
+        $output .= html_writer::tag('div', get_string('snapshot_idnumber', 'tool_mergeusers') . ' ' . s($snapshot->idnumber ?? 'N/A'));
+        $output .= html_writer::tag('div', get_string('snapshot_id', 'tool_mergeusers') . ' ' . s($snapshot->id ?? 'N/A'));
+
+        $suspendedtext = (!empty($snapshot->suspended)) ? get_string('yes') : get_string('no');
+        $deletedtext = (!empty($snapshot->deleted)) ? get_string('yes') : get_string('no');
+        $output .= html_writer::tag('div', get_string('snapshot_suspended', 'tool_mergeusers') . ' ' . $suspendedtext);
+        $output .= html_writer::tag('div', get_string('snapshot_deleted', 'tool_mergeusers') . ' ' . $deletedtext);
+
+        $output .= html_writer::end_tag('div');
+
+        return $output;
     }
 }

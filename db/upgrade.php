@@ -143,5 +143,22 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025102301, 'tool', 'mergeusers');
     }
 
+    if ($oldversion < 2025110403) {
+        // Define field timecreated to be added to tool_mergeusers.
+        $table = new xmldb_table('tool_mergeusers');
+        $field = new xmldb_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'mergedbyuserid');
+
+        // Conditionally launch add field timecreated.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // For existing records, set timecreated to timemodified if not already set.
+        $DB->execute("UPDATE {tool_mergeusers} SET timecreated = timemodified WHERE timecreated IS NULL OR timecreated = 0");
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2025110403, 'tool', 'mergeusers');
+    }
+
     return true;
 }
