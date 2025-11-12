@@ -79,6 +79,18 @@ final class notification_test extends advanced_testcase {
         $message = reset($messages);
         $this->assertEquals('[Merge Users] Merge completed successfully', $message->subject);
         $this->assertEquals('tool_mergeusers', $message->component);
+
+        // Validate notification content includes expected information.
+        $this->assertStringContainsString('merge of user', $message->fullmessage);
+        $this->assertStringContainsString('completed successfully', $message->fullmessage);
+        $this->assertStringContainsString($fromuser->firstname, $message->fullmessage);
+        $this->assertStringContainsString($fromuser->lastname, $message->fullmessage);
+        $this->assertStringContainsString($touser->firstname, $message->fullmessage);
+        $this->assertStringContainsString($touser->lastname, $message->fullmessage);
+        $this->assertStringContainsString((string)$logid, $message->fullmessage);
+
+        // Validate recipient is the user who initiated the merge.
+        $this->assertEquals($USER->id, $message->userto);
     }
 
     /**
@@ -125,5 +137,17 @@ final class notification_test extends advanced_testcase {
         $message = reset($messages);
         $this->assertEquals('[Merge Users] Merge completed with errors', $message->subject);
         $this->assertEquals('tool_mergeusers', $message->component);
+
+        // Validate notification content includes expected information.
+        $this->assertStringContainsString('merge of user', $message->fullmessage);
+        $this->assertStringContainsString('completed with errors', $message->fullmessage);
+        $this->assertStringContainsString($fromuser->firstname, $message->fullmessage);
+        $this->assertStringContainsString($fromuser->lastname, $message->fullmessage);
+        $this->assertStringContainsString($touser->firstname, $message->fullmessage);
+        $this->assertStringContainsString($touser->lastname, $message->fullmessage);
+        $this->assertStringContainsString((string)$logid, $message->fullmessage);
+
+        // Validate recipient is the user who initiated the merge.
+        $this->assertEquals($USER->id, $message->userto);
     }
 }
