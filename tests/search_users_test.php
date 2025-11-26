@@ -39,6 +39,9 @@ final class search_users_test extends advanced_testcase {
      * Test for searching for specific user fields.
      * Also, search must not return any matching deleted users.
      *
+     * @param string $searchfield The field to search in.
+     * @param string $input The search input value.
+     * @param int $count The expected number of results.
      * @group tool_mergeusers
      * @group tool_mergeusers_search_users
      * @dataProvider search_criteria

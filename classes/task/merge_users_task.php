@@ -29,6 +29,7 @@ namespace tool_mergeusers\task;
 use core\task\adhoc_task;
 use core_user;
 use Throwable;
+use tool_mergeusers\event\user_merged_failure;
 use tool_mergeusers\local\status;
 use tool_mergeusers\local\user_merger;
 
@@ -74,16 +75,16 @@ final class merge_users_task extends adhoc_task {
             return;
         }
 
-        // Get user records. They must exist and do not be deleted.
-        $touser = $DB->get_record('user', ['id' => $toid, 'deleted' => 0], '*', MUST_EXIST);
-        $fromuser = $DB->get_record('user', ['id' => $fromid, 'deleted' => 0], '*', MUST_EXIST);
-
         $logger = new \tool_mergeusers\local\logger();
 
-        // Mark as in progress.
-        $logger->update_log_status($logid, status::INPROGRESS->value, []);
-
         try {
+            // Get user records. They must exist and not be deleted.
+            $touser = $DB->get_record('user', ['id' => $toid, 'deleted' => 0], '*', MUST_EXIST);
+            $fromuser = $DB->get_record('user', ['id' => $fromid, 'deleted' => 0], '*', MUST_EXIST);
+
+            // Mark as in progress.
+            $logger->update_log_status($logid, status::INPROGRESS->value, []);
+
             $merger = new user_merger();
             [$success] = $merger->merge($toid, $fromid, $logid);
 
@@ -105,6 +106,24 @@ final class merge_users_task extends adhoc_task {
 
             // Update log with error status.
             $logger->update_log_status($logid, 'error', ['Exception: ' . $e->getMessage()]);
+
+            // Trigger failure event.
+            $event = user_merged_failure::create([
+                'context' => \context_system::instance(),
+                'other' => [
+                    'usersinvolved' => [
+                        'toid' => $toid,
+                        'fromid' => $fromid,
+                    ],
+                    'logid' => $logid,
+                    'log' => ['Exception: ' . $e->getMessage()],
+                ],
+            ]);
+            $event->trigger();
+
+            // Try to get user records for notification (may be null if that's what caused the error).
+            $touser = $DB->get_record('user', ['id' => $toid]);
+            $fromuser = $DB->get_record('user', ['id' => $fromid]);
 
             if ($touser && $fromuser) {
                 $this->send_notification($touser, $fromuser, false, $logid);

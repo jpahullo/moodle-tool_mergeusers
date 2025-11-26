@@ -69,6 +69,10 @@ final class generic_table_merger_test extends advanced_testcase {
     }
 
     /**
+     * Test merge without conflicting records.
+     *
+     * @param object|null $record The record to insert before merge.
+     * @param bool $withlog Whether a log entry is expected.
      * @group tool_mergeusers
      * @group tool_mergeusers_generic_tablemerger
      * @dataProvider without_conflicting_records_provider
@@ -145,6 +149,9 @@ final class generic_table_merger_test extends advanced_testcase {
     }
 
     /**
+     * Test merge with conflicting records.
+     *
+     * @param bool $informedindex Whether the compound index is informed.
      * @group tool_mergeusers
      * @group tool_mergeusers_generic_tablemerger
      * @dataProvider with_conflicting_records_provider

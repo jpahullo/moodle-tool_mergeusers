@@ -103,10 +103,11 @@ final class assign_test extends advanced_testcase {
 
     /**
      * Utility method to get the grade for a user.
-     * @param $user
-     * @param $assign
-     * @param $course
-     * @return testable_assign
+     *
+     * @param stdClass $user The user object.
+     * @param testable_assign $assign The assignment instance.
+     * @param stdClass $course The course object.
+     * @return string The grade string.
      */
     private function get_user_assign_grade($user, $assign, $course) {
         $gradebookgrades = \grade_get_grades($course->id, 'mod', 'assign', $assign->get_instance()->id, $user->id);

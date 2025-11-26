@@ -78,6 +78,7 @@ final class after_merged_all_tables_test extends advanced_testcase {
     /**
      * Prepares a hook callback definition to test the after_merged_all_tables hook.
      *
+     * @param string $hooksfilename The hooks configuration filename.
      * @return void
      * @throws coding_exception
      */
