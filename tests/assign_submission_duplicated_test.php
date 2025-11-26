@@ -28,8 +28,12 @@ use tool_mergeusers\local\merger\duplicateddata\duplicated_data;
 final class assign_submission_duplicated_test extends advanced_testcase {
     /**
      * Should do nothing with new submission and remove old submission when old user has no content submission
-     * and new user has content submission
+     * and new user has content submission.
      *
+     * @param array $expectedtomodify The expected records to modify.
+     * @param array $expectedtoremove The expected records to remove.
+     * @param stdClass $oldusersubmission The old user submission.
+     * @param stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider remove_old_ignore_new_data_provider
@@ -72,8 +76,12 @@ final class assign_submission_duplicated_test extends advanced_testcase {
 
     /**
      * Should update old submission and remove new submission when old user has submitted
-     * submission and new user has new submission
+     * submission and new user has new submission.
      *
+     * @param array $expectedtomodify The expected records to modify.
+     * @param array $expectedtoremove The expected records to remove.
+     * @param stdClass $oldusersubmission The old user submission.
+     * @param stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider update_old_and_remove_new_data_provider
@@ -109,8 +117,12 @@ final class assign_submission_duplicated_test extends advanced_testcase {
     }
 
     /**
-     * Should update first submission submitted and remove last when user has duplicated submission submitted
+     * Should update first submission submitted and remove last when user has duplicated submission submitted.
      *
+     * @param array $expectedtomodify The expected records to modify.
+     * @param array $expectedtoremove The expected records to remove.
+     * @param stdClass $oldusersubmission The old user submission.
+     * @param stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider update_first_and_remove_last_data_provider
@@ -214,8 +226,10 @@ final class assign_submission_duplicated_test extends advanced_testcase {
     }
 
     /**
-     * @param $oldusersubmission
-     * @param $newusersubmission
+     * Get duplicated data for testing.
+     *
+     * @param stdClass $oldusersubmission The old user submission.
+     * @param stdClass $newusersubmission The new user submission.
      * @return duplicated_data
      */
     private function get_duplicated_data($oldusersubmission, $newusersubmission): duplicated_data {

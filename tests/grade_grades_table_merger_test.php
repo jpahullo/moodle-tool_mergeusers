@@ -59,6 +59,12 @@ final class grade_grades_table_merger_test extends \advanced_testcase {
     }
 
     /**
+     * Test that data is kept from the proper user after merge.
+     *
+     * @param int|null $usertobemaintainedfinalgrade The final grade for the user to keep.
+     * @param int|null $usertobedeletedfinalgrade The final grade for the user to delete.
+     * @param int|null $finalgrade The expected final grade after merge.
+     * @param bool $datatokeepisfrommaintaineduser Whether data to keep is from maintained user.
      * @group tool_mergeusers
      * @group tool_mergeusers_grade_grades
      * @covers \tool_mergeusers\local\merger\grade_grades_table_merger::merge

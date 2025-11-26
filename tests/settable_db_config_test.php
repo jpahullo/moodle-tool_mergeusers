@@ -49,6 +49,12 @@ final class settable_db_config_test extends basic_testcase {
     }
 
     /**
+     * Test that config settings can be overridden.
+     *
+     * @param string $settingname The setting name to test.
+     * @param mixed $firstvalue The initial value.
+     * @param mixed $secondvalue The value to set.
+     * @param mixed $expectedvalue The expected final value.
      * @group tool_mergeusers
      * @group tool_mergeusers_settable_db_config
      * @dataProvider override_setting_provider
