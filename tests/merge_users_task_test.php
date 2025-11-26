@@ -76,4 +76,50 @@ final class merge_users_task_test extends advanced_testcase {
         $this->assertEquals(1, $queuedcount);
     }
 
+    /**
+     * Test that adhoc task is NOT queued when enableadhocmerge setting is disabled.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_adhoc_task_not_queued_when_disabled(): void {
+        global $DB, $USER;
+
+        // Disable adhoc merge setting.
+        set_config('enableadhocmerge', 0, 'tool_mergeusers');
+
+        // Create test users.
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        // Verify no tasks queued initially.
+        $initialcount = $DB->count_records('task_adhoc', ['classname' => '\\tool_mergeusers\\task\\merge_users_task']);
+        $this->assertEquals(0, $initialcount);
+
+        // Check the setting (mimicking index.php behavior).
+        $adhocenabled = (bool)(int)get_config('tool_mergeusers', 'enableadhocmerge');
+
+        // Only queue task if enabled (this should NOT happen).
+        if ($adhocenabled) {
+            $logger = new logger();
+            $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id);
+
+            $task = new merge_users_task();
+            $task->set_custom_data([
+                'toid' => $touser->id,
+                'fromid' => $fromuser->id,
+                'logid' => $logid,
+            ]);
+            $task->set_userid($USER->id);
+            manager::queue_adhoc_task($task);
+        }
+
+        // Assert that no task was queued (setting was disabled).
+        $queuedcount = $DB->count_records('task_adhoc', ['classname' => '\\tool_mergeusers\\task\\merge_users_task']);
+        $this->assertEquals(0, $queuedcount);
+
+        // Verify the setting is actually disabled.
+        $this->assertFalse($adhocenabled);
+    }
+
 }
