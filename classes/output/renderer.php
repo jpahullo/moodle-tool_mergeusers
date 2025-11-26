@@ -57,6 +57,7 @@ require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/mergeusers/lib.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renderer extends plugin_renderer_base {
+
     /** On index page, show only the search form. */
     const INDEX_PAGE_SEARCH_STEP = 1;
     /** On index page, show both search and select forms. */
@@ -68,6 +69,7 @@ class renderer extends plugin_renderer_base {
 
     /**
      * Renderers a progress bar.
+     *
      * @param array $items An array of items
      * @return string
      */
@@ -83,11 +85,13 @@ class renderer extends plugin_renderer_base {
                 $item = html_writer::tag('span', $text, $item);
             }
         }
+
         return html_writer::tag('div', join(get_separator(), $items), ['class' => 'merge_progress clearfix']);
     }
 
     /**
      * Returns the HTML for the progress bar, according to the current step.
+     *
      * @param int $step current step
      * @return string HTML for the progress bar.
      */
@@ -116,8 +120,8 @@ class renderer extends plugin_renderer_base {
     /**
      * Shows form for merging users.
      *
-     * @param moodleform $mform form for merging users.
-     * @param int $step step to show in the index page.
+     * @param moodleform $mform           form for merging users.
+     * @param int $step                   step to show in the index page.
      * @param user_select_table|null $ust table for users to merge after searching
      * @return string html to show on index page.
      * @throws coding_exception
@@ -145,6 +149,7 @@ class renderer extends plugin_renderer_base {
 
         $output .= $this->render_user_review_table($step);
         $output .= $this->footer();
+
         return $output;
     }
 
@@ -179,7 +184,7 @@ class renderer extends plugin_renderer_base {
     /**
      * Displays merge users tool error message
      *
-     * @param string $message The error message
+     * @param string $message  The error message
      * @param bool $showreturn Shows a return button to the index page
      *
      * @throws coding_exception
@@ -204,12 +209,12 @@ class renderer extends plugin_renderer_base {
     /**
      * Shows the result of a merging action.
      *
-     * @param object $to stdClass with at least id and username fields (current/dynamic data).
-     * @param object $from stdClass with at least id and username fields (current/dynamic data).
-     * @param string $status status of the merging process.
-     * @param array|stdClass $data logs of actions done if success, or list of errors on failure.
-     * @param int $logid id of the record with the whole detail of this merging action.
-     * @param int|null $timecreated timestamp when merge was queued/initiated.
+     * @param object $to             stdClass with at least id and username fields (current/dynamic data).
+     * @param object $from           stdClass with at least id and username fields (current/dynamic data).
+     * @param string $status         status of the merging process.
+     * @param array|stdClass $data   logs of actions done if success, or list of errors on failure.
+     * @param int $logid             id of the record with the whole detail of this merging action.
+     * @param int|null $timecreated  timestamp when merge was queued/initiated.
      * @param int|null $timemodified timestamp when merge was executed.
      * @return string html with the results.
      * @throws \coding_exception
@@ -263,11 +268,11 @@ class renderer extends plugin_renderer_base {
         $output .= html_writer::tag('span', html_writer::tag('center', $this->render_status($status)));
         $output .= get_string('merging', 'tool_mergeusers') . ' ';
 
-        $fromheader = (object)[
+        $fromheader = (object) [
             'username' => $this->show_user($from->id, $from),
             'id' => $from->id,
         ];
-        $toheader = (object)[
+        $toheader = (object) [
             'username' => $this->show_user($to->id, $to),
             'id' => $to->id,
         ];
@@ -295,32 +300,31 @@ class renderer extends plugin_renderer_base {
             if ($timecreated !== null && $timemodified !== null && $timecreated !== $timemodified) {
                 // Different timestamps: show both queue and execution times.
                 $output .= html_writer::tag(
-                    'strong',
-                    get_string('snapshot_queued',
-                        'tool_mergeusers')
+                        'strong',
+                        get_string('snapshot_queued', 'tool_mergeusers')
                     ) . ' ' . userdate($timecreated);
                 $output .= html_writer::empty_tag('br');
                 $output .= html_writer::tag(
-                    'strong',
-                    get_string('snapshot_executed', 'tool_mergeusers')
+                        'strong',
+                        get_string('snapshot_executed', 'tool_mergeusers')
                     ) . ' ' . userdate($timemodified);
             } else if ($ispending && $timecreated !== null) {
                 // Pending/in-progress: show as "Queued at".
                 $output .= html_writer::tag(
-                    'strong',
-                    get_string('snapshot_queued', 'tool_mergeusers')
+                        'strong',
+                        get_string('snapshot_queued', 'tool_mergeusers')
                     ) . ' ' . userdate($timecreated);
             } else if ($timemodified !== null) {
                 // Completed immediately (no adhoc): show as "Executed at".
                 $output .= html_writer::tag(
-                    'strong',
-                    get_string('snapshot_executed', 'tool_mergeusers')
+                        'strong',
+                        get_string('snapshot_executed', 'tool_mergeusers')
                     ) . ' ' . userdate($timemodified);
             } else if ($timecreated !== null) {
                 // Fallback: just show created time.
                 $output .= html_writer::tag(
-                    'strong',
-                    get_string('snapshot_created', 'tool_mergeusers')
+                        'strong',
+                        get_string('snapshot_created', 'tool_mergeusers')
                     ) . ' ' . userdate($timecreated);
             }
 
@@ -331,9 +335,9 @@ class renderer extends plugin_renderer_base {
         // Display static user snapshots if available.
         if (is_array($data) && isset($data['user_snapshots'])) {
             // Convert user snapshot arrays to objects for rendering.
-            $snapshots = (object)[
-                'to_user' => !empty($data['user_snapshots']['to_user']) ? (object)$data['user_snapshots']['to_user'] : null,
-                'from_user' => !empty($data['user_snapshots']['from_user']) ? (object)$data['user_snapshots']['from_user'] : null,
+            $snapshots = (object) [
+                'to_user' => !empty($data['user_snapshots']['to_user']) ? (object) $data['user_snapshots']['to_user'] : null,
+                'from_user' => !empty($data['user_snapshots']['from_user']) ? (object) $data['user_snapshots']['from_user'] : null,
             ];
             $output .= $this->render_user_snapshots($snapshots);
             $data = $data['actions'] ?? [];
@@ -361,15 +365,21 @@ class renderer extends plugin_renderer_base {
 
     /**
      * Renders a log id as a link to the log details page.
+     *
      * @param int $logid
      * @return string HTML link to the log details page.
      */
     public function render_logid(int $logid): string {
         $logurl = new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]);
-        return get_string('logidurl', 'tool_mergeusers', (object)[
-            'id' => $logid,
-            'url' => $logurl->out(false),
-        ]);
+
+        return get_string(
+            'logidurl',
+            'tool_mergeusers',
+            (object) [
+                'id' => $logid,
+                'url' => $logurl->out(false),
+            ]
+        );
     }
 
     /**
@@ -390,7 +400,7 @@ class renderer extends plugin_renderer_base {
     /**
      * This method produces the HTML to show the details of a user.
      *
-     * @param int $userid user.id
+     * @param int $userid  user.id
      * @param object $user an object with firstname and lastname attributes.
      * @return string the corresponding HTML.
      * @throws moodle_exception
@@ -420,6 +430,7 @@ class renderer extends plugin_renderer_base {
         if ($deleted) {
             return html_writer::tag('span', $text, $attributes);
         }
+
         return html_writer::link(new moodle_url('/user/view.php', ['id' => $userid]), $text, $attributes);
     }
 
@@ -517,6 +528,7 @@ class renderer extends plugin_renderer_base {
             default => 'badge-secondary',
         };
         $statusstring = get_string('status:' . $status, 'tool_mergeusers');
+
         return html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
     }
 
@@ -525,8 +537,8 @@ class renderer extends plugin_renderer_base {
      *
      * @param int $userid
      * @param int $timemodified the time the merge occurred
-     * @param int $logid id of log
-     * @param string $status the merge status: pending, inprogress, success, error
+     * @param int $logid        id of log
+     * @param string $status    the merge status: pending, inprogress, success, error
      * @return array Containing profile link, formatted timestamp and log link.
      * @throws coding_exception
      * @throws moodle_exception
@@ -542,6 +554,7 @@ class renderer extends plugin_renderer_base {
             new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]),
             get_string('openlog', 'tool_mergeusers')
         );
+
         return [
             'profilelink' => $profilelink,
             'time' => $time,
@@ -553,7 +566,7 @@ class renderer extends plugin_renderer_base {
     /**
      * Builds merge detail HTML.
      *
-     * @param stdClass $user User object.
+     * @param stdClass $user        User object.
      * @param last_merge $lastmerge last merge
      * @return string HTML to display
      * @throws coding_exception
@@ -601,7 +614,10 @@ class renderer extends plugin_renderer_base {
     private function render_user_snapshots(object $snapshots): string {
         $output = html_writer::start_tag(
             'div',
-            ['class' => 'user-snapshots', 'style' => 'margin: 15px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px;']
+            [
+                'class' => 'user-snapshots',
+                'style' => 'margin: 15px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px;',
+            ]
         );
         $output .= html_writer::tag('h4', get_string('snapshot_header', 'tool_mergeusers'), ['style' => 'margin-top: 0;']);
 
@@ -627,21 +643,31 @@ class renderer extends plugin_renderer_base {
      * Renders a single user snapshot.
      *
      * @param object $snapshot User snapshot object.
-     * @param string $label Label for this user.
+     * @param string $label    Label for this user.
      * @return string HTML output.
      */
     private function render_single_user_snapshot(object $snapshot, string $label): string {
-        $output = html_writer::start_tag('div', ['style' => 'flex: 1; background-color: white; padding: 10px; border-radius: 3px;']);
+        $boxstyle = 'flex: 1; background-color: white; padding: 10px; border-radius: 3px;';
+
+        $output = html_writer::start_tag('div', ['style' => $boxstyle]);
         $output .= html_writer::tag('strong', $label);
         $output .= html_writer::empty_tag('br');
-        $output .= html_writer::tag('div', get_string('snapshot_username', 'tool_mergeusers') . ' ' . s($snapshot->username ?? 'N/A'));
-        $output .= html_writer::tag('div', get_string('snapshot_email', 'tool_mergeusers') . ' ' . s($snapshot->email ?? 'N/A'));
-        $output .= html_writer::tag(
-            'div',
-            get_string('snapshot_name', 'tool_mergeusers') . ' ' . s(($snapshot->firstname ?? '') . ' ' . ($snapshot->lastname ?? ''))
-        );
-        $output .= html_writer::tag('div', get_string('snapshot_idnumber', 'tool_mergeusers') . ' ' . s($snapshot->idnumber ?? 'N/A'));
-        $output .= html_writer::tag('div', get_string('snapshot_id', 'tool_mergeusers') . ' ' . s($snapshot->id ?? 'N/A'));
+
+        $usernametext = get_string('snapshot_username', 'tool_mergeusers') . ' ' . s($snapshot->username ?? 'N/A');
+        $output .= html_writer::tag('div', $usernametext);
+
+        $emailtext = get_string('snapshot_email', 'tool_mergeusers') . ' ' . s($snapshot->email ?? 'N/A');
+        $output .= html_writer::tag('div', $emailtext);
+
+        $fullname = s(($snapshot->firstname ?? '') . ' ' . ($snapshot->lastname ?? ''));
+        $nametext = get_string('snapshot_name', 'tool_mergeusers') . ' ' . $fullname;
+        $output .= html_writer::tag('div', $nametext);
+
+        $idnumbertext = get_string('snapshot_idnumber', 'tool_mergeusers') . ' ' . s($snapshot->idnumber ?? 'N/A');
+        $output .= html_writer::tag('div', $idnumbertext);
+
+        $idtext = get_string('snapshot_id', 'tool_mergeusers') . ' ' . s($snapshot->id ?? 'N/A');
+        $output .= html_writer::tag('div', $idtext);
 
         $suspendedtext = (!empty($snapshot->suspended)) ? get_string('yes') : get_string('no');
         $deletedtext = (!empty($snapshot->deleted)) ? get_string('yes') : get_string('no');
@@ -652,4 +678,5 @@ class renderer extends plugin_renderer_base {
 
         return $output;
     }
+
 }

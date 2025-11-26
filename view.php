@@ -59,7 +59,7 @@ if ($export) {
         'mergedby',
         'status',
         'timecreated',
-        'timemodified'
+        'timemodified',
     ];
     $csv->add_data($headings);
     foreach ($logs as $log) {
