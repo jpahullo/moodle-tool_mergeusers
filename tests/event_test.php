@@ -72,8 +72,10 @@ final class event_test extends advanced_testcase {
         // Start capturing events.
         $sink = $this->redirectEvents();
 
-        // Execute the adhoc task.
+        // Execute the adhoc task. Buffer output to suppress mtrace.
+        ob_start();
         $task->execute();
+        ob_end_clean();
 
         // Get triggered events.
         $events = $sink->get_events();
@@ -126,8 +128,10 @@ final class event_test extends advanced_testcase {
         // Start capturing events.
         $sink = $this->redirectEvents();
 
-        // Execute the adhoc task (will fail due to deleted user).
+        // Execute the adhoc task (will fail due to deleted user). Buffer output to suppress mtrace.
+        ob_start();
         $task->execute();
+        ob_end_clean();
 
         // Get triggered events.
         $events = $sink->get_events();

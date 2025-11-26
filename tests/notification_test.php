@@ -45,13 +45,17 @@ final class notification_test extends advanced_testcase {
     public function test_success_notification_sent_by_adhoc_task(): void {
         global $USER;
 
+        // Set up admin user - this ensures $USER is properly initialized.
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+
         // Create test users.
         $touser = $this->getDataGenerator()->create_user();
         $fromuser = $this->getDataGenerator()->create_user();
 
         // Create a pending log entry.
         $logger = new logger();
-        $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id);
+        $logid = $logger->create_pending_log($touser->id, $fromuser->id, $adminuserid);
 
         // Create the adhoc task.
         $task = new merge_users_task();
@@ -60,13 +64,15 @@ final class notification_test extends advanced_testcase {
             'fromid' => $fromuser->id,
             'logid' => $logid,
         ]);
-        $task->set_userid($USER->id);
+        $task->set_userid($adminuserid);
 
         // Start capturing messages.
         $sink = $this->redirectMessages();
 
-        // Execute the adhoc task (will succeed).
+        // Execute the adhoc task (will succeed). Buffer output to suppress mtrace.
+        ob_start();
         $task->execute();
+        ob_end_clean();
 
         // Get sent messages.
         $messages = $sink->get_messages();
@@ -90,7 +96,7 @@ final class notification_test extends advanced_testcase {
         $this->assertStringContainsString((string)$logid, $message->fullmessage);
 
         // Validate recipient is the user who initiated the merge.
-        $this->assertEquals($USER->id, $message->userto);
+        $this->assertEquals($adminuserid, $message->useridto);
     }
 
     /**
@@ -102,6 +108,10 @@ final class notification_test extends advanced_testcase {
     public function test_error_notification_sent_by_adhoc_task(): void {
         global $USER;
 
+        // Set up admin user - this ensures $USER is properly initialized.
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+
         // Create one valid user and one deleted user to force failure.
         $touser = $this->getDataGenerator()->create_user();
         $fromuser = $this->getDataGenerator()->create_user();
@@ -109,7 +119,7 @@ final class notification_test extends advanced_testcase {
 
         // Create a pending log entry.
         $logger = new logger();
-        $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id);
+        $logid = $logger->create_pending_log($touser->id, $fromuser->id, $adminuserid);
 
         // Create the adhoc task.
         $task = new merge_users_task();
@@ -118,13 +128,15 @@ final class notification_test extends advanced_testcase {
             'fromid' => $fromuser->id,
             'logid' => $logid,
         ]);
-        $task->set_userid($USER->id);
+        $task->set_userid($adminuserid);
 
         // Start capturing messages.
         $sink = $this->redirectMessages();
 
-        // Execute the adhoc task (will fail due to deleted user).
+        // Execute the adhoc task (will fail due to deleted user). Buffer output to suppress mtrace.
+        ob_start();
         $task->execute();
+        ob_end_clean();
 
         // Get sent messages.
         $messages = $sink->get_messages();
@@ -141,13 +153,13 @@ final class notification_test extends advanced_testcase {
         // Validate notification content includes expected information.
         $this->assertStringContainsString('merge of user', $message->fullmessage);
         $this->assertStringContainsString('completed with errors', $message->fullmessage);
-        $this->assertStringContainsString($fromuser->firstname, $message->fullmessage);
-        $this->assertStringContainsString($fromuser->lastname, $message->fullmessage);
+        // The fromuser is deleted, so their name won't appear - just "Deleted".
+        $this->assertStringContainsString('Deleted', $message->fullmessage);
         $this->assertStringContainsString($touser->firstname, $message->fullmessage);
         $this->assertStringContainsString($touser->lastname, $message->fullmessage);
         $this->assertStringContainsString((string)$logid, $message->fullmessage);
 
         // Validate recipient is the user who initiated the merge.
-        $this->assertEquals($USER->id, $message->userto);
+        $this->assertEquals($adminuserid, $message->useridto);
     }
 }
