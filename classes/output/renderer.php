@@ -57,7 +57,6 @@ require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/mergeusers/lib.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renderer extends plugin_renderer_base {
-
     /** On index page, show only the search form. */
     const INDEX_PAGE_SEARCH_STEP = 1;
     /** On index page, show both search and select forms. */
@@ -300,32 +299,32 @@ class renderer extends plugin_renderer_base {
             if ($timecreated !== null && $timemodified !== null && $timecreated !== $timemodified) {
                 // Different timestamps: show both queue and execution times.
                 $output .= html_writer::tag(
-                        'strong',
-                        get_string('snapshot_queued', 'tool_mergeusers')
-                    ) . ' ' . userdate($timecreated);
+                    'strong',
+                    get_string('snapshot_queued', 'tool_mergeusers')
+                ) . ' ' . userdate($timecreated);
                 $output .= html_writer::empty_tag('br');
                 $output .= html_writer::tag(
-                        'strong',
-                        get_string('snapshot_executed', 'tool_mergeusers')
-                    ) . ' ' . userdate($timemodified);
+                    'strong',
+                    get_string('snapshot_executed', 'tool_mergeusers')
+                ) . ' ' . userdate($timemodified);
             } else if ($ispending && $timecreated !== null) {
                 // Pending/in-progress: show as "Queued at".
                 $output .= html_writer::tag(
-                        'strong',
-                        get_string('snapshot_queued', 'tool_mergeusers')
-                    ) . ' ' . userdate($timecreated);
+                    'strong',
+                    get_string('snapshot_queued', 'tool_mergeusers')
+                ) . ' ' . userdate($timecreated);
             } else if ($timemodified !== null) {
                 // Completed immediately (no adhoc): show as "Executed at".
                 $output .= html_writer::tag(
-                        'strong',
-                        get_string('snapshot_executed', 'tool_mergeusers')
-                    ) . ' ' . userdate($timemodified);
+                    'strong',
+                    get_string('snapshot_executed', 'tool_mergeusers')
+                ) . ' ' . userdate($timemodified);
             } else if ($timecreated !== null) {
                 // Fallback: just show created time.
                 $output .= html_writer::tag(
-                        'strong',
-                        get_string('snapshot_created', 'tool_mergeusers')
-                    ) . ' ' . userdate($timecreated);
+                    'strong',
+                    get_string('snapshot_created', 'tool_mergeusers')
+                ) . ' ' . userdate($timecreated);
             }
 
             $output .= html_writer::end_tag('div');
@@ -678,5 +677,4 @@ class renderer extends plugin_renderer_base {
 
         return $output;
     }
-
 }
