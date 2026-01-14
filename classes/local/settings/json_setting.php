@@ -62,7 +62,7 @@ class json_setting extends admin_setting_configtextarea {
     /**
      * Check whether the content is a valid JSON content.
      *
-     * @param $data
+     * @param string $data The JSON data to validate
      * @return bool|string string with the error message; true on valid content.
      * @throws coding_exception
      */
@@ -84,6 +84,8 @@ class json_setting extends admin_setting_configtextarea {
     /**
      * Writes the JSON content in human-readable content.
      *
+     * @param string $data The JSON data to write
+     * @return bool|string True on success or error message
      * @throws coding_exception
      */
     public function write_setting($data) {

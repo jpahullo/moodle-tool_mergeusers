@@ -23,6 +23,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 use tool_mergeusers\fixtures\add_settings_before_merging_callbacks;
 use tool_mergeusers\hook\add_settings_before_merging;
 

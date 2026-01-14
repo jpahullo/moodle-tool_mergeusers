@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile moodle.PHPUnit.TestCaseNames.MissingNS
+
 use tool_mergeusers\local\config;
 use tool_mergeusers\local\user_merger;
 
@@ -23,7 +25,9 @@ use tool_mergeusers\local\user_merger;
  * @package    tool_mergeusers
  * @subpackage mergeusers
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
+ * @copyright  Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \tool_mergeusers\local\config
  */
 final class clioptions_test extends advanced_testcase {
     public function setUp(): void {

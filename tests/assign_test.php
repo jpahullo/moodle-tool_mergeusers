@@ -14,11 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile moodle.PHPUnit.TestCaseNames.MissingNS
+
 /**
  * Version information
  *
  * @package    tool_mergeusers
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
+ * @copyright  Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -31,6 +34,12 @@ require_once("$CFG->dirroot/mod/assign/tests/generator.php");
 
 /**
  * Class assign_test
+ *
+ * @package   tool_mergeusers
+ * @author    Andrew Hancox <andrewdchancox@googlemail.com>
+ * @copyright Andrew Hancox <andrewdchancox@googlemail.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers    \tool_mergeusers\local\user_merger
  */
 final class assign_test extends advanced_testcase {
     use \mod_assign_test_generator;
@@ -103,10 +112,11 @@ final class assign_test extends advanced_testcase {
 
     /**
      * Utility method to get the grade for a user.
-     * @param $user
-     * @param $assign
-     * @param $course
-     * @return testable_assign
+     *
+     * @param object $user The user object
+     * @param testable_assign $assign The assignment object
+     * @param object $course The course object
+     * @return string The user's grade
      */
     private function get_user_assign_grade($user, $assign, $course) {
         $gradebookgrades = \grade_get_grades($course->id, 'mod', 'assign', $assign->get_instance()->id, $user->id);
@@ -122,7 +132,7 @@ final class assign_test extends advanced_testcase {
      * @group tool_mergeusers_assign
      * @throws dml_exception
      */
-    public function test_failed_merged_for_missing_course_module() {
+    public function test_failed_merged_for_missing_course_module(): void {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();
@@ -182,7 +192,7 @@ final class assign_test extends advanced_testcase {
      * @group tool_mergeusers_assign
      * @throws dml_exception
      */
-    public function test_failed_merged_for_missing_module_record() {
+    public function test_failed_merged_for_missing_module_record(): void {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile moodle.PHPUnit.TestCaseNames.UnexpectedLevel2NS
+
 namespace tool_mergeusers\local\merger;
 
 use mod_attendance\output\user_data;
@@ -37,6 +39,7 @@ final class grade_grades_table_merger_test extends \advanced_testcase {
     private $usertobemaintained;
 
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
 
         $category = $this->getDataGenerator()->create_category(['name' => 'Merge Users']);
@@ -58,6 +61,12 @@ final class grade_grades_table_merger_test extends \advanced_testcase {
     }
 
     /**
+     * Test keep data from proper user.
+     *
+     * @param int|null $usertobemaintainedfinalgrade The final grade for the user to be maintained
+     * @param int|null $usertobedeletedfinalgrade The final grade for the user to be deleted
+     * @param int|null $finalgrade The expected final grade after merge
+     * @param bool $datatokeepisfrommaintaineduser Whether data to keep is from maintained user
      * @group tool_mergeusers
      * @group tool_mergeusers_grade_grades
      * @covers \tool_mergeusers\local\merger\grade_grades_table_merger::merge
@@ -109,6 +118,11 @@ final class grade_grades_table_merger_test extends \advanced_testcase {
         $this->assertTrue($DB->record_exists("grade_grades", ["id" => $gradeid]));
     }
 
+    /**
+     * Data provider for test_keep_data_from_proper_user.
+     *
+     * @return array
+     */
     public static function grade_grades_table_merger_provider(): array {
         return [
             // Values: grade from user to keep, grade from user to delete, final grade, keep data from user to keep.
@@ -119,6 +133,13 @@ final class grade_grades_table_merger_test extends \advanced_testcase {
         ];
     }
 
+    /**
+     * Helper to create a grade with a specific final grade.
+     *
+     * @param int $userid User ID
+     * @param int|null $finalgrade Final grade
+     * @return \grade_grade
+     */
     private function create_grade_with_finalgrade(int $userid, int|null $finalgrade): \grade_grade {
         return $this->getDataGenerator()->create_grade_grade(["itemid" => $this->assigngrade->id, "userid" => $userid,
             "finalgrade" => $finalgrade]);

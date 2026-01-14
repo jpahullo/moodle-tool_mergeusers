@@ -23,6 +23,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 use tool_mergeusers\fixtures\after_merged_all_tables_callbacks;
 use tool_mergeusers\hook\after_merged_all_tables;
 

@@ -27,6 +27,7 @@ use tool_mergeusers\local\user_merger;
  * @author    Matthew Hilton <matthewhilton@catalyst-au.net>
  * @copyright 2025 Catalyst IT Australia
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @coversNothing
  */
 final class lib_test extends advanced_testcase {
     /**
