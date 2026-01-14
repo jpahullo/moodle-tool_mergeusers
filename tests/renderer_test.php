@@ -14,11 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Renderer tests for tool_mergeusers.
+ *
+ * @package   tool_mergeusers
+ * @author    Matthew Hilton <matthewhilton@catalyst-au.net>
+ * @copyright 2025 Catalyst IT Australia
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace tool_mergeusers;
 
 use advanced_testcase;
 use tool_mergeusers\output\renderer;
 use tool_mergeusers_renderer;
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Renderer tests
@@ -27,6 +38,7 @@ use tool_mergeusers_renderer;
  * @author    Matthew Hilton <matthewhilton@catalyst-au.net>
  * @copyright 2025 Catalyst IT Australia
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers    \tool_mergeusers\output\renderer
  */
 final class renderer_test extends advanced_testcase {
     /**
@@ -91,11 +103,28 @@ final class renderer_test extends advanced_testcase {
     }
 }
 
+// phpcs:disable PSR1.Classes.ClassDeclaration.MultipleClasses
+/**
+ * In-memory last merge helper class for testing.
+ */
 class in_memory_last_merge extends \tool_mergeusers\local\last_merge {
+    /** @var int User ID. */
     private int $userid;
+    /** @var bool Whether user is suspended. */
     private bool $suspended;
+    /** @var mixed Log data for 'tome' merge. */
     private mixed $tome;
+    /** @var mixed Log data for 'fromme' merge. */
     private mixed $fromme;
+
+    /**
+     * Constructor.
+     *
+     * @param int $userid User ID
+     * @param bool $suspended Whether user is suspended
+     * @param mixed $tome Log data for 'tome' merge
+     * @param mixed $fromme Log data for 'fromme' merge
+     */
     public function __construct(int $userid, bool $suspended, mixed $tome, mixed $fromme) {
         $this->userid = $userid;
         $this->suspended = $suspended;
@@ -103,14 +132,29 @@ class in_memory_last_merge extends \tool_mergeusers\local\last_merge {
         $this->fromme = $fromme;
     }
 
+    /**
+     * Get fromme log data.
+     *
+     * @return null|\stdClass
+     */
     public function fromme(): null|\stdClass {
         return $this->fromme;
     }
 
+    /**
+     * Get tome log data.
+     *
+     * @return null|\stdClass
+     */
     public function tome(): null|\stdClass {
         return $this->tome;
     }
 
+    /**
+     * Check if this user is deletable.
+     *
+     * @return bool
+     */
     public function is_this_user_deletable(): bool {
         return true;
     }

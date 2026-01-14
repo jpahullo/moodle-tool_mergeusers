@@ -30,7 +30,9 @@ use tool_mergeusers\local\user_merger;
  *
  * @package    tool_mergeusers
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
+ * @copyright  Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \tool_mergeusers\local\merger\quiz_attempts_table_merger
  */
 final class quiz_test extends advanced_testcase {
     /** @var object test course 1. */

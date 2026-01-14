@@ -37,8 +37,8 @@ interface duplicated_data_merger {
     /**
      * Merges both list of records potentially conflicting.
      *
-     * @param array $olddata data from the user to remove.
-     * @param array $newdata data from the user to keep.
+     * @param object $olddata data from the user to remove.
+     * @param object $newdata data from the user to keep.
      * @return duplicated_data the result of the merge.
      */
     public function merge(object $olddata, object $newdata): duplicated_data;
