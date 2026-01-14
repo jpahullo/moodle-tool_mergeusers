@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile moodle.PHPUnit.TestCaseNames.UnexpectedLevel2NS
+
 namespace tool_mergeusers\local\merger;
 
 use mod_attendance\output\user_data;
