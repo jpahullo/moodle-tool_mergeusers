@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/mergeusers/db" VERSION="20220615" COMMENT="XMLDB file for Moodle admin/tool/mergeusers"
+<XMLDB PATH="admin/tool/mergeusers/db" VERSION="20260224" COMMENT="XMLDB file for Moodle admin/tool/mergeusers"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -18,10 +18,10 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="mdl_toolmerg_tou_ix" UNIQUE="false" FIELDS="touserid" COMMENT="index for touserid field." NEXT="mdl_toolmerg_fru_ix"/>
-        <INDEX NAME="mdl_toolmerg_fru_ix" UNIQUE="false" FIELDS="fromuserid" COMMENT="index for fromuserid field." PREVIOUS="mdl_toolmerg_tou_ix" NEXT="mdl_toolmerg_suc_ix"/>
-        <INDEX NAME="mdl_toolmerg_suc_ix" UNIQUE="false" FIELDS="success" COMMENT="Was the merging action ok?" PREVIOUS="mdl_toolmerg_fru_ix" NEXT="mdl_toolmerg_tfs_ix"/>
-        <INDEX NAME="mdl_toolmerg_tfs_ix" UNIQUE="false" FIELDS="touserid, fromuserid, success" COMMENT="Index enabling fast looking for merging actions for given pair of users." PREVIOUS="mdl_toolmerg_suc_ix"/>
+        <INDEX NAME="mdl_toolmerg_tou_ix" UNIQUE="false" FIELDS="touserid" COMMENT="index for touserid field."/>
+        <INDEX NAME="mdl_toolmerg_fru_ix" UNIQUE="false" FIELDS="fromuserid" COMMENT="index for fromuserid field."/>
+        <INDEX NAME="mdl_toolmerg_suc_ix" UNIQUE="false" FIELDS="success" COMMENT="Was the merging action ok?"/>
+        <INDEX NAME="mdl_toolmerg_tfs_ix" UNIQUE="false" FIELDS="touserid, fromuserid, success" COMMENT="Index enabling fast looking for merging actions for given pair of users."/>
       </INDEXES>
     </TABLE>
   </TABLES>
