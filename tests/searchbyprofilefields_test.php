@@ -97,19 +97,20 @@ final class searchbyprofilefields_test extends \advanced_testcase {
         $course2 = $this->getDataGenerator()->create_course();
         $course3 = $this->getDataGenerator()->create_course();
 
-        $maninstance1 = $DB->get_record('enrol', ['courseid' => $course1->id, 'enrol' => 'manual'], '*', MUST_EXIST);
-        $maninstance2 = $DB->get_record('enrol', ['courseid' => $course2->id, 'enrol' => 'manual'], '*', MUST_EXIST);
-        $maninstance3 = $DB->get_record('enrol', ['courseid' => $course3->id, 'enrol' => 'manual'], '*', MUST_EXIST);
+        $maninstance1 = $DB->get_record('enrol', ['enrol' => 'manual', 'courseid' => $course1->id], '*', MUST_EXIST);
+        $maninstance2 = $DB->get_record('enrol', ['enrol' => 'manual', 'courseid' => $course2->id], '*', MUST_EXIST);
+        $maninstance3 = $DB->get_record('enrol', ['enrol' => 'manual', 'courseid' => $course3->id], '*', MUST_EXIST);
 
         $manual = enrol_get_plugin('manual');
 
         $studentrole = $DB->get_record('role', ['shortname' => 'student']);
 
-        // Enrol $user2 on course 1 + 2 and $user1 on course 2 + 3.
-        $manual->enrol_user($maninstance1, $usertwo->id, $studentrole->id);
-        $manual->enrol_user($maninstance2, $usertwo->id, $studentrole->id);
+        // Enrol  $user1 on course 2 + 3 and $user2 on course 1 + 2.
         $manual->enrol_user($maninstance2, $userone->id, $studentrole->id);
         $manual->enrol_user($maninstance3, $userone->id, $studentrole->id);
+        $manual->enrol_user($maninstance1, $usertwo->id, $studentrole->id);
+        $manual->enrol_user($maninstance2, $usertwo->id, $studentrole->id);
+        
 
         // Check initial state of enrolments for $usertwo.
         $courses = enrol_get_all_users_courses($usertwo->id);

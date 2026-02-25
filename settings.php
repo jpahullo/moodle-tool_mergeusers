@@ -75,6 +75,11 @@ $databasesettings = new admin_settingpage(
     new lang_string('settings:databasesettings', 'tool_mergeusers'),
     'moodle/site:config',
 );
+$searchbyprofilefieldssettings = new admin_settingpage(
+    'toolmergeuserssearchbyprofilefieldssettings',
+    new lang_string('settings:searchbyprofilefieldssettings', 'tool_mergeusers'),
+    'moodle/site:config',
+);
 
 // Build just the links on the settings page.
 if ($hassiteconfig) {
@@ -87,6 +92,7 @@ if ($hassiteconfig) {
     );
 
     $ADMIN->add('toolmergeuserscat', $generalsettings);
+    $ADMIN->add('toolmergeuserscat', $searchbyprofilefieldssettings);
     $ADMIN->add('toolmergeuserscat', $databasesettings);
 }
 
@@ -98,6 +104,11 @@ if ($ADMIN->fulltree) {
             'toolmergeusersgeneralsettings',
             new moodle_url('/admin/settings.php', ['section' => 'toolmergeusersgeneralsettings']),
             new lang_string('settings:generalsettings', 'tool_mergeusers'),
+        ),
+        new tabobject(
+            'toolmergeuserssearchbyprofilefieldssettings',
+            new moodle_url('/admin/settings.php', ['section' => 'toolmergeuserssearchbyprofilefieldssettings']),
+            new lang_string('settings:searchbyprofilefieldssettings', 'tool_mergeusers'),
         ),
         new tabobject(
             'toolmergeusersdatabasesettings',
@@ -178,9 +189,13 @@ if ($ADMIN->fulltree) {
     }
 
     // Search by Profile fields.
+    // Add general settings.
+    if ($showtabs) {
+        $searchbyprofilefieldssettings->add($tabs);
+    }
     $profilefieldsoptions = tool_mergeusers_build_profilefields_options();
     if ($profilefieldsoptions->options) {
-        $generalsettings->add(new admin_setting_configmultiselect(
+        $searchbyprofilefieldssettings->add(new admin_setting_configmultiselect(
             'tool_mergeusers/searchbyprofilefields',
             get_string('searchbyprofilefields', 'tool_mergeusers'),
             get_string('searchbyprofilefields_desc', 'tool_mergeusers', $profilefieldsoptions->defaultvalue),

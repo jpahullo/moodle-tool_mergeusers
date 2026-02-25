@@ -112,6 +112,7 @@ $string['settings:customdbsettingsdesc'] = 'Specify the custom database settings
 $string['settings:databasesettings'] = 'Database settings';
 $string['settings:defaultdbsettings'] = 'Default database settings from <code>default_db_config.php</code>';
 $string['settings:generalsettings'] = 'General settings';
+$string['settings:searchbyprofilefieldssettings'] = 'Search by profile fields settings';
 $string['starttime'] = 'Merge started at {$a}';
 $string['suspenduser_setting'] = 'Suspend old user';
 $string['suspenduser_setting_desc'] = 'If enabled, it suspends the old user automatically upon a successful merge process, preventing the user from logging in Moodle (recommended). If disabled, the old user remains active. In both cases, old user will not have his/her related data.';
