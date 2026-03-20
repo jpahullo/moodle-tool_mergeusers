@@ -109,10 +109,10 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         if ($dbman->field_exists($table, $field)) {
             $DB->execute("UPDATE {tool_mergeusers} SET status =
                 CASE
-                    WHEN success = 1 THEN \"success\"
-                    WHEN success = 0 THEN \"error\"
+                    WHEN success = 1 THEN 'success'
+                    WHEN success = 0 THEN 'error'
                 END
-                WHERE status IS NULL OR status = \"\"");
+                WHERE status IS NULL OR status = ''");
         }
 
         // Mergeusers savepoint reached.
