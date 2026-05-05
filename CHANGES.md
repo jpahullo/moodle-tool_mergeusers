@@ -5,7 +5,8 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
 ## 2026050500 - upcomming
 
-1. fix: #405: remove execution permissions for db/install.xml and db/upgrade.php.
+1. task: #407: add support for Moodle 5.2.
+2. fix: #405: remove execution permissions for db/install.xml and db/upgrade.php.
 
 ## 2025102100
 
