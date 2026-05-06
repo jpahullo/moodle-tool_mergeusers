@@ -62,7 +62,7 @@ final class assign_test extends \advanced_testcase {
         $assign = $this->create_instance($course);
 
         // Give a grade to student 1.
-        $data = new stdClass();
+        $data = new \stdClass();
         $data->grade = '75.0';
         $assign->testable_apply_grade_to_user($data, $student2->id, 0);
 
@@ -137,7 +137,7 @@ final class assign_test extends \advanced_testcase {
         $assign = $this->create_instance($course);
 
         // Give a grade to student 1.
-        $data = new stdClass();
+        $data = new \stdClass();
         $data->grade = '75.0';
         $assign->testable_apply_grade_to_user($data, $student2->id, 0);
 
@@ -197,7 +197,7 @@ final class assign_test extends \advanced_testcase {
         $assign = $this->create_instance($course);
 
         // Give a grade to student 1.
-        $data = new stdClass();
+        $data = new \stdClass();
         $data->grade = '75.0';
         $assign->testable_apply_grade_to_user($data, $student2->id, 0);
 

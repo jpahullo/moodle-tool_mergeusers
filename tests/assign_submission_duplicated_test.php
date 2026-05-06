@@ -196,7 +196,7 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      *
      * @param int $id Submission ID
      * @param int $assignid Assignment ID
-     * @return stdClass
+     * @return \stdClass
      */
     private static function get_assign_submission_submitted($id, $assignid) {
         $anoldsubmittedassignsubmision = self::get_assign_submission($id);
@@ -212,7 +212,7 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      * @param int $id Submission ID
      * @param int $assignid Assignment ID
      * @param int $date Modification date
-     * @return stdClass
+     * @return \stdClass
      */
     private static function get_assign_submission_submitted_by_date($id, $assignid, $date) {
         $anewsubmittedassignsubmission = self::get_assign_submission($id);
@@ -228,7 +228,7 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      *
      * @param int $id Submission ID
      * @param int $assignid Assignment ID
-     * @return stdClass
+     * @return \stdClass
      */
     private static function get_assign_submission_new($id, $assignid) {
         $anoldsubmittedassignsubmision = self::get_assign_submission($id);
@@ -244,7 +244,7 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      * @param int $id Submission ID
      * @param int $assignid Assignment ID
      * @param int $date Modification date
-     * @return stdClass
+     * @return \stdClass
      */
     private static function get_assign_submission_draft_by_date($id, $assignid, $date) {
         $draft = self::get_assign_submission_draft($id, $assignid);
@@ -258,7 +258,7 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      *
      * @param int $id Submission ID
      * @param int $assignid Assignment ID
-     * @return stdClass
+     * @return \stdClass
      */
     private static function get_assign_submission_draft($id, $assignid) {
         $anassignsubmissiondraft = self::get_assign_submission($id);
@@ -273,7 +273,7 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      *
      * @param int $id Submission ID
      * @param int $assignid Assignment ID
-     * @return stdClass
+     * @return \stdClass
      */
     private static function get_assign_submission_reopened($id, $assignid) {
         $anassignsubmissionreopened = self::get_assign_submission($id);
@@ -287,7 +287,7 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      * Get a base assign submission object.
      *
      * @param int $id Submission ID
-     * @return stdClass
+     * @return \stdClass
      */
     private static function get_assign_submission($id) {
         $anewassignsubmision = new stdClass();
