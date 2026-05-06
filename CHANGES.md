@@ -3,6 +3,17 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026052713
+
+1. 2025-10-07: improvement: #378: add support for asynchronous user merging via adhoc task.
+   1. New adhoc task `merge_users_task` allows queuing merge operations to run during cron execution.
+   2. New setting `enableadhocmerge` to enable/disable adhoc task-based merging from web interface.
+   3. When adhoc merge is enabled, web-based merges are queued and processed asynchronously,
+      reducing timeout risks for large merge operations.
+   4. Thanks to @nihaalshaikh and @luukverhoeven.
+4. fix: #409: CI: codechecker passes for all plugin files.
+
+
 ## 2026052700
 
 1. fix: #411: regrading after merging users: prevent errors when plugin is uninstalled or
@@ -11,20 +22,13 @@ plugin table is missing. Thanks to @terryaulenbach for reporting the issue.
    2. Aborting merge when plugin is installed but table is missing, treating it as critical database corruption consistent with other data integrity checks.
    3. Added tests covering all edge cases.
 
+
 ## 2026050500
 
 1. task: #407: add support for Moodle 5.2.
 2. fix: #405: remove execution permissions for db/install.xml and db/upgrade.php.
 3. fix: #399: fix suspended image path. Thanks @matheus1002 for reporting.
 
-## 2025102202
-
-1. 2025-10-07: improvement: #378: add support for asynchronous user merging via adhoc task.
-   1. New adhoc task `merge_users_task` allows queuing merge operations to run during cron execution.
-   2. New setting `enableadhocmerge` to enable/disable adhoc task-based merging from web interface.
-   3. When adhoc merge is enabled, web-based merges are queued and processed asynchronously,
-      reducing timeout risks for large merge operations.
-   4. Thanks to @nihaalshaikh and @luukverhoeven.
 
 ## 2025102100
 
