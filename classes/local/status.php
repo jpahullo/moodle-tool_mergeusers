@@ -16,6 +16,8 @@
 
 namespace tool_mergeusers\local;
 
+// phpcs:disable moodle.Commenting.InlineComment.DocBlock
+
 /**
  * Status enum for user merging process.
  *
