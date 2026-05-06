@@ -175,8 +175,15 @@ final class logger {
     public function update_log_status(int $logid, string $status, array $log): bool {
         global $DB;
 
-        // Get existing log to preserve user snapshots.
-        $existinglog = $DB->get_record('tool_mergeusers', ['id' => $logid]);
+        try {
+            // Get existing log to preserve user snapshots.
+            // Use MUST_EXIST to ensure the record exists, or throw an exception.
+            $existinglog = $DB->get_record('tool_mergeusers', ['id' => $logid], '*', MUST_EXIST);
+        } catch (\dml_missing_record_exception $e) {
+            debugging('Cannot update non-existent merge log: ' . $logid, DEBUG_DEVELOPER);
+            return false;
+        }
+
         $existinglogdata = json_decode($existinglog->log, true);
 
         // Preserve user snapshots from the original log.

@@ -161,6 +161,14 @@ final class merge_users_task extends adhoc_task {
         $message->notification = 1;
 
         global $PAGE;
+
+        // Defensive check: $PAGE should be initialized by Moodle cron framework,
+        // but we verify it's available before attempting to get the renderer.
+        if (!isset($PAGE) || !$PAGE->has_context()) {
+            mtrace('tool_mergeusers: Cannot send notification - PAGE not initialized');
+            return;
+        }
+
         //phpcs:disable
         /** @var \tool_mergeusers\output\renderer $renderer */
         $renderer = $PAGE->get_renderer('tool_mergeusers');
@@ -169,22 +177,27 @@ final class merge_users_task extends adhoc_task {
         $messagedata = new \stdClass();
         $messagedata->fromuser = $renderer->show_user($fromuser->id, $fromuser);
         $messagedata->touser = $renderer->show_user($touser->id, $touser);
+        $messagedata->fromuserid = $fromuser->id;
+        $messagedata->touserid = $touser->id;
         $messagedata->logid = $renderer->render_logid($logid);
 
         // Prepare content for the notifications.
         if ($success) {
             $subject = get_string('message:mergeusers_success_subject', 'tool_mergeusers');
-            $body = get_string('message:mergeusers_success_body', 'tool_mergeusers', $messagedata);
+            $bodyhtml = get_string('message:mergeusers_success_body', 'tool_mergeusers', $messagedata);
         } else {
             $subject = get_string('message:mergeusers_error_subject', 'tool_mergeusers');
-            $body = get_string('message:mergeusers_error_body', 'tool_mergeusers', $messagedata);
+            $bodyhtml = get_string('message:mergeusers_error_body', 'tool_mergeusers', $messagedata);
         }
+
+        // Convert HTML body to plaintext for email clients that don't support HTML.
+        $bodyplain = html_to_text($bodyhtml);
 
         // Populate the message with the content.
         $message->subject = $subject;
-        $message->fullmessage = $body;
-        $message->fullmessagehtml = $body;
-        $message->fullmessageformat = FORMAT_PLAIN;
+        $message->fullmessage = $bodyplain;
+        $message->fullmessagehtml = $bodyhtml;
+        $message->fullmessageformat = FORMAT_HTML;
         $message->smallmessage = $subject;
 
         message_send($message);

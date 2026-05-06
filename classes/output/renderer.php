@@ -222,7 +222,7 @@ class renderer extends plugin_renderer_base {
     public function results_page(
         object $to,
         object $from,
-        string $status,
+        ?string $status,
         array|stdClass $data,
         int $logid,
         ?int $timecreated = null,
@@ -232,7 +232,7 @@ class renderer extends plugin_renderer_base {
             $data = json_decode(json_encode($data), true);
         }
 
-        $statusenum = status::from($status);
+        $statusenum = status::safe_from($status);
         switch ($statusenum) {
             case status::PENDING:
                 $resulttype = '';
@@ -245,16 +245,16 @@ class renderer extends plugin_renderer_base {
                 $notifytype = 'info';
                 break;
             case status::SUCCESS:
-                $resulttype = 'logok';
+                $resulttype = 'ok';
                 $dbmessage = 'dbok';
-                $notifytype = $status;
+                $notifytype = $statusenum->value;
                 break;
             case status::ERROR:
-                $resulttype = 'logko';
+                $resulttype = 'ko';
                 $dbmessage = (database_transactions::are_supported()) ?
                     'dbko_transactions' :
                     'dbko_no_transactions';
-                $notifytype = $status;
+                $notifytype = $statusenum->value;
                 break;
         }
 
@@ -333,12 +333,22 @@ class renderer extends plugin_renderer_base {
 
         // Display static user snapshots if available.
         if (is_array($data) && isset($data['user_snapshots'])) {
-            // Convert user snapshot arrays to objects for rendering.
-            $snapshots = (object) [
-                'to_user' => !empty($data['user_snapshots']['to_user']) ? (object) $data['user_snapshots']['to_user'] : null,
-                'from_user' => !empty($data['user_snapshots']['from_user']) ? (object) $data['user_snapshots']['from_user'] : null,
-            ];
-            $output .= $this->render_user_snapshots($snapshots);
+            // Check if user_snapshots is completely null (full anonymization).
+            if ($data['user_snapshots'] === null) {
+                $output .= $this->render_anonymized_notice();
+            } else {
+                // Convert user snapshot arrays to objects for rendering.
+                $snapshots = (object) [
+                    'to_user' => !empty($data['user_snapshots']['to_user']) ?
+                        (object) $data['user_snapshots']['to_user'] : null,
+                    'from_user' => !empty($data['user_snapshots']['from_user']) ?
+                        (object) $data['user_snapshots']['from_user'] : null,
+                ];
+                // Pass user IDs for anonymized snapshots.
+                $snapshots->to_user_id = $to->id ?? null;
+                $snapshots->from_user_id = $from->id ?? null;
+                $output .= $this->render_user_snapshots($snapshots);
+            }
             $data = $data['actions'] ?? [];
         }
 
@@ -515,18 +525,19 @@ class renderer extends plugin_renderer_base {
     /**
      * Renders a status badge.
      *
-     * @param string $status
+     * @param string|null $status
      * @return string HTML badge
      */
-    public function render_status(string $status): string {
-        $statusbadgeclass = match (status::from($status)) {
+    public function render_status(?string $status): string {
+        $statusenum = status::safe_from($status);
+        $statusbadgeclass = match ($statusenum) {
             status::PENDING => 'badge-warning',
             status::INPROGRESS => 'badge-info',
             status::SUCCESS => 'badge-success',
             status::ERROR => 'badge-danger',
             default => 'badge-secondary',
         };
-        $statusstring = get_string('status:' . $status, 'tool_mergeusers');
+        $statusstring = get_string('status:' . $statusenum->value, 'tool_mergeusers');
 
         return html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
     }
@@ -625,11 +636,23 @@ class renderer extends plugin_renderer_base {
         // From user snapshot.
         if (isset($snapshots->from_user) && $snapshots->from_user) {
             $output .= $this->render_single_user_snapshot($snapshots->from_user, get_string('olduser', 'tool_mergeusers'));
+        } else if (isset($snapshots->from_user_id)) {
+            // Show anonymized notice for from_user.
+            $output .= $this->render_anonymized_user_box(
+                get_string('olduser', 'tool_mergeusers'),
+                $snapshots->from_user_id
+            );
         }
 
         // To user snapshot.
         if (isset($snapshots->to_user) && $snapshots->to_user) {
             $output .= $this->render_single_user_snapshot($snapshots->to_user, get_string('newuser', 'tool_mergeusers'));
+        } else if (isset($snapshots->to_user_id)) {
+            // Show anonymized notice for to_user.
+            $output .= $this->render_anonymized_user_box(
+                get_string('newuser', 'tool_mergeusers'),
+                $snapshots->to_user_id
+            );
         }
 
         $output .= html_writer::end_tag('div');
@@ -672,6 +695,50 @@ class renderer extends plugin_renderer_base {
         $deletedtext = (!empty($snapshot->deleted)) ? get_string('yes') : get_string('no');
         $output .= html_writer::tag('div', get_string('snapshot_suspended', 'tool_mergeusers') . ' ' . $suspendedtext);
         $output .= html_writer::tag('div', get_string('snapshot_deleted', 'tool_mergeusers') . ' ' . $deletedtext);
+
+        $output .= html_writer::end_tag('div');
+
+        return $output;
+    }
+
+    /**
+     * Renders a notice when all user snapshots have been anonymized.
+     *
+     * @return string HTML output for anonymization notice.
+     */
+    private function render_anonymized_notice(): string {
+        $output = html_writer::start_tag(
+            'div',
+            [
+                'class' => 'alert alert-info user-snapshots-anonymized',
+                'style' => 'margin: 15px 0; padding: 15px;',
+            ]
+        );
+        $output .= html_writer::tag('strong', get_string('snapshot_anonymized_header', 'tool_mergeusers'));
+        $output .= html_writer::empty_tag('br');
+        $output .= get_string('snapshot_anonymized_notice', 'tool_mergeusers');
+        $output .= html_writer::end_tag('div');
+
+        return $output;
+    }
+
+    /**
+     * Renders a box showing a user's data has been anonymized.
+     *
+     * @param string $label User label (e.g., "User to keep").
+     * @param int $userid The user ID.
+     * @return string HTML output.
+     */
+    private function render_anonymized_user_box(string $label, int $userid): string {
+        $boxstyle = 'flex: 1; background-color: white; padding: 10px; border-radius: 3px; border: 2px dashed #ccc;';
+
+        $output = html_writer::start_tag('div', ['style' => $boxstyle]);
+        $output .= html_writer::tag('strong', $label);
+        $output .= html_writer::empty_tag('br');
+        $output .= html_writer::empty_tag('br');
+
+        $notice = get_string('snapshot_user_anonymized', 'tool_mergeusers', ['userid' => $userid]);
+        $output .= html_writer::tag('em', $notice, ['style' => 'color: #666;']);
 
         $output .= html_writer::end_tag('div');
 

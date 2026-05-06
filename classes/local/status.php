@@ -41,4 +41,21 @@ enum status: string {
     public static function from_success(bool $success): self {
         return $success ? self::SUCCESS : self::ERROR;
     }
+
+    /**
+     * Safely converts a string value to a status enum, with fallback for NULL/invalid values.
+     *
+     * This method handles legacy merge logs where the status field may be NULL,
+     * as well as any unexpected/invalid status strings. Returns ERROR as the default
+     * fallback, which is the safest assumption for logs without a valid status.
+     *
+     * @param string|null $value The status string value, or NULL for legacy logs.
+     * @return self The corresponding status enum, or ERROR for NULL/invalid values.
+     */
+    public static function safe_from(?string $value): self {
+        if ($value === null) {
+            return self::ERROR;
+        }
+        return self::tryFrom($value) ?? self::ERROR;
+    }
 }
