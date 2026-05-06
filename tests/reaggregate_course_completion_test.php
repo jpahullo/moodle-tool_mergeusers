@@ -120,7 +120,6 @@ final class reaggregate_course_completion_test extends advanced_testcase {
         $this->assertFalse($result);
         aggregate_completions(0);
 
-
         $mut = new user_merger();
         // This merge already invokes the callback for reaggregate course completion.
         [$success, $logs, $logid] = $mut->merge($tostudent->id, $fromstudent->id);
