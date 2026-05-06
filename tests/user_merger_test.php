@@ -28,6 +28,7 @@ use tool_mergeusers\local\user_merger;
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
  * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\user_merger
  */
 final class user_merger_test extends advanced_testcase {
     public function setUp(): void {
@@ -74,7 +75,7 @@ final class user_merger_test extends advanced_testcase {
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function test_failed_merge_with_one_deleted_user() {
+    public function test_failed_merge_with_one_deleted_user(): void {
         global $DB;
 
         // Setup two users to merge.
@@ -125,7 +126,7 @@ final class user_merger_test extends advanced_testcase {
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function test_failed_merge_with_two_deleted_users() {
+    public function test_failed_merge_with_two_deleted_users(): void {
         global $DB;
 
         // Setup two users to merge.

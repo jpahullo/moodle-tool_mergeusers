@@ -29,6 +29,7 @@ use tool_mergeusers\local\logger;
  * @package     tool_mergeusers
  * @copyright   10/11/2025 LdesignMedia.nl - Luuk Verhoeven
  * @author      Nihaal Shaikh
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class event_test extends advanced_testcase {
     /**

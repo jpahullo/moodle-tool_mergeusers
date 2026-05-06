@@ -29,9 +29,12 @@ use tool_mergeusers\local\user_merger;
  * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
  * @copyright 2025 onwards to Universitat Rovira i Virgili
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\user_merger
  */
 final class after_merged_all_tables_test extends advanced_testcase {
     /**
+     * Test custom callback for after_merged_all_tables hook is invoked.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_after_merge_hook
      * @throws dml_exception
@@ -55,6 +58,8 @@ final class after_merged_all_tables_test extends advanced_testcase {
     }
 
     /**
+     * Test custom callback for after_merged_all_tables hook records an error message.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_after_merge_hook
      * @throws dml_exception

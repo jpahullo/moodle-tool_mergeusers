@@ -29,10 +29,9 @@ use coding_exception;
 use dml_exception;
 use tool_mergeusers\local\user_searcher;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Tests for searching for users.
+ * @covers \tool_mergeusers\local\user_searcher
  */
 final class search_users_test extends advanced_testcase {
     /**

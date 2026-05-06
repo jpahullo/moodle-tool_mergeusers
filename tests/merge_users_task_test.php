@@ -27,6 +27,7 @@ use tool_mergeusers\local\logger;
  * @package     tool_mergeusers
  * @copyright   10/11/2025 LdesignMedia.nl - Luuk Verhoeven
  * @author      Nihaal Shaikh
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class merge_users_task_test extends advanced_testcase {
     /**
@@ -121,5 +122,4 @@ final class merge_users_task_test extends advanced_testcase {
         // Verify the setting is actually disabled.
         $this->assertFalse($adhocenabled);
     }
-
 }

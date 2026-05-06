@@ -14,11 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Tests for renderer functionality.
+ *
+ * @package   tool_mergeusers
+ * @author    Matthew Hilton <matthewhilton@catalyst-au.net>
+ * @copyright 2025 Catalyst IT Australia
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace tool_mergeusers;
 
 use advanced_testcase;
 use tool_mergeusers\output\renderer;
 use tool_mergeusers_renderer;
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Renderer tests
@@ -27,6 +38,7 @@ use tool_mergeusers_renderer;
  * @author    Matthew Hilton <matthewhilton@catalyst-au.net>
  * @copyright 2025 Catalyst IT Australia
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\output\renderer
  */
 final class renderer_test extends advanced_testcase {
     /**
@@ -91,11 +103,33 @@ final class renderer_test extends advanced_testcase {
     }
 }
 
+// @codingStandardsIgnoreStart
+
+/**
+ * In-memory implementation of last_merge for testing purposes.
+ *
+ * @package   tool_mergeusers
+ * @copyright 2025 Catalyst IT Australia
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class in_memory_last_merge extends \tool_mergeusers\local\last_merge {
+    /** @var int User ID. */
     private int $userid;
+    /** @var bool Whether user is suspended. */
     private bool $suspended;
+    /** @var mixed Merge to data. */
     private mixed $tome;
+    /** @var mixed Merge from data. */
     private mixed $fromme;
+
+    /**
+     * Constructor.
+     *
+     * @param int $userid User ID
+     * @param bool $suspended Whether user is suspended
+     * @param mixed $tome Merge to data
+     * @param mixed $fromme Merge from data
+     */
     public function __construct(int $userid, bool $suspended, mixed $tome, mixed $fromme) {
         $this->userid = $userid;
         $this->suspended = $suspended;
@@ -103,15 +137,32 @@ class in_memory_last_merge extends \tool_mergeusers\local\last_merge {
         $this->fromme = $fromme;
     }
 
+    /**
+     * Get merge from data.
+     *
+     * @return null|\stdClass
+     */
     public function fromme(): null|\stdClass {
         return $this->fromme;
     }
 
+    /**
+     * Get merge to data.
+     *
+     * @return null|\stdClass
+     */
     public function tome(): null|\stdClass {
         return $this->tome;
     }
 
+    /**
+     * Check if this user is deletable.
+     *
+     * @return bool
+     */
     public function is_this_user_deletable(): bool {
         return true;
     }
 }
+
+// @codingStandardsIgnoreEnd

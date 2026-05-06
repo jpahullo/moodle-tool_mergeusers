@@ -15,12 +15,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Tests for assignment merging.
  *
  * @package    tool_mergeusers
+ * @copyright  2024 Andrew Hancox <andrewdchancox@googlemail.com>
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\user_merger
  */
+
+namespace tool_mergeusers;
 
 use tool_mergeusers\local\user_merger;
 
@@ -30,9 +34,10 @@ global $CFG;
 require_once("$CFG->dirroot/mod/assign/tests/generator.php");
 
 /**
- * Class assign_test
+ * Tests for assignment merging.
+ * @covers \tool_mergeusers\local\user_merger
  */
-final class assign_test extends advanced_testcase {
+final class assign_test extends \advanced_testcase {
     use \mod_assign_test_generator;
 
     public function setUp(): void {
@@ -123,7 +128,7 @@ final class assign_test extends advanced_testcase {
      * @group tool_mergeusers_assign
      * @throws dml_exception
      */
-    public function test_failed_merged_for_missing_course_module() {
+    public function test_failed_merged_for_missing_course_module(): void {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();
@@ -183,7 +188,7 @@ final class assign_test extends advanced_testcase {
      * @group tool_mergeusers_assign
      * @throws dml_exception
      */
-    public function test_failed_merged_for_missing_module_record() {
+    public function test_failed_merged_for_missing_module_record(): void {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();

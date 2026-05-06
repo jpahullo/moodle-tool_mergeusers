@@ -30,13 +30,19 @@ use xmldb_table;
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
  * @copyright Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\merger\generic_table_merger
  */
 final class generic_table_merger_test extends advanced_testcase {
+    /** @var int User ID to keep. */
     public const USER_TO_KEEP = 1;
+    /** @var int User ID to remove. */
     public const USER_TO_REMOVE = 2;
+    /** @var string Table name for testing. */
     public const TABLE_NAME_FOR_TESTING = 'generic_table_merger_test';
 
+    /** @var array Data for table merger. */
     private array $datafortablemerger;
+    /** @var generic_table_merger Table merger instance. */
     private generic_table_merger $merger;
 
     public function setUp(): void {
@@ -126,6 +132,11 @@ final class generic_table_merger_test extends advanced_testcase {
         $this->assertCount(1, $matchinglogs);
     }
 
+    /**
+     * Data provider for test_merge_without_conflicting_records.
+     *
+     * @return array
+     */
     public static function without_conflicting_records_provider(): array {
         return [
             'no records for users' => [null, false],
@@ -197,6 +208,11 @@ final class generic_table_merger_test extends advanced_testcase {
         $this->assertEmpty($errormessages);
     }
 
+    /**
+     * Data provider for test_merge_with_conflicting_records.
+     *
+     * @return array
+     */
     public static function with_conflicting_records_provider(): array {
         return [
             'with informed compound index' => [true],

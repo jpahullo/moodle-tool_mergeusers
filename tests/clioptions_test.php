@@ -14,18 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_mergeusers;
+
 use tool_mergeusers\local\config;
 use tool_mergeusers\local\user_merger;
 
 /**
- * Version information
+ * Tests for CLI options.
  *
  * @package    tool_mergeusers
- * @subpackage mergeusers
+ * @copyright  2024 Andrew Hancox <andrewdchancox@googlemail.com>
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\config
  */
-final class clioptions_test extends advanced_testcase {
+final class clioptions_test extends \advanced_testcase {
     public function setUp(): void {
         global $CFG;
         parent::setUp();

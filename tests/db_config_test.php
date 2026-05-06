@@ -26,9 +26,12 @@ use tool_mergeusers\local\db_config;
  * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
  * @copyright 2025 onwards to Universitat Rovira i Virgili
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\db_config
  */
 final class db_config_test extends basic_testcase {
     /**
+     * Test that config is initialized empty.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
@@ -38,6 +41,8 @@ final class db_config_test extends basic_testcase {
     }
 
     /**
+     * Test that config is initialized with valid settings.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
@@ -48,6 +53,8 @@ final class db_config_test extends basic_testcase {
     }
 
     /**
+     * Test that config is initialized with invalid settings and not considered.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
@@ -58,6 +65,8 @@ final class db_config_test extends basic_testcase {
     }
 
     /**
+     * Test that config merges content and first settings are kept.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
@@ -68,6 +77,8 @@ final class db_config_test extends basic_testcase {
     }
 
     /**
+     * Test that config merges content and first array settings are kept.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
@@ -109,6 +120,8 @@ final class db_config_test extends basic_testcase {
     }
 
     /**
+     * Test that config merge with other config and first settings are kept.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */
@@ -119,6 +132,8 @@ final class db_config_test extends basic_testcase {
     }
 
     /**
+     * Test that config settings are not settable.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_db_config
      */

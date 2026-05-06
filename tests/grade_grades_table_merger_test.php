@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace tool_mergeusers\local\merger;
+namespace tool_mergeusers;
 
 use mod_attendance\output\user_data;
 use tool_mergeusers\local\merger\grade_grades_table_merger;
@@ -116,6 +116,11 @@ final class grade_grades_table_merger_test extends \advanced_testcase {
         $this->assertTrue($DB->record_exists("grade_grades", ["id" => $gradeid]));
     }
 
+    /**
+     * Data provider for test_merge_grade_grades.
+     *
+     * @return array
+     */
     public static function grade_grades_table_merger_provider(): array {
         return [
             // Values: grade from user to keep, grade from user to delete, final grade, keep data from user to keep.
@@ -126,6 +131,13 @@ final class grade_grades_table_merger_test extends \advanced_testcase {
         ];
     }
 
+    /**
+     * Create a grade with a specific final grade.
+     *
+     * @param int $userid User ID
+     * @param int|null $finalgrade Final grade value
+     * @return \grade_grade
+     */
     private function create_grade_with_finalgrade(int $userid, int|null $finalgrade): \grade_grade {
         return $this->getDataGenerator()->create_grade_grade(["itemid" => $this->assigngrade->id, "userid" => $userid,
             "finalgrade" => $finalgrade]);

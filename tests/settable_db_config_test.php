@@ -26,9 +26,12 @@ use tool_mergeusers\local\settable_db_config;
  * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
  * @copyright 2025 onwards to Universitat Rovira i Virgili
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\settable_db_config
  */
 final class settable_db_config_test extends basic_testcase {
     /**
+     * Test that config is initialized empty.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_settable_db_config
      */
@@ -38,6 +41,8 @@ final class settable_db_config_test extends basic_testcase {
     }
 
     /**
+     * Test that config is initialized with valid settings.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_settable_db_config
      */
@@ -72,6 +77,11 @@ final class settable_db_config_test extends basic_testcase {
         $this->assertEquals($expectedvalue, $config->{$settingname});
     }
 
+    /**
+     * Data provider for test_config_override_specific_setting.
+     *
+     * @return array
+     */
     public static function override_setting_provider(): array {
         return [
             'alwaysrollback is settable' => [

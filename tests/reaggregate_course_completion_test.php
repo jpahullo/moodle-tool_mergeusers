@@ -39,6 +39,7 @@ require_once($CFG->libdir . '/completionlib.php');
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
  * @copyright 2025 Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\user_merger
  */
 final class reaggregate_course_completion_test extends advanced_testcase {
     /**
