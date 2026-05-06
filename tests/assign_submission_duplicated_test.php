@@ -40,8 +40,8 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      *
      * @param array $expectedtomodify The expected records to modify.
      * @param array $expectedtoremove The expected records to remove.
-     * @param stdClass $oldusersubmission The old user submission.
-     * @param stdClass $newusersubmission The new user submission.
+     * @param \stdClass $oldusersubmission The old user submission.
+     * @param \stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider remove_old_ignore_new_data_provider
@@ -93,8 +93,8 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      *
      * @param array $expectedtomodify The expected records to modify.
      * @param array $expectedtoremove The expected records to remove.
-     * @param stdClass $oldusersubmission The old user submission.
-     * @param stdClass $newusersubmission The new user submission.
+     * @param \stdClass $oldusersubmission The old user submission.
+     * @param \stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider update_old_and_remove_new_data_provider
@@ -144,8 +144,8 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      *
      * @param array $expectedtomodify The expected records to modify.
      * @param array $expectedtoremove The expected records to remove.
-     * @param stdClass $oldusersubmission The old user submission.
-     * @param stdClass $newusersubmission The new user submission.
+     * @param \stdClass $oldusersubmission The old user submission.
+     * @param \stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider update_first_and_remove_last_data_provider
@@ -290,7 +290,7 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
      * @return \stdClass
      */
     private static function get_assign_submission($id) {
-        $anewassignsubmision = new stdClass();
+        $anewassignsubmision = new \stdClass();
         $anewassignsubmision->id = $id;
         $anewassignsubmision->assignment = 123456;
         $anewassignsubmision->userid = 1234;
@@ -306,8 +306,8 @@ final class assign_submission_duplicated_test extends \advanced_testcase {
     /**
      * Get duplicated data for testing.
      *
-     * @param stdClass $oldusersubmission The old user submission.
-     * @param stdClass $newusersubmission The new user submission.
+     * @param \stdClass $oldusersubmission The old user submission.
+     * @param \stdClass $newusersubmission The new user submission.
      * @return duplicated_data
      */
     private function get_duplicated_data($oldusersubmission, $newusersubmission): duplicated_data {
