@@ -12,4 +12,3 @@ jobs:
     with:
       disable_grunt: true
       disable_release: true
-      ignore_paths: tests/
