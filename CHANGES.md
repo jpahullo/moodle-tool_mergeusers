@@ -3,6 +3,14 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026052700
+
+1. fix: #411: regrading after merging users: prevent errors when plugin is uninstalled or
+plugin table is missing. Thanks to @terryaulenbach for reporting the issue.
+   1. Skipped grade records from uninstalled plugins at database level, improving performance.
+   2. Aborting merge when plugin is installed but table is missing, treating it as critical database corruption consistent with other data integrity checks.
+   3. Added tests covering all edge cases.
+
 ## 2026050500
 
 1. task: #407: add support for Moodle 5.2.

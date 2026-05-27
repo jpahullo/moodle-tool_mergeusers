@@ -15,11 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Desc.
+ * Testing regrading activities after merging users.
  *
  * @package   tool_mergeusers
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
- * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @copyright 2026 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -35,7 +35,7 @@ use tool_mergeusers\hook\after_merged_all_tables;
  *
  * @package   tool_mergeusers
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
- * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @copyright 2026 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class regrading_after_merged_callback {
@@ -67,15 +67,18 @@ class regrading_after_merged_callback {
         $dbman = $DB->get_manager();
 
         foreach ($iteminstances as $iteminstance) {
-            // Check if the plugin table exists (edge case: module registered but table missing).
+            // Check if the plugin table exists (critical: module registered but table missing = corruption).
             if (!$dbman->table_exists($iteminstance->itemmodule)) {
-                $hook->add_log(sprintf(
-                    'Plugin table "%s" missing but registered. Skipping regrade for instance id "%s" in course id "%s".',
-                    $iteminstance->itemmodule,
-                    $iteminstance->id,
-                    $iteminstance->courseid
-                ));
-                continue;
+                throw new moodle_exception(
+                    'exception:plugintablemissing',
+                    'tool_mergeusers',
+                    '',
+                    [
+                        'module' => $iteminstance->itemmodule,
+                        'itemid' => $iteminstance->id,
+                        'courseid' => $iteminstance->courseid,
+                    ]
+                );
             }
 
             if (!$activity = $DB->get_record($iteminstance->itemmodule, ['id' => $iteminstance->iteminstance])) {

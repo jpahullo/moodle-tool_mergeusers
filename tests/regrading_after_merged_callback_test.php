@@ -95,9 +95,12 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
     }
 
     /**
-     * Test that regrading logs message when module is registered but table is missing.
+     * Test that exception is thrown when plugin table is missing.
      *
-     * This tests the table_exists() check inside the loop for data corruption detection.
+     * This validates that when a plugin is installed (present in {modules}) but its
+     * database table doesn't exist, an exception is thrown indicating critical database
+     * corruption, consistent with the other two data integrity exceptions.
+     *
      * Uses table renaming instead of dropping to avoid breaking test cleanup.
      *
      * NOTE: This test uses preventResetByRollback() to force full database reset,
@@ -107,7 +110,7 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
      * @group tool_mergeusers
      * @group tool_mergeusers_regrade
      */
-    public function test_regrade_logs_when_module_registered_but_table_missing(): void {
+    public function test_regrade_throws_exception_when_plugin_table_missing(): void {
         global $DB;
 
         // Force full database reset (required for DDL operations).
@@ -116,7 +119,7 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
         // Create an assignment with grades.
         $assign = $this->create_activity_with_grades('assign');
 
-        // Rename table to simulate it doesn't exist (corruption scenario).
+        // Rename table to simulate corruption (plugin installed but table missing).
         $dbman = $DB->get_manager();
         $table = new \xmldb_table('assign');
         $backupname = 'assign_phpunit_backup_temp';
@@ -125,24 +128,17 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
             // Hide the assign table by renaming it.
             $dbman->rename_table($table, $backupname);
 
-            // Execute regrading callback - should log missing table.
+            // Execute regrading callback and expect exception.
             $logs = [];
             $errors = [];
             $hook = new after_merged_all_tables($this->user1->id, $this->user2->id, $logs, $errors);
 
-            regrading_after_merged_callback::regrade($hook);
+            $this->expectException(moodle_exception::class);
+            $this->expectExceptionMessageMatches(
+                '/Plugin "assign" is installed but its database table is missing/'
+            );
 
-            // Verify: Log should contain message about missing table.
-            $this->assertNotEmpty($logs, 'Logs should be generated for missing table');
-            $foundlog = false;
-            foreach ($logs as $log) {
-                if (strpos($log, 'Plugin table "assign" missing but registered') !== false) {
-                    $foundlog = true;
-                    break;
-                }
-            }
-            $this->assertTrue($foundlog, 'Log should contain message about missing plugin table');
-            $this->assertEmpty($errors, 'No errors should be generated');
+            regrading_after_merged_callback::regrade($hook);
 
         } finally {
             // ALWAYS restore table name, even if test fails.
@@ -245,29 +241,25 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
     }
 
     /**
-     * Test regrading with multiple modules in mixed scenarios.
+     * Test that regrading filters out uninstalled modules at SQL level.
      *
-     * This validates that the callback handles multiple grade items correctly,
-     * processing valid ones and skipping/logging invalid ones.
+     * This validates that the SQL INNER JOIN with {modules} correctly excludes
+     * grade items from uninstalled plugins, preventing any processing or logging
+     * for those items.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_regrade
      */
-    public function test_regrade_with_multiple_modules_mixed_scenarios(): void {
+    public function test_regrade_filters_uninstalled_module(): void {
         global $DB;
 
-        // Create two assignments with grades.
-        $assign1 = $this->create_activity_with_grades('assign', 'Assignment 1');
-        $assign2 = $this->create_activity_with_grades('assign', 'Assignment 2');
+        // Create a valid assignment with grades.
+        $assign = $this->create_activity_with_grades('assign', 'Assignment Test');
 
         // Create a data activity with grades.
-        $data = $this->create_activity_with_grades('data', 'Database 1');
+        $data = $this->create_activity_with_grades('data', 'Database Test');
 
-        // Scenario 1: assign1 is valid.
-        // Scenario 2: assign2 activity record is deleted (will throw exception, but we'll catch it).
-        $DB->delete_records('assign', ['id' => $assign2->id]);
-
-        // Scenario 3: data module is uninstalled.
+        // Uninstall the data module (simulate uninstalled plugin).
         $DB->delete_records('modules', ['name' => 'data']);
 
         // Execute regrading callback.
@@ -275,27 +267,54 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
         $errors = [];
         $hook = new after_merged_all_tables($this->user1->id, $this->user2->id, $logs, $errors);
 
-        // We expect an exception for assign2, so we need to catch it.
-        try {
-            regrading_after_merged_callback::regrade($hook);
-            $this->fail('Expected moodle_exception was not thrown for missing activity record');
-        } catch (moodle_exception $e) {
-            // Expected exception for assign2.
-            $this->assertStringContainsString('exception:nomoduleinstance', $e->errorcode);
-        }
+        regrading_after_merged_callback::regrade($hook);
 
-        // Even though exception was thrown, we should have processed assign1 before hitting assign2.
-        // The data module should have been filtered by SQL (no log entry).
-        // Note: The order of processing depends on SQL results, so we verify assign1 was processed.
-        $foundassign1 = false;
+        // Verify: Assignment was processed.
+        $foundassign = false;
         foreach ($logs as $log) {
             if (strpos($log, 'Regraded grade item') !== false && strpos($log, 'assign') !== false) {
-                $foundassign1 = true;
-                break;
+                $foundassign = true;
+            }
+            // Data module should NOT appear in logs (filtered by SQL).
+            $this->assertStringNotContainsString('data', $log, 'Data module should be filtered by SQL');
+        }
+
+        $this->assertTrue($foundassign, 'Assignment should be processed and logged');
+        $this->assertEmpty($errors, 'No errors should be generated');
+    }
+
+    /**
+     * Test that regrading processes multiple valid modules correctly.
+     *
+     * This validates that when multiple activities from the same or different
+     * modules exist, all valid ones are processed and logged correctly.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_regrade
+     */
+    public function test_regrade_processes_multiple_valid_modules(): void {
+        // Create two assignments with grades.
+        $assign1 = $this->create_activity_with_grades('assign', 'Assignment 1');
+        $assign2 = $this->create_activity_with_grades('assign', 'Assignment 2');
+
+        // Execute regrading callback.
+        $logs = [];
+        $errors = [];
+        $hook = new after_merged_all_tables($this->user1->id, $this->user2->id, $logs, $errors);
+
+        regrading_after_merged_callback::regrade($hook);
+
+        // Count how many grade items were regraded.
+        $regradecount = 0;
+        foreach ($logs as $log) {
+            if (strpos($log, 'Regraded grade item') !== false) {
+                $regradecount++;
             }
         }
-        // This assertion might fail depending on SQL order. The test validates mixed scenarios exist.
-        // The important part is that data was filtered by SQL and assign2 threw expected exception.
+
+        // Both assignments should be processed.
+        $this->assertEquals(2, $regradecount, 'Both assignments should be regraded');
+        $this->assertEmpty($errors, 'No errors should be generated');
     }
 
     /**

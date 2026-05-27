@@ -45,6 +45,7 @@ $string['eventusermergedfailure'] = 'Merge failed';
 $string['eventusermergedsuccess'] = 'Merge success';
 $string['exception:nocoursemodule'] = 'Can not find the course module for module "{$a->module}", activity.id "{$a->activityid}" and course.id "{$a->courseid}".';
 $string['exception:nomoduleinstance'] = 'Can not find "{$a->module}" activity with id "{$a->activityid}".';
+$string['exception:plugintablemissing'] = 'Plugin "{$a->module}" is installed but its database table is missing. Grade item id "{$a->itemid}" in course id "{$a->courseid}" cannot be processed due to database corruption.';
 $string['excluded_exceptions'] = 'Exclude exceptions';
 $string['excluded_exceptions_desc'] = 'Experience on this subject suggests that all these database tables should be excluded from the merge. See README for more details. <br> Therefore, for applying default plugin behaviour, you need to choose \'{$a}\' to exclude all those tables from the merge process (recommended).<br> If you prefer, you can exclude any of those tables and include them in the merge process (not recommended).';
 $string['exportlogs'] = 'Export logs as CSV';
