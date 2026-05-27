@@ -57,12 +57,27 @@ class regrading_after_merged_callback {
 
         $sql = "SELECT DISTINCT gi.id, gi.iteminstance, gi.itemmodule, gi.courseid
                 FROM {grade_grades} gg
-                INNER JOIN {grade_items} gi on gg.itemid = gi.id
-                WHERE itemtype = :itemtype AND (gg.userid = :toid OR gg.userid = :fromid)";
+                INNER JOIN {grade_items} gi ON gg.itemid = gi.id
+                INNER JOIN {modules} m ON m.name = gi.itemmodule
+                WHERE gi.itemtype = :itemtype AND (gg.userid = :toid OR gg.userid = :fromid)";
 
         $iteminstances = $DB->get_records_sql($sql, ['itemtype' => 'mod', 'toid' => $hook->toid, 'fromid' => $hook->fromid]);
 
+        // Get database manager once for reuse in the loop.
+        $dbman = $DB->get_manager();
+
         foreach ($iteminstances as $iteminstance) {
+            // Check if the plugin table exists (edge case: module registered but table missing).
+            if (!$dbman->table_exists($iteminstance->itemmodule)) {
+                $hook->add_log(sprintf(
+                    'Plugin table "%s" missing but registered. Skipping regrade for instance id "%s" in course id "%s".',
+                    $iteminstance->itemmodule,
+                    $iteminstance->id,
+                    $iteminstance->courseid
+                ));
+                continue;
+            }
+
             if (!$activity = $DB->get_record($iteminstance->itemmodule, ['id' => $iteminstance->iteminstance])) {
                 throw new moodle_exception(
                     'exception:nomoduleinstance',
