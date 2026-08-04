@@ -42,6 +42,7 @@ use html_writer;
 use moodle_exception;
 use moodle_url;
 use ReflectionException;
+use Throwable;
 use tool_mergeusers\event\user_merged_failure;
 use tool_mergeusers\event\user_merged_success;
 use tool_mergeusers\local\merger\table_merger;
@@ -323,7 +324,7 @@ final class user_merger {
             \core\di::get(\core\hook\manager::class)->dispatch(
                 new \tool_mergeusers\hook\after_merged_all_tables($toid, $fromid, $logs, $errors),
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $errors[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
                     html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
                     'Trace:' . html_writer::empty_tag('br') .
