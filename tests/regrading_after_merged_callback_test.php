@@ -139,7 +139,6 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
             );
 
             regrading_after_merged_callback::regrade($hook);
-
         } finally {
             // ALWAYS restore table name, even if test fails.
             if ($dbman->table_exists($backupname)) {
