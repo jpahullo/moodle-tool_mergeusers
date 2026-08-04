@@ -3,6 +3,20 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080400
+
+1. fix: #393: CI: codechecker errors (blank line before `finally`; alphabetical order of `provider::implements`).
+2. fix: #393: adhoc task notification crashed with undefined method `moodle_page::has_context()`; use
+   `set_context()` on the system context instead.
+3. fix: #393: PHPUnit risky-test warnings from output buffers left open when `merge_users_task::execute()` failed
+   inside a test.
+4. fix: #393: `user_merger::merge_users()` now catches `Throwable` instead of `Exception`, so a real merge failure
+   can never fire the `user_merged_failure` event twice.
+5. improvement: #393: settings page now shows an informational note when adhoc merging is enabled but Moodle's
+   native `$CFG->task_concurrency_limit` is not forced to 1 for `merge_users_task` — only relevant if merges are
+   observed running out of the order they were requested; see `README.md` for details.
+
+
 ## 2026052713
 
 1. 2025-10-07: improvement: #378: add support for asynchronous user merging via adhoc task.
