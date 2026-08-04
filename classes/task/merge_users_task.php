@@ -53,6 +53,24 @@ final class merge_users_task extends adhoc_task {
     }
 
     /**
+     * Ensure at most one merge_users_task instance runs at a time across the
+     * whole site, regardless of how many cron workers are processing adhoc
+     * tasks in parallel. This is what guarantees chained merges (e.g. A into
+     * B, then B into C) always execute in the order they were queued: Moodle
+     * leaves any task it cannot grab a concurrency slot for untouched, so the
+     * oldest queued task is always the next one picked up.
+     *
+     * Site administrators can override this via
+     * $CFG->task_concurrency_limit[self::class] in config.php if they
+     * explicitly understand and accept the ordering risk of a higher value.
+     *
+     * @return int
+     */
+    protected function get_default_concurrency_limit(): int {
+        return 1;
+    }
+
+    /**
      * Executes the merge.
      */
     public function execute(): void {
