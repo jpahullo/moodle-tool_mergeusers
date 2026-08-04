@@ -20,8 +20,10 @@ use advanced_testcase;
 use core\task\manager;
 use tool_mergeusers\event\user_merged_success;
 use tool_mergeusers\event\user_merged_failure;
+use tool_mergeusers\fixtures\after_merged_all_tables_callbacks;
 use tool_mergeusers\task\merge_users_task;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\user_merger;
 
 /**
  * Tests for events triggered by adhoc task execution.
@@ -149,5 +151,40 @@ final class event_test extends advanced_testcase {
         $this->assertEquals($touser->id, $event->get_new_user_id());
         $this->assertEquals($fromuser->id, $event->get_old_user_id());
         $this->assertEquals($logid, $event->get_log_id());
+    }
+
+    /**
+     * Test that user_merged_failure fires exactly once when a PHP Error (not an Exception)
+     * is thrown while merging, so it never escapes uncaught to cause a second failure event
+     * elsewhere (e.g. from merge_users_task::execute()'s own catch block).
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\local\user_merger
+     * @covers \tool_mergeusers\event\user_merged_failure
+     */
+    public function test_user_merged_failure_event_fires_exactly_once_when_merge_throws_error(): void {
+        require_once(__DIR__ . '/fixtures/after_merged_all_tables_callbacks.php');
+        \core\di::set(
+            \core\hook\manager::class,
+            \core\hook\manager::phpunit_get_instance([
+                'tool_mergeusers' => __DIR__ . '/fixtures/after_merged_all_tables_hooks_with_throwable_error.php',
+            ]),
+        );
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $sink = $this->redirectEvents();
+
+        $mut = new user_merger();
+        [$success] = $mut->merge($touser->id, $fromuser->id);
+
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertFalse($success);
+
+        $failureevents = array_filter($events, fn ($event) => $event instanceof user_merged_failure);
+        $this->assertCount(1, $failureevents);
     }
 }

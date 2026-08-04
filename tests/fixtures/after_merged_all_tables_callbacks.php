@@ -66,4 +66,17 @@ final class after_merged_all_tables_callbacks {
     ): void {
         $hook->add_error_message(self::class);
     }
+
+    /**
+     * Simulates a callback that fails with a PHP Error (not an Exception),
+     * to test that user_merger::merge_users() catches it as any other failure.
+     *
+     * @param after_merged_all_tables $hook
+     * @return void
+     */
+    public static function test_hook_after_merged_all_tables_throws_error(
+        after_merged_all_tables $hook,
+    ): void {
+        throw new \Error('Simulated fatal error from after_merged_all_tables callback.');
+    }
 }
