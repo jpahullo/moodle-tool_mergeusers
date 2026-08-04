@@ -12,3 +12,4 @@ jobs:
     with:
       disable_grunt: true
       disable_release: true
+      disable_behat: true
