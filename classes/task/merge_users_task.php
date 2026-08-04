@@ -164,9 +164,16 @@ final class merge_users_task extends adhoc_task {
 
         // Defensive check: $PAGE should be initialized by Moodle cron framework,
         // but we verify it's available before attempting to get the renderer.
-        if (!isset($PAGE) || !$PAGE->has_context()) {
+        if (!isset($PAGE)) {
             mtrace('tool_mergeusers: Cannot send notification - PAGE not initialized');
             return;
+        }
+
+        // The renderer needs a context; in a cron/adhoc-task context $PAGE->context
+        // is not set by anything else, so set it explicitly to the system context
+        // (this notification is not tied to any more specific context).
+        if (!$PAGE->context) {
+            $PAGE->set_context(\context_system::instance());
         }
 
         //phpcs:disable
