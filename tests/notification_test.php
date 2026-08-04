@@ -72,8 +72,11 @@ final class notification_test extends advanced_testcase {
 
         // Execute the adhoc task (will succeed). Buffer output to suppress mtrace.
         ob_start();
-        $task->execute();
-        ob_end_clean();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
 
         // Get sent messages.
         $messages = $sink->get_messages();
@@ -136,8 +139,11 @@ final class notification_test extends advanced_testcase {
 
         // Execute the adhoc task (will fail due to deleted user). Buffer output to suppress mtrace.
         ob_start();
-        $task->execute();
-        ob_end_clean();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
 
         // Get sent messages.
         $messages = $sink->get_messages();
