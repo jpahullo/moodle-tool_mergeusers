@@ -12,9 +12,12 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    inside a test.
 4. fix: #393: `user_merger::merge_users()` now catches `Throwable` instead of `Exception`, so a real merge failure
    can never fire the `user_merged_failure` event twice.
-5. improvement: #393: settings page now shows an informational note when adhoc merging is enabled but Moodle's
-   native `$CFG->task_concurrency_limit` is not forced to 1 for `merge_users_task` — only relevant if merges are
-   observed running out of the order they were requested; see `README.md` for details.
+5. improvement: #393: `merge_users_task` now enforces, by default and with no configuration required, that only
+   one merge runs at a time and that a failed merge is never retried — guaranteeing chained merges (e.g. A into B,
+   then B into C) always execute in the order they were requested.
+6. improvement: #393: settings page now shows a note only when an administrator has explicitly overridden the
+   default concurrency limit above via `$CFG->task_concurrency_limit`, since doing so can let merges run out of
+   order; see `README.md` for details.
 
 
 ## 2026052713

@@ -204,25 +204,24 @@ A failed merge processed this way is **never retried**: the task fires a
 for review. Retrying a partially-applied merge automatically could corrupt
 data, particularly for chained merges (e.g. merging A into B, and later B
 into C), so this plugin deliberately never lets Moodle's adhoc task retry
-mechanism run again on a failed merge.
+mechanism run again on a failed merge (`merge_users_task::retry_until_success()`
+returns `false`).
 
-In general, you do not need to do anything else: Moodle processes queued
-adhoc tasks in the order they were requested. This can only become a
-concern when several cron workers run in parallel and a merge task is
-requeued (e.g. due to contention), which could in rare cases run a
-later-requested merge before an earlier one it should have followed. If,
-and only if, you observe merges being applied out of the order they were
-requested, add the following to your `config.php` to force Moodle to run
-strictly one merge task at a time:
+For the same reason, `merge_users_task` only ever runs **one instance at a
+time**, by default, regardless of how many cron workers process adhoc tasks
+in parallel (`merge_users_task::get_default_concurrency_limit()` returns
+`1`). This guarantees merges are always applied in the order they were
+requested — you do not need to configure anything for this.
+
+If you specifically understand and accept the risk of merges running out of
+order, an administrator can override this via `config.php`:
 
 ```php
-$CFG->task_concurrency_limit[\tool_mergeusers\task\merge_users_task::class] = 1;
+$CFG->task_concurrency_limit[\tool_mergeusers\task\merge_users_task::class] = 2; // Or any value other than 1.
 ```
 
-This setting can only be defined in `config.php` — Moodle reads it directly
-from the bootstrap `$CFG`, so the plugin cannot set it for you. When adhoc
-merging is enabled and this is not configured, the plugin's settings page
-shows an informational note about it.
+When adhoc merging is enabled and this override is in place, the plugin's
+settings page shows a note about it as a reminder of the ordering risk.
 
 
 # An important note about provided hooks
