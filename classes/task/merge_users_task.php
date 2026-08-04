@@ -71,6 +71,19 @@ final class merge_users_task extends adhoc_task {
     }
 
     /**
+     * A failed merge must never be retried: retrying a partially-applied
+     * merge could corrupt data, especially for chained merges. execute()
+     * already never lets an exception escape uncaught, but this makes the
+     * guarantee explicit and enforced natively by Moodle's task manager too
+     * (it forces attemptsavailable to 1 when queuing this task).
+     *
+     * @return bool
+     */
+    public function retry_until_success(): bool {
+        return false;
+    }
+
+    /**
      * Executes the merge.
      */
     public function execute(): void {
