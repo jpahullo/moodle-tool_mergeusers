@@ -177,7 +177,7 @@ if ($ADMIN->fulltree) {
 
     if (
         (bool)(int)get_config('tool_mergeusers', 'enableadhocmerge')
-        && !tool_mergeusers_is_adhoc_concurrency_configured()
+        && tool_mergeusers_is_adhoc_concurrency_limit_overridden()
     ) {
         $generalsettings->add(new admin_setting_description(
             'tool_mergeusers/adhocconcurrencywarning',

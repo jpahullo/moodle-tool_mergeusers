@@ -126,21 +126,19 @@ function tool_mergeusers_inform_about_pending_user_profile_fields(): stdClass {
 }
 
 /**
- * Checks whether Moodle's native adhoc task concurrency limit is configured
- * to allow at most one merge_users_task instance running at a time.
+ * Checks whether an administrator has explicitly overridden, via config.php,
+ * the concurrency limit this plugin enforces by default (1) for
+ * merge_users_task. Such an override can let merges run out of the order
+ * they were requested, so it is worth flagging on the settings page.
  *
- * This setting can only be defined in config.php: Moodle reads
- * $CFG->task_concurrency_limit directly from the bootstrap $CFG, never from
- * values stored through set_config(), so this plugin cannot set it for the
- * administrator.
- *
- * @return bool true when $CFG->task_concurrency_limit[merge_users_task::class] equals 1.
+ * @return bool true when $CFG->task_concurrency_limit[merge_users_task::class]
+ * is set to a value other than 1.
  */
-function tool_mergeusers_is_adhoc_concurrency_configured(): bool {
+function tool_mergeusers_is_adhoc_concurrency_limit_overridden(): bool {
     global $CFG;
 
     $classname = merge_users_task::class;
 
     return isset($CFG->task_concurrency_limit[$classname])
-        && (int) $CFG->task_concurrency_limit[$classname] === 1;
+        && (int) $CFG->task_concurrency_limit[$classname] !== 1;
 }
