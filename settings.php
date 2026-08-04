@@ -181,8 +181,8 @@ if ($ADMIN->fulltree) {
     ) {
         $generalsettings->add(new admin_setting_description(
             'tool_mergeusers/adhocconcurrencywarning',
-            get_string('adhocconcurrencywarning', 'tool_mergeusers'),
-            get_string(
+            new lang_string('adhocconcurrencywarning', 'tool_mergeusers'),
+            new lang_string(
                 'adhocconcurrencywarning_desc',
                 'tool_mergeusers',
                 \tool_mergeusers\task\merge_users_task::class,
