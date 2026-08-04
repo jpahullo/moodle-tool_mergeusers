@@ -122,4 +122,76 @@ final class merge_users_task_test extends advanced_testcase {
         // Verify the setting is actually disabled.
         $this->assertFalse($adhocenabled);
     }
+
+    /**
+     * Test that the task's concurrency limit defaults to 1 with no configuration needed.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_get_concurrency_limit_defaults_to_one(): void {
+        $task = new merge_users_task();
+
+        $this->assertEquals(1, $task->get_concurrency_limit());
+    }
+
+    /**
+     * Test that an administrator can override the concurrency limit via config.php.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_get_concurrency_limit_can_be_overridden_via_cfg(): void {
+        global $CFG;
+
+        $CFG->task_concurrency_limit = [
+            merge_users_task::class => 5,
+        ];
+
+        $task = new merge_users_task();
+
+        $this->assertEquals(5, $task->get_concurrency_limit());
+    }
+
+    /**
+     * Test that a failed merge task is never retried by Moodle's task manager.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_retry_until_success_returns_false(): void {
+        $task = new merge_users_task();
+
+        $this->assertFalse($task->retry_until_success());
+    }
+
+    /**
+     * Test that a queued task only has one attempt available, so Moodle's task
+     * manager will never retry it after a failure.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_queued_task_has_only_one_attempt_available(): void {
+        global $DB, $USER;
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $logger = new logger();
+        $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id);
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'toid' => $touser->id,
+            'fromid' => $fromuser->id,
+            'logid' => $logid,
+        ]);
+        $task->set_userid($USER->id);
+        manager::queue_adhoc_task($task);
+
+        $record = $DB->get_record('task_adhoc', ['classname' => '\\tool_mergeusers\\task\\merge_users_task'], '*', MUST_EXIST);
+
+        $this->assertEquals(1, $record->attemptsavailable);
+    }
 }
