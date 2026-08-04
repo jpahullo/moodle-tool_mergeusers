@@ -27,6 +27,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['adhocconcurrencywarning'] = 'About adhoc merge ordering';
+$string['adhocconcurrencywarning_desc'] = 'In general you do not need to do anything here: Moodle normally processes queued merge tasks in the order they were requested. This only becomes relevant when several cron workers run in parallel and a merge task gets requeued (e.g. due to contention), which could in rare cases execute a later-requested merge before an earlier one it should have followed (important for chained merges, e.g. merging A into B, then B into C). If, and only if, you observe merges being applied out of the order they were requested, add the following line to your config.php to force strictly one "{$a}" task to run at a time: $CFG->task_concurrency_limit[\'{$a}\'] = 1;';
 $string['choose_users'] = 'Choose users to merge';
 $string['clear_selection'] = 'Clear current user selection';
 $string['cligathering:description'] = "Introduce pairs of user's id to merge the first one into the\nsecond one. The first user id (fromid) will 'lose' all its data to be 'migrated'\ninto the second one (toid). The user 'toid' will include data from both users.";

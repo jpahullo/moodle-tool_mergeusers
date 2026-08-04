@@ -175,6 +175,21 @@ if ($ADMIN->fulltree) {
         0
     ));
 
+    if (
+        (bool)(int)get_config('tool_mergeusers', 'enableadhocmerge')
+        && !tool_mergeusers_is_adhoc_concurrency_configured()
+    ) {
+        $generalsettings->add(new admin_setting_description(
+            'tool_mergeusers/adhocconcurrencywarning',
+            get_string('adhocconcurrencywarning', 'tool_mergeusers'),
+            get_string(
+                'adhocconcurrencywarning_desc',
+                'tool_mergeusers',
+                \tool_mergeusers\task\merge_users_task::class,
+            ),
+        ));
+    }
+
     $fields = tool_mergeusers_inform_about_pending_user_profile_fields();
     if ($fields->exists) {
         $generalsettings->add(new admin_setting_description(

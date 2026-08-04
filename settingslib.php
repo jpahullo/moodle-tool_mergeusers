@@ -25,6 +25,7 @@
 
 use tool_mergeusers\local\config;
 use tool_mergeusers\local\merger\quiz_attempts_table_merger;
+use tool_mergeusers\task\merge_users_task;
 
 /**
  * Builds the form options for table exception from processing.
@@ -122,4 +123,24 @@ function tool_mergeusers_inform_about_pending_user_profile_fields(): stdClass {
         'categories' => implode(', ', $categories),
         'url' => (new moodle_url('/user/profile/index.php'))->out(false),
     ];
+}
+
+/**
+ * Checks whether Moodle's native adhoc task concurrency limit is configured
+ * to allow at most one merge_users_task instance running at a time.
+ *
+ * This setting can only be defined in config.php: Moodle reads
+ * $CFG->task_concurrency_limit directly from the bootstrap $CFG, never from
+ * values stored through set_config(), so this plugin cannot set it for the
+ * administrator.
+ *
+ * @return bool true when $CFG->task_concurrency_limit[merge_users_task::class] equals 1.
+ */
+function tool_mergeusers_is_adhoc_concurrency_configured(): bool {
+    global $CFG;
+
+    $classname = merge_users_task::class;
+
+    return isset($CFG->task_concurrency_limit[$classname])
+        && (int) $CFG->task_concurrency_limit[$classname] === 1;
 }

@@ -190,6 +190,41 @@ We use the success event to suspend the user to remove when
 the setting `tool_mergeusers/suspenduser` is enabled.
 
 
+## Merging asynchronously via adhoc task
+
+Enabling the setting `tool_mergeusers/enableadhocmerge` changes how the web
+interface behaves: instead of merging users immediately within the web
+request, it queues a Moodle adhoc task (`\tool_mergeusers\task\merge_users_task`)
+that performs the merge the next time Moodle cron processes adhoc tasks.
+This avoids web request timeouts on large merges. CLI merging is not
+affected by this setting; it always runs synchronously.
+
+A failed merge processed this way is **never retried**: the task fires a
+`user_merged_failure` event and leaves the merge log with status `error`
+for review. Retrying a partially-applied merge automatically could corrupt
+data, particularly for chained merges (e.g. merging A into B, and later B
+into C), so this plugin deliberately never lets Moodle's adhoc task retry
+mechanism run again on a failed merge.
+
+In general, you do not need to do anything else: Moodle processes queued
+adhoc tasks in the order they were requested. This can only become a
+concern when several cron workers run in parallel and a merge task is
+requeued (e.g. due to contention), which could in rare cases run a
+later-requested merge before an earlier one it should have followed. If,
+and only if, you observe merges being applied out of the order they were
+requested, add the following to your `config.php` to force Moodle to run
+strictly one merge task at a time:
+
+```php
+$CFG->task_concurrency_limit[\tool_mergeusers\task\merge_users_task::class] = 1;
+```
+
+This setting can only be defined in `config.php` — Moodle reads it directly
+from the bootstrap `$CFG`, so the plugin cannot set it for you. When adhoc
+merging is enabled and this is not configured, the plugin's settings page
+shows an informational note about it.
+
+
 # An important note about provided hooks
 
 Providing callbacks for both hooks, Moodle core and plugins
