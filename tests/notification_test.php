@@ -159,7 +159,9 @@ final class notification_test extends advanced_testcase {
 
         // Validate notification content includes expected information.
         $this->assertStringContainsString('merge of user', $message->fullmessage);
-        $this->assertStringContainsString('completed with errors', $message->fullmessage);
+        // Checked against the HTML body (not the plaintext one) because html_to_text()
+        // word-wraps the plaintext body, which can split this phrase across a line break.
+        $this->assertStringContainsString('completed with errors', $message->fullmessagehtml);
         // The fromuser is deleted, so their name won't appear - just "Deleted".
         $this->assertStringContainsString('Deleted', $message->fullmessage);
         $this->assertStringContainsString($touser->firstname, $message->fullmessage);
