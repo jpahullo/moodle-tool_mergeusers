@@ -13,3 +13,4 @@ jobs:
       disable_grunt: true
       disable_release: true
       disable_behat: true
+      disable_version_bump_check: true
