@@ -63,16 +63,9 @@ final class logger {
 
         $currenttime = time();
 
-        // Capture user snapshots.
-        $tosnapshot = $this->capture_user_snapshot($touserid);
-        $fromsnapshot = $this->capture_user_snapshot($fromuserid);
-
         // Add user snapshots to the log data.
         $logdata = [
-            'user_snapshots' => [
-                'to_user' => $tosnapshot,
-                'from_user' => $fromsnapshot,
-            ],
+            'user_snapshots' => self::capture_user_snapshots($touserid, $fromuserid),
             'actions' => $log,
         ];
 
@@ -122,16 +115,9 @@ final class logger {
 
         $currenttime = time();
 
-        // Capture user snapshots at queue time.
-        $tosnapshot = $this->capture_user_snapshot($touserid);
-        $fromsnapshot = $this->capture_user_snapshot($fromuserid);
-
         // Store user snapshots in log data.
         $logdata = [
-            'user_snapshots' => [
-                'to_user' => $tosnapshot,
-                'from_user' => $fromsnapshot,
-            ],
+            'user_snapshots' => self::capture_user_snapshots($touserid, $fromuserid),
             'actions' => [],
         ];
 
@@ -258,29 +244,111 @@ final class logger {
     }
 
     /**
-     * Captures a snapshot of user data at the current time.
+     * Captures normalized snapshots for both users involved in a merge, sharing a
+     * single capture timestamp (when this pair was captured, not when the merge
+     * itself happened - useful during db/upgrade.php normalization, where the
+     * capture can happen long after the original merge).
+     *
+     * @param int $touserid user.id to keep.
+     * @param int $fromuserid user.id to remove.
+     * @return array{timemodified: int, to_user: stdClass, from_user: stdClass}
+     */
+    public static function capture_user_snapshots(int $touserid, int $fromuserid): array {
+        return [
+            'timemodified' => time(),
+            'to_user' => self::capture_user_snapshot($touserid),
+            'from_user' => self::capture_user_snapshot($fromuserid),
+        ];
+    }
+
+    /**
+     * Captures a normalized snapshot of a single user's data.
+     *
+     * Always returns a well-formed object (never a bare null), distinguishing:
+     * - notfound: $userid is not a real user id (e.g. <= 0, produced by an
+     *   external gathering that could not resolve a username to a user id).
+     * - recoverable false: a real id, but no {user} row could be found for it.
+     * - recoverable true: real, resolvable user data.
      *
      * @param int $userid user.id to capture snapshot of.
-     * @return stdClass|null user snapshot with relevant fields, or null if user not found.
+     * @return stdClass normalized user snapshot.
      */
-    private function capture_user_snapshot(int $userid): ?stdClass {
+    public static function capture_user_snapshot(int $userid): stdClass {
         global $DB;
+
+        if ($userid <= 0) {
+            return self::notfound_snapshot();
+        }
 
         $user = $DB->get_record('user', ['id' => $userid]);
         if (!$user) {
-            return null;
+            return self::unrecoverable_snapshot($userid);
         }
 
-        $snapshot = new stdClass();
-        $snapshot->id = $user->id;
-        $snapshot->username = $user->username;
-        $snapshot->email = $user->email;
-        $snapshot->firstname = $user->firstname;
-        $snapshot->lastname = $user->lastname;
-        $snapshot->idnumber = $user->idnumber;
-        $snapshot->suspended = $user->suspended;
-        $snapshot->deleted = $user->deleted;
+        return self::snapshot_from_user($user);
+    }
 
-        return $snapshot;
+    /**
+     * Builds a snapshot marking that no real user id was available to capture from.
+     *
+     * @return stdClass
+     */
+    public static function notfound_snapshot(): stdClass {
+        return (object) [
+            'notfound' => true,
+            'recoverable' => false,
+            'id' => null,
+            'username' => null,
+            'email' => null,
+            'firstname' => null,
+            'lastname' => null,
+            'idnumber' => null,
+            'suspended' => null,
+            'deleted' => null,
+        ];
+    }
+
+    /**
+     * Builds a snapshot marking a real user id for which no data could be recovered
+     * (neither a live {user} row nor a previously captured snapshot).
+     *
+     * @param int $userid
+     * @return stdClass
+     */
+    public static function unrecoverable_snapshot(int $userid): stdClass {
+        return (object) [
+            'notfound' => false,
+            'recoverable' => false,
+            'id' => $userid,
+            'username' => null,
+            'email' => null,
+            'firstname' => null,
+            'lastname' => null,
+            'idnumber' => null,
+            'suspended' => null,
+            'deleted' => null,
+        ];
+    }
+
+    /**
+     * Builds a fully recoverable snapshot from a {user} record.
+     *
+     * @param stdClass $user a {user} table record (at least id/username/email/
+     * firstname/lastname/idnumber/suspended/deleted).
+     * @return stdClass
+     */
+    public static function snapshot_from_user(stdClass $user): stdClass {
+        return (object) [
+            'notfound' => false,
+            'recoverable' => true,
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+            'firstname' => $user->firstname,
+            'lastname' => $user->lastname,
+            'idnumber' => $user->idnumber,
+            'suspended' => (bool) $user->suspended,
+            'deleted' => (bool) $user->deleted,
+        ];
     }
 }
