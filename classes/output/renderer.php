@@ -296,22 +296,28 @@ class renderer extends plugin_renderer_base {
         );
         $output .= html_writer::start_tag('div', ['class' => 'title']);
         $output .= get_string('logline', 'tool_mergeusers', $this->render_logid($logid));
-        if (!empty($resulttype)) {
-            $output .= html_writer::empty_tag('br');
-            $output .= get_string('log' . $resulttype, 'tool_mergeusers');
-        }
-        $output .= html_writer::end_tag('div');
-        $output .= html_writer::empty_tag('br');
 
-        // Display timestamps if available.
+        // Display timestamps right under the log id reference, if available.
         if ($timecreated !== null || $timemodified !== null) {
-            $output .= html_writer::start_tag('div', ['class' => 'merge-timestamps']);
+            $output .= html_writer::empty_tag('br');
 
-            // Check if merge is still pending or in progress.
+            // Check if merge is still pending or in progress. This must be checked
+            // BEFORE comparing the two timestamps: update_log_status() also bumps
+            // timemodified when a task transitions to "in progress", so a pending/
+            // in-progress row can already have timecreated !== timemodified despite
+            // never having actually finished executing yet.
             $ispending = ($status === 'pending' || $status === 'inprogress');
 
-            if ($timecreated !== null && $timemodified !== null && $timecreated !== $timemodified) {
-                // Different timestamps: show both queue and execution times.
+            if ($ispending) {
+                // Pending/in-progress: only the queue time is meaningful yet.
+                if ($timecreated !== null) {
+                    $output .= html_writer::tag(
+                        'strong',
+                        get_string('snapshot_queued', 'tool_mergeusers')
+                    ) . ' ' . userdate($timecreated);
+                }
+            } else if ($timecreated !== null && $timemodified !== null && $timecreated !== $timemodified) {
+                // Completed (success/error) via adhoc task: show both queue and execution times.
                 $output .= html_writer::tag(
                     'strong',
                     get_string('snapshot_queued', 'tool_mergeusers')
@@ -321,14 +327,8 @@ class renderer extends plugin_renderer_base {
                     'strong',
                     get_string('snapshot_executed', 'tool_mergeusers')
                 ) . ' ' . userdate($timemodified);
-            } else if ($ispending && $timecreated !== null) {
-                // Pending/in-progress: show as "Queued at".
-                $output .= html_writer::tag(
-                    'strong',
-                    get_string('snapshot_queued', 'tool_mergeusers')
-                ) . ' ' . userdate($timecreated);
             } else if ($timemodified !== null) {
-                // Completed immediately (no adhoc): show as "Executed at".
+                // Completed synchronously (no adhoc): show as "Executed at".
                 $output .= html_writer::tag(
                     'strong',
                     get_string('snapshot_executed', 'tool_mergeusers')
@@ -340,7 +340,13 @@ class renderer extends plugin_renderer_base {
                     get_string('snapshot_created', 'tool_mergeusers')
                 ) . ' ' . userdate($timecreated);
             }
+        }
+        $output .= html_writer::end_tag('div');
+        $output .= html_writer::empty_tag('br');
 
+        if (!empty($resulttype)) {
+            $output .= html_writer::start_tag('div', ['class' => 'title']);
+            $output .= get_string('log' . $resulttype, 'tool_mergeusers');
             $output .= html_writer::end_tag('div');
             $output .= html_writer::empty_tag('br');
         }

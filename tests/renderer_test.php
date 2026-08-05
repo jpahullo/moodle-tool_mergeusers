@@ -189,6 +189,78 @@ final class renderer_test extends advanced_testcase {
     }
 
     /**
+     * Test that an "in progress" merge always shows "Queued at", never "Executed
+     * at" - even though update_log_status() also bumps timemodified when a task
+     * transitions to in-progress, which would otherwise make timecreated and
+     * timemodified differ and look like a genuinely completed (adhoc) merge.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_queued_not_executed_for_inprogress_status(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $timecreated = time() - 60;
+        $timeinprogress = time();
+
+        $output = $this->get_renderer()->results_page(
+            $touser,
+            $fromuser,
+            'inprogress',
+            [],
+            1,
+            $timecreated,
+            $timeinprogress,
+        );
+
+        $this->assertStringContainsString(get_string('snapshot_queued', 'tool_mergeusers'), $output);
+        $this->assertStringNotContainsString(get_string('snapshot_executed', 'tool_mergeusers'), $output);
+        $this->assertStringContainsString(userdate($timecreated), $output);
+    }
+
+    /**
+     * Test that the "Executed at" timestamp appears directly under the "for further
+     * reference, log id X" line, before the "queries sent to the DB" caption - not
+     * after it, as previously rendered.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_executed_at_right_after_logline(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $timestamp = time();
+
+        $output = $this->get_renderer()->results_page(
+            $touser,
+            $fromuser,
+            'success',
+            ['Some action.'],
+            1,
+            $timestamp,
+            $timestamp,
+        );
+
+        $loglinepos = strpos($output, get_string('logline', 'tool_mergeusers', $this->get_renderer()->render_logid(1)));
+        $executedpos = strpos($output, get_string('snapshot_executed', 'tool_mergeusers'));
+        $logokpos = strpos($output, get_string('logok', 'tool_mergeusers'));
+
+        $this->assertNotFalse($loglinepos);
+        $this->assertNotFalse($executedpos);
+        $this->assertNotFalse($logokpos);
+        $this->assertLessThan($executedpos, $loglinepos, '"Executed at" must appear after the log id reference.');
+        $this->assertLessThan($logokpos, $executedpos, '"Executed at" must appear before the "logok" caption.');
+    }
+
+    /**
      * Test that a side with no real user id at merge time (id <= 0, e.g. from an
      * external gathering that could not resolve a username) shows the dedicated
      * "not found" message rather than the generic "unavailable" one.
