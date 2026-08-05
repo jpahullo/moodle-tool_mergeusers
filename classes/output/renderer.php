@@ -29,6 +29,7 @@ namespace tool_mergeusers\output;
 use coding_exception;
 use context_system;
 use core\exception\moodle_exception;
+use core\output\notification;
 use core_user;
 use dml_exception;
 use html_table;
@@ -263,8 +264,12 @@ class renderer extends plugin_renderer_base {
         $output .= $this->build_progress_bar(self::INDEX_PAGE_RESULTS_STEP);
         $output .= html_writer::empty_tag('br');
         $output .= html_writer::start_tag('div', ['class' => 'result']);
+        $output .= $this->notification(
+            get_string('status:' . $statusenum->value, 'tool_mergeusers'),
+            $this->status_notification_type($statusenum),
+            false,
+        );
         $output .= html_writer::start_tag('div', ['class' => 'title']);
-        $output .= html_writer::tag('span', html_writer::tag('center', $this->render_status($status)));
         $output .= get_string('merging', 'tool_mergeusers') . ' ';
 
         $fromheader = (object) [
@@ -523,6 +528,22 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
+     * Maps a merge status to the corresponding \core\output\notification type,
+     * shared by the results page's full-width status box and the status badge.
+     *
+     * @param status $statusenum
+     * @return string one of the \core\output\notification::NOTIFY_* constants.
+     */
+    private function status_notification_type(status $statusenum): string {
+        return match ($statusenum) {
+            status::PENDING => notification::NOTIFY_WARNING,
+            status::INPROGRESS => notification::NOTIFY_INFO,
+            status::SUCCESS => notification::NOTIFY_SUCCESS,
+            status::ERROR => notification::NOTIFY_ERROR,
+        };
+    }
+
+    /**
      * Renders a status badge.
      *
      * @param string|null $status
@@ -530,13 +551,7 @@ class renderer extends plugin_renderer_base {
      */
     public function render_status(?string $status): string {
         $statusenum = status::safe_from($status);
-        $statusbadgeclass = match ($statusenum) {
-            status::PENDING => 'badge-warning',
-            status::INPROGRESS => 'badge-info',
-            status::SUCCESS => 'badge-success',
-            status::ERROR => 'badge-danger',
-            default => 'badge-secondary',
-        };
+        $statusbadgeclass = 'badge-' . $this->status_notification_type($statusenum);
         $statusstring = get_string('status:' . $statusenum->value, 'tool_mergeusers');
 
         return html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
