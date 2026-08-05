@@ -145,4 +145,100 @@ final class logger_test extends advanced_testcase {
         $this->assertSame($touser->username, $snapshots->to_user->username);
         $this->assertSame($fromuser->username, $snapshots->from_user->username);
     }
+
+    /**
+     * Test that notfound_snapshot() populates the matching existing field with the
+     * searched value, without introducing any new key, when given an allowed field.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_notfound_snapshot_reuses_matching_field_for_allowed_searched_field(): void {
+        $snapshot = logger::notfound_snapshot('email', 'x@example.com');
+
+        $this->assertTrue($snapshot->notfound);
+        $this->assertFalse($snapshot->recoverable);
+        $this->assertNull($snapshot->id);
+        $this->assertSame('x@example.com', $snapshot->email);
+        $this->assertNull($snapshot->username);
+        $this->assertNull($snapshot->idnumber);
+        $this->assertNull($snapshot->firstname);
+        $this->assertNull($snapshot->lastname);
+        $this->assertNull($snapshot->suspended);
+        $this->assertNull($snapshot->deleted);
+        $this->assertFalse($snapshot->erasedforgdpr);
+        $this->assertNull($snapshot->timeerased);
+
+        // Same object shape as the base notfound_snapshot(): no new keys anywhere.
+        $this->assertSame(
+            array_keys((array) logger::notfound_snapshot()),
+            array_keys((array) $snapshot),
+        );
+    }
+
+    /**
+     * Test that a field name outside the allowed set (username/idnumber/email) is
+     * silently ignored: the snapshot stays identical to the no-hint case.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_notfound_snapshot_ignores_disallowed_searched_field(): void {
+        $withhint = logger::notfound_snapshot('firstname', 'Jane');
+        $withouthint = logger::notfound_snapshot();
+
+        $this->assertEquals($withouthint, $withhint);
+    }
+
+    /**
+     * Test that capture_user_snapshot() propagates a hint into notfound_snapshot()
+     * only when the id is not positive, and that omitting the hint entirely (as
+     * every call site predating this feature does) is unaffected.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_capture_user_snapshot_propagates_hint_only_when_not_found(): void {
+        $snapshot = logger::capture_user_snapshot(0, ['field' => 'username', 'value' => 'jsmith123']);
+        $this->assertTrue($snapshot->notfound);
+        $this->assertSame('jsmith123', $snapshot->username);
+
+        $user = $this->getDataGenerator()->create_user();
+        $recoverable = logger::capture_user_snapshot($user->id, ['field' => 'username', 'value' => 'ignored']);
+        $this->assertSame($user->username, $recoverable->username);
+
+        $nohint = logger::capture_user_snapshot(0);
+        $this->assertNull($nohint->username);
+    }
+
+    /**
+     * Test that log() forwards optional to/from hints through to the stored snapshot,
+     * and that calling it exactly as every existing call site does (no hints) leaves
+     * the stored snapshot unchanged from before this feature.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_log_forwards_optional_hints_and_stays_compatible_without_them(): void {
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+
+        $mut = new logger();
+        $logid = $mut->log(
+            $touser->id,
+            0,
+            false,
+            ['Could not resolve username.'],
+            null,
+            null,
+            ['field' => 'username', 'value' => 'jsmith123'],
+        );
+        $stored = $mut->detail_from($logid);
+        $this->assertSame('jsmith123', $stored->log->user_snapshots->from_user->username);
+
+        $legacylogid = $mut->log($touser->id, 0, false, ['Could not resolve username.']);
+        $legacystored = $mut->detail_from($legacylogid);
+        $this->assertNull($legacystored->log->user_snapshots->from_user->username);
+    }
 }

@@ -94,6 +94,19 @@ To support a new table or plugin without touching core merge logic:
    not covered by the default configuration of this plugin.
    You can, then, register your custom settings in the `add_settings_before_merging` hook or update the
    administration settings from the UI.
+5. A custom `gathering` implementation (see `classes/local/cli/gathering.php`,
+   an empty marker interface over `\Iterator`) can optionally expose
+   `fromsearchedfield`/`fromsearchedvalue` and/or `tosearchedfield`/
+   `tosearchedvalue` string properties on a produced action, for the side(s)
+   where it could not resolve a real user id (`toid`/`fromid` <= 0).
+   `gathering_merger::merge()` reads these via `property_exists()` — a
+   `gathering` that predates this or simply doesn't set them behaves exactly
+   as before. `field` must be one of `username`, `idnumber`, `email` (the
+   same fields the web UI itself searches by, minus `id` — a not-found
+   search by `id` is already represented by the existing id +
+   `recoverable=false` snapshot shape); any other field name is silently
+   ignored. The results/log detail page then shows that one field instead of
+   the generic "not found" message with no context.
 
 ## Coding standards
 

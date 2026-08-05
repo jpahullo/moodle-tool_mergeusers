@@ -202,6 +202,9 @@ final class user_merger {
      * @param int $toid The user inheriting the data
      * @param int $fromid The user being replaced
      * @param int|null $logid Optional existing log id to update instead of creating new log
+     * @param array|null $tohint optional ['field' => ..., 'value' => ...] describing what a gathering searched for
+     * when $toid could not be resolved (id <= 0). Ignored otherwise, and when $logid is given.
+     * @param array|null $fromhint same as $tohint, for $fromid.
      * @return array An array(bool, array, int) having the following cases: if array(true, log, id)
      * users' merging was successful and log contains all actions done; if array(false, errors, id)
      * means users' merging was aborted and errors contain the list of errors.
@@ -210,7 +213,13 @@ final class user_merger {
      * @throws coding_exception
      * @throws moodle_exception
      */
-    public function merge(int $toid, int $fromid, ?int $logid = null): array {
+    public function merge(
+        int $toid,
+        int $fromid,
+        ?int $logid = null,
+        ?array $tohint = null,
+        ?array $fromhint = null,
+    ): array {
         [$success, $logs] = $this->merge_users($toid, $fromid);
 
         $status = status::from_success($success)->value;
@@ -225,7 +234,7 @@ final class user_merger {
             $this->logger->update_log_status($logid, $status, $logs);
         } else {
             // Create new log.
-            $logid = $this->logger->log($toid, $fromid, $success, $logs, $status);
+            $logid = $this->logger->log($toid, $fromid, $success, $logs, $status, $tohint, $fromhint);
         }
 
         $event = $eventname::create([

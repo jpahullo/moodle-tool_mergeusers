@@ -128,7 +128,25 @@ final class merge_user_display {
      */
     public static function from_snapshot(stdClass $snapshot): self {
         if (!empty($snapshot->notfound)) {
-            return new self(0, true, false, null, null, null, null, null, false, null, false, null);
+            // At most one of username/email/idnumber can be non-null here: a gathering
+            // that reported what it searched for and could not find, per
+            // logger::notfound_snapshot(). Reusing these existing fields (rather than
+            // dedicated ones) keeps the display of that hint reusing the same rendering
+            // as a found user's identity fields.
+            return new self(
+                0,
+                true,
+                false,
+                null,
+                $snapshot->username ?? null,
+                $snapshot->email ?? null,
+                $snapshot->idnumber ?? null,
+                null,
+                false,
+                null,
+                false,
+                null,
+            );
         }
 
         if (empty($snapshot->recoverable)) {

@@ -694,6 +694,22 @@ class renderer extends plugin_renderer_base {
         $output .= html_writer::empty_tag('br');
 
         if ($user->notfound) {
+            // At most one of these is non-null: the field a gathering reported having
+            // searched for, per logger::notfound_snapshot(). Reuses the same field
+            // labels a found user's identity is shown with, but only for that one field
+            // - not the full set, since there is nothing else known about this side.
+            $searchedfieldlabels = [
+                'username' => 'snapshot_username',
+                'idnumber' => 'snapshot_idnumber',
+                'email' => 'snapshot_email',
+            ];
+            foreach ($searchedfieldlabels as $field => $labelkey) {
+                if ($user->$field !== null) {
+                    $output .= html_writer::tag('div', get_string($labelkey, 'tool_mergeusers') . ' ' . s($user->$field));
+                    break;
+                }
+            }
+
             $output .= html_writer::tag('em', get_string('usernotfoundatmerge', 'tool_mergeusers'));
             $output .= html_writer::end_tag('div');
 

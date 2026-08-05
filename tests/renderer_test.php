@@ -214,6 +214,48 @@ final class renderer_test extends advanced_testcase {
     }
 
     /**
+     * Test that a not-found side with a searched-field hint (e.g. from an external
+     * gathering that searched by 'email' and could not find a match) shows only that
+     * one field alongside the "not found" message, not the full identity field set a
+     * found user would show.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_only_the_searched_field_for_not_found_with_hint(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+
+        $logger = new \tool_mergeusers\local\logger();
+        $logid = $logger->log(
+            $touser->id,
+            0,
+            false,
+            ['Could not resolve email.'],
+            null,
+            null,
+            ['field' => 'email', 'value' => 'missing@example.com'],
+        );
+        $stored = $logger->detail_from($logid);
+
+        $output = $this->get_renderer()->results_page($touser, (object) ['id' => 0], $stored->status, $stored->log, $logid);
+
+        // Scope assertions to the "user to remove" box only: the "user to keep" box is
+        // a normal recoverable user and legitimately shows its own username/email/etc.
+        $fromboxstart = strpos($output, get_string('olduser', 'tool_mergeusers'));
+        $toboxstart = strpos($output, get_string('newuser', 'tool_mergeusers'));
+        $frombox = substr($output, $fromboxstart, $toboxstart - $fromboxstart);
+
+        $this->assertStringContainsString(get_string('usernotfoundatmerge', 'tool_mergeusers'), $frombox);
+        $this->assertStringContainsString(get_string('snapshot_email', 'tool_mergeusers'), $frombox);
+        $this->assertStringContainsString('missing@example.com', $frombox);
+        $this->assertStringNotContainsString(get_string('snapshot_username', 'tool_mergeusers'), $frombox);
+        $this->assertStringNotContainsString(get_string('snapshot_idnumber', 'tool_mergeusers'), $frombox);
+    }
+
+    /**
      * Test that logs_page() shows the same "not found" message as the results page
      * for a row whose fromuserid/touserid is <= 0, instead of the generic "deleted"
      * text that a merely-since-deleted real user id would show.

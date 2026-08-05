@@ -60,6 +60,25 @@ final class merge_user_display_test extends advanced_testcase {
         $this->assertFalse($display->recoverable);
         $this->assertNull($display->profileurl);
         $this->assertNull($display->displayname);
+        $this->assertNull($display->username);
+        $this->assertNull($display->email);
+        $this->assertNull($display->idnumber);
+    }
+
+    /**
+     * Test the notfound case when the snapshot carries a searched-field hint: only
+     * the matching field is exposed, the rest stay null.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_from_snapshot_notfound_with_searched_field_hint(): void {
+        $display = merge_user_display::from_snapshot(logger::notfound_snapshot('idnumber', 'ID999'));
+
+        $this->assertTrue($display->notfound);
+        $this->assertSame('ID999', $display->idnumber);
+        $this->assertNull($display->username);
+        $this->assertNull($display->email);
     }
 
     /**

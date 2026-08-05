@@ -161,4 +161,31 @@ final class user_merger_test extends advanced_testcase {
 
         $this->assertCount(2, $matchingerror);
     }
+
+    /**
+     * Testing that merge() forwards an optional searched-field hint for a side that
+     * could not be resolved (id <= 0) into the stored log's snapshot, and that calling
+     * merge() with only the original 2 positional arguments - as every call site
+     * predating this feature does - stores no hint at all, unchanged from before.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_tool
+     * @throws dml_exception
+     * @throws moodle_exception
+     */
+    public function test_merge_forwards_optional_searched_field_hint_and_stays_compatible_without_it(): void {
+        $usertokeep = $this->getDataGenerator()->create_user();
+
+        $mut = new user_merger();
+        [, , $logidwithhint] = $mut->merge($usertokeep->id, 0, null, null, ['field' => 'username', 'value' => 'jsmith123']);
+
+        $logger = new \tool_mergeusers\local\logger();
+        $storedwithhint = $logger->detail_from($logidwithhint);
+        $this->assertSame('jsmith123', $storedwithhint->log->user_snapshots->from_user->username);
+
+        [, , $logidlegacy] = $mut->merge($usertokeep->id, 0);
+        $storedlegacy = $logger->detail_from($logidlegacy);
+        $this->assertNull($storedlegacy->log->user_snapshots->from_user->username);
+    }
+
 }

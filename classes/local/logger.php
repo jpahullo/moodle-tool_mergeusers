@@ -47,6 +47,14 @@ require_once($CFG->libdir . '/clilib.php');
  */
 final class logger {
     /**
+     * Fields a gathering is allowed to report as the one it searched by when it
+     * could not resolve a user. Matches the fields the web UI itself lets an
+     * admin search by; excludes 'id' because a not-found search by id is already
+     * represented by the existing id + recoverable=false snapshot shape.
+     */
+    private const ALLOWED_SEARCH_FIELDS = ['username', 'idnumber', 'email'];
+
+    /**
      * Adds a merging action log into tool log.
      *
      * @param int $touserid user.id where all data from $fromuserid will be merged into.
@@ -55,17 +63,28 @@ final class logger {
      * @param array $log list of actions performed for a successful merging;
      * or a problem description if merging failed.
      * @param string|null $status the status: pending, inprogress, success, error. When null, it will be derived from $success.
+     * @param array|null $tohint optional ['field' => ..., 'value' => ...] describing what a gathering searched for
+     * when $touserid could not be resolved (id <= 0). Ignored otherwise.
+     * @param array|null $fromhint same as $tohint, for $fromuserid.
      * @return bool|int false when could not insert the record; the log id when success.
      * @throws moodle_exception when log record cannot be inserted.
      */
-    public function log(int $touserid, int $fromuserid, bool $success, array $log, ?string $status = null): bool|int {
+    public function log(
+        int $touserid,
+        int $fromuserid,
+        bool $success,
+        array $log,
+        ?string $status = null,
+        ?array $tohint = null,
+        ?array $fromhint = null,
+    ): bool|int {
         global $DB, $USER;
 
         $currenttime = time();
 
         // Add user snapshots to the log data.
         $logdata = [
-            'user_snapshots' => self::capture_user_snapshots($touserid, $fromuserid),
+            'user_snapshots' => self::capture_user_snapshots($touserid, $fromuserid, $tohint, $fromhint),
             'actions' => $log,
         ];
 
@@ -251,13 +270,20 @@ final class logger {
      *
      * @param int $touserid user.id to keep.
      * @param int $fromuserid user.id to remove.
+     * @param array|null $tohint optional ['field' => ..., 'value' => ...] a gathering searched for $touserid.
+     * @param array|null $fromhint same as $tohint, for $fromuserid.
      * @return array{timemodified: int, to_user: stdClass, from_user: stdClass}
      */
-    public static function capture_user_snapshots(int $touserid, int $fromuserid): array {
+    public static function capture_user_snapshots(
+        int $touserid,
+        int $fromuserid,
+        ?array $tohint = null,
+        ?array $fromhint = null,
+    ): array {
         return [
             'timemodified' => time(),
-            'to_user' => self::capture_user_snapshot($touserid),
-            'from_user' => self::capture_user_snapshot($fromuserid),
+            'to_user' => self::capture_user_snapshot($touserid, $tohint),
+            'from_user' => self::capture_user_snapshot($fromuserid, $fromhint),
         ];
     }
 
@@ -271,13 +297,15 @@ final class logger {
      * - recoverable true: real, resolvable user data.
      *
      * @param int $userid user.id to capture snapshot of.
+     * @param array|null $hint optional ['field' => ..., 'value' => ...] a gathering searched for, used only
+     * when $userid <= 0.
      * @return stdClass normalized user snapshot.
      */
-    public static function capture_user_snapshot(int $userid): stdClass {
+    public static function capture_user_snapshot(int $userid, ?array $hint = null): stdClass {
         global $DB;
 
         if ($userid <= 0) {
-            return self::notfound_snapshot();
+            return self::notfound_snapshot($hint['field'] ?? null, $hint['value'] ?? null);
         }
 
         $user = $DB->get_record('user', ['id' => $userid]);
@@ -291,10 +319,18 @@ final class logger {
     /**
      * Builds a snapshot marking that no real user id was available to capture from.
      *
+     * When a gathering reports the field and value it searched for, and that field
+     * is one of the fields the web UI itself allows searching by (excluding id,
+     * already covered by the unrecoverable_snapshot() shape), the matching existing
+     * field is populated with the searched value instead of staying null - the rest
+     * of the shape is untouched, so no new keys are ever added.
+     *
+     * @param string|null $searchedfield the field a gathering searched by, if any.
+     * @param string|null $searchedvalue the value a gathering searched for, if any.
      * @return stdClass
      */
-    public static function notfound_snapshot(): stdClass {
-        return (object) [
+    public static function notfound_snapshot(?string $searchedfield = null, ?string $searchedvalue = null): stdClass {
+        $snapshot = (object) [
             'notfound' => true,
             'recoverable' => false,
             'id' => null,
@@ -308,6 +344,12 @@ final class logger {
             'erasedforgdpr' => false,
             'timeerased' => null,
         ];
+
+        if ($searchedvalue !== null && in_array($searchedfield, self::ALLOWED_SEARCH_FIELDS, true)) {
+            $snapshot->$searchedfield = $searchedvalue;
+        }
+
+        return $snapshot;
     }
 
     /**

@@ -74,7 +74,10 @@ final class gathering_merger {
     public function merge(gathering $gathering): void {
         $numberoperations = 0;
         foreach ($gathering as $action) {
-            [$success, $log, $id] = $this->usermerger->merge($action->toid, $action->fromid);
+            $tohint = self::extract_hint($action, 'to');
+            $fromhint = self::extract_hint($action, 'from');
+
+            [$success, $log, $id] = $this->usermerger->merge($action->toid, $action->fromid, null, $tohint, $fromhint);
 
             // Only shows results on cli script.
             if (defined("CLI_SCRIPT")) {
@@ -90,5 +93,30 @@ final class gathering_merger {
         if (defined("CLI_SCRIPT")) {
             cli_writeln("{$numberoperations} merge operations performed. Bye!");
         }
+    }
+
+    /**
+     * Reads the optional '{$side}searchedfield'/'{$side}searchedvalue' properties a gathering action may expose,
+     * describing what it searched for when it could not resolve a real user id for that side. A gathering
+     * implementation is free to not expose these properties at all (as every gathering predating this feature does);
+     * this is always safe to call regardless.
+     *
+     * @param object $action a single merging action produced by a gathering.
+     * @param string $side either 'to' or 'from'.
+     * @return array|null ['field' => ..., 'value' => ...] when both properties are present and non-null; null otherwise.
+     */
+    private static function extract_hint(object $action, string $side): ?array {
+        $fieldproperty = $side . 'searchedfield';
+        $valueproperty = $side . 'searchedvalue';
+
+        if (!property_exists($action, $fieldproperty) || !property_exists($action, $valueproperty)) {
+            return null;
+        }
+
+        if ($action->$fieldproperty === null || $action->$valueproperty === null) {
+            return null;
+        }
+
+        return ['field' => $action->$fieldproperty, 'value' => $action->$valueproperty];
     }
 }
