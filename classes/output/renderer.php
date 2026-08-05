@@ -284,7 +284,7 @@ class renderer extends plugin_renderer_base {
         $output .= get_string('logline', 'tool_mergeusers', $this->render_logid($logid));
         if (!empty($resulttype)) {
             $output .= html_writer::empty_tag('br');
-            $output .= get_string($resulttype, 'tool_mergeusers');
+            $output .= get_string('log' . $resulttype, 'tool_mergeusers');
         }
         $output .= html_writer::end_tag('div');
         $output .= html_writer::empty_tag('br');
