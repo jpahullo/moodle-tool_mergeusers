@@ -438,6 +438,25 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
+     * Same as show_user(), but distinguishes a user id that was never real to begin
+     * with (id <= 0, e.g. a gathering that could not resolve a search into a real
+     * user id) from one that no longer resolves to a live {user} row.
+     *
+     * @param int $userid user.id (touserid/fromuserid column value; can be <= 0).
+     * @param object|false $user the live {user} record, or false when none was found
+     * ($DB->get_record() returns false, not null, on a miss).
+     * @return string the corresponding HTML.
+     * @throws moodle_exception
+     */
+    private function show_user_or_notfound(int $userid, object|false $user): string {
+        if ($userid <= 0) {
+            return get_string('usernotfoundatmerge', 'tool_mergeusers');
+        }
+
+        return $user ? $this->show_user($userid, $user) : get_string('deleted', 'tool_mergeusers', $userid);
+    }
+
+    /**
      * Produces the page with the list of logs.
      * TODO: make pagination.
      *
@@ -483,12 +502,8 @@ class renderer extends plugin_renderer_base {
                 $displaytime = (!empty($log->timecreated)) ? $log->timecreated : $log->timemodified;
 
                 $row->cells = [
-                    ($log->from)
-                        ? $this->show_user($log->fromuserid, $log->from)
-                        : get_string('deleted', 'tool_mergeusers', $log->fromuserid),
-                    ($log->to)
-                        ? $this->show_user($log->touserid, $log->to)
-                        : get_string('deleted', 'tool_mergeusers', $log->touserid),
+                    $this->show_user_or_notfound($log->fromuserid, $log->from),
+                    $this->show_user_or_notfound($log->touserid, $log->to),
                     ($log->mergedby)
                         ? $this->show_user($log->mergedbyuserid, $log->mergedby)
                         : get_string('nomergedby', 'tool_mergeusers'),

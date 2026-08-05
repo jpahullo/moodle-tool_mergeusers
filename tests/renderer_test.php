@@ -212,6 +212,31 @@ final class renderer_test extends advanced_testcase {
 
         $this->assertStringContainsString(get_string('usernotfoundatmerge', 'tool_mergeusers'), $output);
     }
+
+    /**
+     * Test that logs_page() shows the same "not found" message as the results page
+     * for a row whose fromuserid/touserid is <= 0, instead of the generic "deleted"
+     * text that a merely-since-deleted real user id would show.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_not_found_message_for_zero_id(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+
+        $logger = new \tool_mergeusers\local\logger();
+        $logger->log($touser->id, 0, false, ['Could not resolve username.']);
+
+        $logs = $logger->get();
+
+        $output = $this->get_renderer()->logs_page($logs);
+
+        $this->assertStringContainsString(get_string('usernotfoundatmerge', 'tool_mergeusers'), $output);
+        $this->assertStringNotContainsString(get_string('deleted', 'tool_mergeusers', 0), $output);
+    }
 }
 
 // @codingStandardsIgnoreStart
