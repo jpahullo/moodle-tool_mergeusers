@@ -268,8 +268,11 @@ final class user_merger {
         global $DB;
 
         // Initial checks.
-        // Are they the same?
-        if ($fromid == $toid) {
+        // Are they the same real user? A gathering that could not resolve either side
+        // reports both as id 0 (or another non-positive id), which is not "the same
+        // user" but "neither user was found" - let that fall through to the per-id
+        // check below instead, so each unresolved side gets its own clear message.
+        if ($fromid === $toid && $toid > 0) {
             // Do nothing.
             return [false, [get_string('errorsameuser', 'tool_mergeusers')]];
         }

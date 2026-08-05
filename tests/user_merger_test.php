@@ -188,4 +188,34 @@ final class user_merger_test extends advanced_testcase {
         $this->assertNull($storedlegacy->log->user_snapshots->from_user->username);
     }
 
+    /**
+     * Testing that when NEITHER side could be resolved (toid = fromid = 0, a real
+     * case for a gathering that searches both users and finds neither), this is
+     * reported as two invalid/not-found users - not as "the same user", which would
+     * hide that both sides are actually unresolved. Also verifies both sides' hints
+     * reach the stored log snapshot independently.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_tool
+     * @throws dml_exception
+     * @throws moodle_exception
+     */
+    public function test_merge_with_both_sides_unresolved_reports_invalid_users_not_same_user(): void {
+        $mut = new user_merger();
+        [$success, $log, $logid] = $mut->merge(
+            0,
+            0,
+            null,
+            ['field' => 'username', 'value' => 'tokeep123'],
+            ['field' => 'username', 'value' => 'toremove123'],
+        );
+
+        $this->assertFalse($success);
+        $this->assertStringNotContainsString(get_string('errorsameuser', 'tool_mergeusers'), implode(' ', $log));
+
+        $logger = new \tool_mergeusers\local\logger();
+        $stored = $logger->detail_from($logid);
+        $this->assertSame('tokeep123', $stored->log->user_snapshots->to_user->username);
+        $this->assertSame('toremove123', $stored->log->user_snapshots->from_user->username);
+    }
 }

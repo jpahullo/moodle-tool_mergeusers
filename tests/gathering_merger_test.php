@@ -77,6 +77,36 @@ final class gathering_merger_test extends advanced_testcase {
     }
 
     /**
+     * Test the real-world case reported from production: a gathering searching both
+     * users by username can fail to resolve EITHER side, producing an action with
+     * both toid = 0 and fromid = 0. Both sides' hints must reach their own snapshot
+     * independently, and this must not be misreported as "the same user".
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_cli
+     */
+    public function test_merge_propagates_hints_for_both_sides_when_neither_is_resolved(): void {
+        $action = (object) [
+            'toid' => 0,
+            'fromid' => 0,
+            'tosearchedfield' => 'username',
+            'tosearchedvalue' => 'tokeep123',
+            'fromsearchedfield' => 'username',
+            'fromsearchedvalue' => 'toremove123',
+        ];
+
+        $mut = new gathering_merger(new user_merger());
+        $mut->merge(new in_memory_gathering([$action]));
+
+        $logger = new logger();
+        $logs = $logger->get(['touserid' => 0, 'fromuserid' => 0]);
+        $stored = $logger->detail_from(reset($logs)->id);
+
+        $this->assertSame('tokeep123', $stored->log->user_snapshots->to_user->username);
+        $this->assertSame('toremove123', $stored->log->user_snapshots->from_user->username);
+    }
+
+    /**
      * Test that a gathering producing actions with none of the new hint properties -
      * exactly what every gathering implementation predating this feature does,
      * including the plain 'merge_request' shape - merges and logs exactly as before:
