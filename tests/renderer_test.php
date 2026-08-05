@@ -151,6 +151,67 @@ final class renderer_test extends advanced_testcase {
             $this->assertStringContainsString(get_string($expectedcaptionkey, 'tool_mergeusers'), $output);
         }
     }
+
+    /**
+     * Test that results_page() shows the consolidated user info table, sourced
+     * from a normalized snapshot, with a profile link for each live user and the
+     * shared capture timestamp - and no longer the old duplicated identity line.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_consolidated_user_info_table(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $logger = new \tool_mergeusers\local\logger();
+        $logid = $logger->log($touser->id, $fromuser->id, true, ['Some action.']);
+        $stored = $logger->detail_from($logid);
+
+        $output = $this->get_renderer()->results_page(
+            $touser,
+            $fromuser,
+            $stored->status,
+            $stored->log,
+            $logid,
+            $stored->timecreated,
+            $stored->timemodified,
+        );
+
+        $this->assertStringContainsString($touser->username, $output);
+        $this->assertStringContainsString($fromuser->username, $output);
+        $this->assertStringContainsString('/user/profile.php?id=' . $touser->id, $output);
+        $this->assertStringContainsString('/user/profile.php?id=' . $fromuser->id, $output);
+        $this->assertStringContainsString(userdate($stored->log->user_snapshots->timemodified), $output);
+    }
+
+    /**
+     * Test that a side with no real user id at merge time (id <= 0, e.g. from an
+     * external gathering that could not resolve a username) shows the dedicated
+     * "not found" message rather than the generic "unavailable" one.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_not_found_for_zero_id(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+
+        $logger = new \tool_mergeusers\local\logger();
+        $logid = $logger->log($touser->id, 0, false, ['Could not resolve username.']);
+        $stored = $logger->detail_from($logid);
+
+        $fromstub = (object) ['id' => 0, 'username' => get_string('deleted'), 'deleted' => 1];
+
+        $output = $this->get_renderer()->results_page($touser, $fromstub, $stored->status, $stored->log, $logid);
+
+        $this->assertStringContainsString(get_string('usernotfoundatmerge', 'tool_mergeusers'), $output);
+    }
 }
 
 // @codingStandardsIgnoreStart
