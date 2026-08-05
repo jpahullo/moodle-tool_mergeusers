@@ -174,7 +174,12 @@ than extend the gap.
 
 - Repository: `github.com/jpahullo/moodle-tool_mergeusers`.
 - Commit messages follow `#<github-issue-number> - <short description>`,
-  every change tied to a GitHub issue.
+  every change tied to a GitHub issue. **The first line must start with a
+  leading space before the `#`** (` #393 - ...`, not `#393 - ...`): git's
+  default comment character is `#`, so a line starting with it at column 1
+  gets silently stripped as a comment by any editor-based git flow (merge
+  commit messages, interactive rebase, `git commit` without `-m`) - GitHub
+  itself also renders it more reliably with the leading space.
 - Plugin version is a Moodle-style timestamp `YYYYMMDDvv`, tracked in both
   `version.php` and `CHANGES.md`; releases happen roughly monthly to
   bimonthly.
