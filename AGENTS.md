@@ -183,8 +183,10 @@ than extend the gap.
 - Plugin version is a Moodle-style timestamp `YYYYMMDDvv`, tracked in both
   `version.php` and `CHANGES.md`; releases happen roughly monthly to
   bimonthly.
-- Pushing a tag matching `2*` triggers the `moodle-release.yml` workflow,
-  which publishes the release to the Moodle plugins directory.
+- Releases are pushed to the Moodle plugins directory manually. The
+  automated `moodle-release.yml` workflow (tag push -> `local_plugins_add_
+  version` webservice call) was removed after Moodle's migration from the
+  Plugins directory to the Moodle Marketplace broke the automatic upload.
 - **Never edit a `db/upgrade.php` savepoint once it has been committed** —
   not even before it has been released or tagged. Any environment (a
   developer's local install included) may already have run it, and Moodle
