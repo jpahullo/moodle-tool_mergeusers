@@ -386,6 +386,55 @@ final class renderer_test extends advanced_testcase {
         );
     }
 
+    /**
+     * Test the real-world "rename in place" case: a gathering that detects the "old"
+     * and "new" users are actually the SAME Moodle account (only the username
+     * changed) can log a merge with touserid === fromuserid, reporting the OLD
+     * username as the "from" side's hint. The results page must show the old
+     * username on the "from" box and the CURRENT username on the "to" box, while
+     * every other field (email, idnumber, id) is identical on both, since it is
+     * genuinely the same account.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_hinted_username_prevailing_on_a_same_account_rename(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        // Explicit, distinct email: the generator otherwise derives it from the
+        // username, which would make it overlap with the username assertions below.
+        $user = $this->getDataGenerator()->create_user(['username' => 'newusername', 'email' => 'person@example.com']);
+
+        $logger = new \tool_mergeusers\local\logger();
+        $logid = $logger->log(
+            $user->id,
+            $user->id,
+            true,
+            ['Renamed username in place.'],
+            null,
+            null,
+            ['field' => 'username', 'value' => 'oldusername'],
+        );
+        $stored = $logger->detail_from($logid);
+
+        $output = $this->get_renderer()->results_page($user, $user, $stored->status, $stored->log, $logid);
+
+        $fromboxstart = strpos($output, get_string('olduser', 'tool_mergeusers'));
+        $toboxstart = strpos($output, get_string('newuser', 'tool_mergeusers'));
+        $frombox = substr($output, $fromboxstart, $toboxstart - $fromboxstart);
+        $tobox = substr($output, $toboxstart);
+
+        $this->assertStringContainsString('oldusername', $frombox);
+        $this->assertStringNotContainsString('newusername', $frombox);
+        $this->assertStringContainsString('newusername', $tobox);
+
+        // Every other field is identical on both sides, since it is the same account.
+        $this->assertStringContainsString($user->email, $frombox);
+        $this->assertStringContainsString($user->email, $tobox);
+        $this->assertStringContainsString('ID: ' . $user->id, $frombox);
+        $this->assertStringContainsString('ID: ' . $user->id, $tobox);
+    }
 }
 
 // @codingStandardsIgnoreStart

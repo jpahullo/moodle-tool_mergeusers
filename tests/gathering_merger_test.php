@@ -77,6 +77,39 @@ final class gathering_merger_test extends advanced_testcase {
     }
 
     /**
+     * Test that a hint reaches the stored snapshot even when the side it belongs to
+     * DOES resolve to a real, existing user (fromid > 0) - not just for a notfound
+     * side. This exercises the full CLI path (gathering_merger -> user_merger ->
+     * logger) for the "hint prevails" behaviour already unit-tested in isolation on
+     * logger::capture_user_snapshot().
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_cli
+     */
+    public function test_merge_propagates_searched_field_hint_for_a_resolved_side(): void {
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $action = (object) [
+            'toid' => $touser->id,
+            'fromid' => $fromuser->id,
+            'fromsearchedfield' => 'username',
+            'fromsearchedvalue' => 'oldusername',
+        ];
+
+        $mut = new gathering_merger(new user_merger());
+        $mut->merge(new in_memory_gathering([$action]));
+
+        $logger = new logger();
+        $logs = $logger->get(['touserid' => $touser->id, 'fromuserid' => $fromuser->id]);
+        $stored = $logger->detail_from(reset($logs)->id);
+
+        $this->assertTrue($stored->log->user_snapshots->from_user->recoverable);
+        $this->assertSame('oldusername', $stored->log->user_snapshots->from_user->username);
+        $this->assertSame($fromuser->email, $stored->log->user_snapshots->from_user->email);
+    }
+
+    /**
      * Test the real-world case reported from production: a gathering searching both
      * users by username can fail to resolve EITHER side, producing an action with
      * both toid = 0 and fromid = 0. Both sides' hints must reach their own snapshot

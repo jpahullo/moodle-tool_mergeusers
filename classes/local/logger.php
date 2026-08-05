@@ -304,16 +304,19 @@ final class logger {
     public static function capture_user_snapshot(int $userid, ?array $hint = null): stdClass {
         global $DB;
 
+        $searchedfield = $hint['field'] ?? null;
+        $searchedvalue = $hint['value'] ?? null;
+
         if ($userid <= 0) {
-            return self::notfound_snapshot($hint['field'] ?? null, $hint['value'] ?? null);
+            return self::notfound_snapshot($searchedfield, $searchedvalue);
         }
 
         $user = $DB->get_record('user', ['id' => $userid]);
         if (!$user) {
-            return self::unrecoverable_snapshot($userid);
+            return self::apply_search_hint(self::unrecoverable_snapshot($userid), $searchedfield, $searchedvalue);
         }
 
-        return self::snapshot_from_user($user);
+        return self::apply_search_hint(self::snapshot_from_user($user), $searchedfield, $searchedvalue);
     }
 
     /**
@@ -345,6 +348,24 @@ final class logger {
             'timeerased' => null,
         ];
 
+        return self::apply_search_hint($snapshot, $searchedfield, $searchedvalue);
+    }
+
+    /**
+     * Overwrites a snapshot's field with a searched value a gathering reported, when
+     * that field is one of the fields the web UI itself allows searching by. Used both
+     * for a notfound side (the only data it will ever have) and for a side that DID
+     * resolve to a real user - e.g. a gathering that renames a username in place on a
+     * single account (no real merge needed) can still report what the old username
+     * was, so it prevails over the live value for that field alone; every other field
+     * (email, idnumber, id, suspended, deleted...) keeps reflecting the real user.
+     *
+     * @param stdClass $snapshot the snapshot to (maybe) adjust.
+     * @param string|null $searchedfield the field a gathering searched by, if any.
+     * @param string|null $searchedvalue the value a gathering searched for, if any.
+     * @return stdClass the same $snapshot instance, for chaining.
+     */
+    private static function apply_search_hint(stdClass $snapshot, ?string $searchedfield, ?string $searchedvalue): stdClass {
         if ($searchedvalue !== null && in_array($searchedfield, self::ALLOWED_SEARCH_FIELDS, true)) {
             $snapshot->$searchedfield = $searchedvalue;
         }

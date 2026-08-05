@@ -192,23 +192,76 @@ final class logger_test extends advanced_testcase {
 
     /**
      * Test that capture_user_snapshot() propagates a hint into notfound_snapshot()
-     * only when the id is not positive, and that omitting the hint entirely (as
-     * every call site predating this feature does) is unaffected.
+     * when the id is not positive, and that omitting the hint entirely (as every
+     * call site predating this feature does) is unaffected.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_logger
      */
-    public function test_capture_user_snapshot_propagates_hint_only_when_not_found(): void {
+    public function test_capture_user_snapshot_propagates_hint_when_not_found(): void {
         $snapshot = logger::capture_user_snapshot(0, ['field' => 'username', 'value' => 'jsmith123']);
         $this->assertTrue($snapshot->notfound);
         $this->assertSame('jsmith123', $snapshot->username);
 
-        $user = $this->getDataGenerator()->create_user();
-        $recoverable = logger::capture_user_snapshot($user->id, ['field' => 'username', 'value' => 'ignored']);
-        $this->assertSame($user->username, $recoverable->username);
-
         $nohint = logger::capture_user_snapshot(0);
         $this->assertNull($nohint->username);
+    }
+
+    /**
+     * Test that a hint for a side that DOES resolve to a real user prevails over the
+     * live value for that one field only - the real-world case being a gathering that
+     * renames a username in place on a single account (no real merge needed) but still
+     * reports what the old username was, so the "from" side of the log can show it.
+     * Every other field must keep reflecting the real, live user.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_capture_user_snapshot_hint_prevails_for_a_resolved_user(): void {
+        $user = $this->getDataGenerator()->create_user(['idnumber' => 'ID001']);
+
+        $snapshot = logger::capture_user_snapshot($user->id, ['field' => 'username', 'value' => 'oldusername']);
+
+        $this->assertFalse($snapshot->notfound);
+        $this->assertTrue($snapshot->recoverable);
+        $this->assertSame('oldusername', $snapshot->username);
+        $this->assertSame((int) $user->id, $snapshot->id);
+        $this->assertSame($user->email, $snapshot->email);
+        $this->assertSame('ID001', $snapshot->idnumber);
+        $this->assertFalse($snapshot->suspended);
+        $this->assertFalse($snapshot->deleted);
+    }
+
+    /**
+     * Test that a disallowed field name on a resolved user's hint is silently
+     * ignored, same as for a notfound side.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_capture_user_snapshot_ignores_disallowed_hint_field_for_a_resolved_user(): void {
+        $user = $this->getDataGenerator()->create_user();
+
+        $snapshot = logger::capture_user_snapshot($user->id, ['field' => 'firstname', 'value' => 'Jane']);
+
+        $this->assertSame($user->username, $snapshot->username);
+        $this->assertSame($user->firstname, $snapshot->firstname);
+    }
+
+    /**
+     * Test that a hint also prevails for an unrecoverable side (a real id with no
+     * live {user} row), for consistency with both the notfound and resolved cases.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_capture_user_snapshot_hint_prevails_for_unrecoverable_id(): void {
+        $snapshot = logger::capture_user_snapshot(999999, ['field' => 'email', 'value' => 'old@example.com']);
+
+        $this->assertFalse($snapshot->notfound);
+        $this->assertFalse($snapshot->recoverable);
+        $this->assertSame(999999, $snapshot->id);
+        $this->assertSame('old@example.com', $snapshot->email);
     }
 
     /**
