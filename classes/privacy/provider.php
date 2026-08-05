@@ -165,11 +165,10 @@ class provider implements
             ];
 
             // Include user snapshots if present (contains username, email, idnumber).
+            // A side already erased by a prior privacy request still shows up here,
+            // but with recoverable=false and no personal fields (see erase_snapshot_side()).
             if (!empty($logdata['user_snapshots'])) {
                 $exportdata->user_snapshots = $logdata['user_snapshots'];
-            } else if (isset($logdata['user_snapshots']) && $logdata['user_snapshots'] === null) {
-                // Indicate that snapshots have been anonymized.
-                $exportdata->user_snapshots_anonymized = true;
             }
 
             // Include action log summary.
@@ -199,17 +198,24 @@ class provider implements
         }
 
         // Anonymize user snapshots in all merge logs instead of deleting records.
-        // This preserves audit trail with user IDs and timestamps while removing personal data.
-        $logs = $DB->get_records('tool_mergeusers');
+        // This preserves audit trail (user ids, capture timestamp, merge actions)
+        // while removing personal data from both sides of every snapshot.
+        $logs = $DB->get_recordset('tool_mergeusers');
         foreach ($logs as $log) {
             $logdata = json_decode($log->log, true);
-            if (!empty($logdata)) {
-                // Set user_snapshots to null to anonymize personal data.
-                $logdata['user_snapshots'] = null;
-                $log->log = json_encode($logdata);
-                $DB->update_record('tool_mergeusers', $log);
+            if (empty($logdata) || empty($logdata['user_snapshots']) || !is_array($logdata['user_snapshots'])) {
+                continue;
             }
+
+            $logdata['user_snapshots']['to_user'] = self::erase_snapshot_side($logdata['user_snapshots']['to_user'] ?? null);
+            $logdata['user_snapshots']['from_user'] = self::erase_snapshot_side(
+                $logdata['user_snapshots']['from_user'] ?? null,
+            );
+
+            $log->log = json_encode($logdata);
+            $DB->update_record('tool_mergeusers', $log);
         }
+        $logs->close();
     }
 
     /**
@@ -237,33 +243,33 @@ class provider implements
             'mergedbyuserid' => $userid,
         ];
 
-        $logs = $DB->get_records_select('tool_mergeusers', $select, $params);
+        $logs = $DB->get_recordset_select('tool_mergeusers', $select, $params);
         foreach ($logs as $log) {
             $logdata = json_decode($log->log, true);
-            if (!empty($logdata) && !empty($logdata['user_snapshots'])) {
-                // Selectively remove this user's snapshot only.
-                if (
-                    !empty($logdata['user_snapshots']['to_user']) &&
-                    (int) $logdata['user_snapshots']['to_user']['id'] === $userid
-                ) {
-                    $logdata['user_snapshots']['to_user'] = null;
-                }
-                if (
-                    !empty($logdata['user_snapshots']['from_user']) &&
-                    (int) $logdata['user_snapshots']['from_user']['id'] === $userid
-                ) {
-                    $logdata['user_snapshots']['from_user'] = null;
-                }
+            if (empty($logdata) || empty($logdata['user_snapshots']) || !is_array($logdata['user_snapshots'])) {
+                continue;
+            }
 
-                // If both snapshots are now null, set the whole user_snapshots to null.
-                if (empty($logdata['user_snapshots']['to_user']) && empty($logdata['user_snapshots']['from_user'])) {
-                    $logdata['user_snapshots'] = null;
-                }
+            $modified = false;
 
+            $touser = $logdata['user_snapshots']['to_user'] ?? null;
+            if (is_array($touser) && (int) ($touser['id'] ?? 0) === $userid) {
+                $logdata['user_snapshots']['to_user'] = self::erase_snapshot_side($touser);
+                $modified = true;
+            }
+
+            $fromuser = $logdata['user_snapshots']['from_user'] ?? null;
+            if (is_array($fromuser) && (int) ($fromuser['id'] ?? 0) === $userid) {
+                $logdata['user_snapshots']['from_user'] = self::erase_snapshot_side($fromuser);
+                $modified = true;
+            }
+
+            if ($modified) {
                 $log->log = json_encode($logdata);
                 $DB->update_record('tool_mergeusers', $log);
             }
         }
+        $logs->close();
     }
 
     /**
@@ -293,47 +299,67 @@ class provider implements
         $select = "touserid $usersql OR fromuserid $usersql OR mergedbyuserid $usersql";
         $params = array_merge($userparams, $userparams, $userparams);
 
-        $logs = $DB->get_records_select('tool_mergeusers', $select, $params);
+        $logs = $DB->get_recordset_select('tool_mergeusers', $select, $params);
 
         // Create a map of userids for quick lookup.
         $useridmap = array_flip($userids);
 
         foreach ($logs as $log) {
             $logdata = json_decode($log->log, true);
-            if (!empty($logdata) && !empty($logdata['user_snapshots'])) {
-                $modified = false;
+            if (empty($logdata) || empty($logdata['user_snapshots']) || !is_array($logdata['user_snapshots'])) {
+                continue;
+            }
 
-                // Anonymize to_user snapshot if user is in deletion list.
-                if (!empty($logdata['user_snapshots']['to_user'])) {
-                    $touserid = (int) $logdata['user_snapshots']['to_user']['id'];
-                    if (isset($useridmap[$touserid])) {
-                        $logdata['user_snapshots']['to_user'] = null;
-                        $modified = true;
-                    }
-                }
+            $modified = false;
 
-                // Anonymize from_user snapshot if user is in deletion list.
-                if (!empty($logdata['user_snapshots']['from_user'])) {
-                    $fromuserid = (int) $logdata['user_snapshots']['from_user']['id'];
-                    if (isset($useridmap[$fromuserid])) {
-                        $logdata['user_snapshots']['from_user'] = null;
-                        $modified = true;
-                    }
-                }
+            $touser = $logdata['user_snapshots']['to_user'] ?? null;
+            if (is_array($touser) && isset($useridmap[(int) ($touser['id'] ?? 0)])) {
+                $logdata['user_snapshots']['to_user'] = self::erase_snapshot_side($touser);
+                $modified = true;
+            }
 
-                // If both snapshots are now null, set the whole user_snapshots to null.
-                if (
-                    $modified && empty($logdata['user_snapshots']['to_user']) &&
-                    empty($logdata['user_snapshots']['from_user'])
-                ) {
-                    $logdata['user_snapshots'] = null;
-                }
+            $fromuser = $logdata['user_snapshots']['from_user'] ?? null;
+            if (is_array($fromuser) && isset($useridmap[(int) ($fromuser['id'] ?? 0)])) {
+                $logdata['user_snapshots']['from_user'] = self::erase_snapshot_side($fromuser);
+                $modified = true;
+            }
 
-                if ($modified) {
-                    $log->log = json_encode($logdata);
-                    $DB->update_record('tool_mergeusers', $log);
-                }
+            if ($modified) {
+                $log->log = json_encode($logdata);
+                $DB->update_record('tool_mergeusers', $log);
             }
         }
+        $logs->close();
+    }
+
+    /**
+     * Erases the personal fields of one side (to_user/from_user) of a normalized
+     * user snapshot, keeping its id (not personal data on its own - it is already
+     * preserved unerased in the touserid/fromuserid columns) and its notfound flag
+     * as-is: a side that never had a real user id has nothing to erase.
+     *
+     * @param mixed $side the current to_user/from_user value, in whatever shape it
+     * already had (normalized or not).
+     * @return array the erased side, in the normalized "recoverable = false" shape.
+     */
+    private static function erase_snapshot_side($side): array {
+        if (is_array($side) && !empty($side['notfound'])) {
+            return $side;
+        }
+
+        $id = (is_array($side) && !empty($side['id'])) ? (int) $side['id'] : null;
+
+        return [
+            'notfound' => false,
+            'recoverable' => false,
+            'id' => $id,
+            'username' => null,
+            'email' => null,
+            'firstname' => null,
+            'lastname' => null,
+            'idnumber' => null,
+            'suspended' => null,
+            'deleted' => null,
+        ];
     }
 }
