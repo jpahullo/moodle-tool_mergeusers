@@ -167,6 +167,15 @@ than extend the gap.
   bimonthly.
 - Pushing a tag matching `2*` triggers the `moodle-release.yml` workflow,
   which publishes the release to the Moodle plugins directory.
+- **Never edit a `db/upgrade.php` savepoint once it has been committed** —
+  not even before it has been released or tagged. Any environment (a
+  developer's local install included) may already have run it, and Moodle
+  only re-runs an upgrade step whose savepoint number is newer than the
+  site's currently stored version; editing an already-executed step's body
+  silently never re-applies the edit anywhere it already ran, and the only
+  fix is a manual plugin downgrade + re-upgrade. Any further change to the
+  upgrade logic — even one line — must be a brand new `if ($oldversion <
+  ...)` block with its own new savepoint number.
 
 ## Quick file reference
 
