@@ -79,7 +79,7 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023040401, 'tool', 'mergeusers');
     }
 
-    if ($oldversion < 2025102202) {
+    if ($oldversion < 2026060100) {
         // Define field status to be added to tool_mergeusers.
         $table = new xmldb_table('tool_mergeusers');
         $field = new xmldb_field('status', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'log');
@@ -97,10 +97,10 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         }
 
         // Mergeusers savepoint reached.
-        upgrade_plugin_savepoint(true, 2025102202, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2026060100, 'tool', 'mergeusers');
     }
 
-    if ($oldversion < 2025102300) {
+    if ($oldversion < 2026060101) {
         // Migrate success field into status field.
         $table = new xmldb_table('tool_mergeusers');
         $field = new xmldb_field('success');
@@ -116,10 +116,10 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         }
 
         // Mergeusers savepoint reached.
-        upgrade_plugin_savepoint(true, 2025102300, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2026060101, 'tool', 'mergeusers');
     }
 
-    if ($oldversion < 2025102301) {
+    if ($oldversion < 2026060102) {
         $table = new xmldb_table('tool_mergeusers');
 
         // Drop indexes related to success field.
@@ -140,10 +140,10 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         }
 
         // Mergeusers savepoint reached.
-        upgrade_plugin_savepoint(true, 2025102301, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2026060102, 'tool', 'mergeusers');
     }
 
-    if ($oldversion < 2025110403) {
+    if ($oldversion < 2026061000) {
         // Define field timecreated to be added to tool_mergeusers.
         $table = new xmldb_table('tool_mergeusers');
         $field = new xmldb_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'mergedbyuserid');
@@ -157,7 +157,7 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         $DB->execute("UPDATE {tool_mergeusers} SET timecreated = timemodified WHERE timecreated IS NULL OR timecreated = 0");
 
         // Mergeusers savepoint reached.
-        upgrade_plugin_savepoint(true, 2025110403, 'tool', 'mergeusers');
+        upgrade_plugin_savepoint(true, 2026061000, 'tool', 'mergeusers');
     }
 
     return true;
