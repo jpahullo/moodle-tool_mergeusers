@@ -30,8 +30,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version = 2026080400;
-$plugin->release = '(2026080400: Fix CI failures for the adhoc merge task)';
+$plugin->version = 2026080500;
+$plugin->release = '(2026080500: Fix legacy log rows losing their action list after upgrade)';
 $plugin->requires = 2024100700; // Moodle 4.5+, https://moodledev.io/general/releases#moodle-45-lts.
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;

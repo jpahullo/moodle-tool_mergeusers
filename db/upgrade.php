@@ -171,6 +171,18 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080100, 'tool', 'mergeusers');
     }
 
+    if ($oldversion < 2026080500) {
+        // Fixes rows whose log JSON still has legacy top-level numeric keys (the
+        // original pre-a6ec50c flat action-list shape) instead of an "actions" key -
+        // including rows the 2026080100 step above already touched, which injected
+        // user_snapshots into that flat array without ever migrating it, producing
+        // {"0": ..., "1": ..., "user_snapshots": {...}} with no "actions" key at all.
+        tool_mergeusers_migrate_legacy_top_level_actions();
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2026080500, 'tool', 'mergeusers');
+    }
+
     return true;
 }
 
@@ -292,4 +304,43 @@ function tool_mergeusers_normalize_user_snapshot_side(int $userid, $existing, ar
     }
 
     return (array) \tool_mergeusers\local\logger::snapshot_from_user($user);
+}
+
+/**
+ * Fixes log JSON that still has legacy top-level numeric keys (the original
+ * pre-a6ec50c flat action-list shape, e.g. {"0": "...", "1": "..."}) - including
+ * rows where the 2026080100 step above already added a user_snapshots key onto
+ * that flat array without migrating it - by moving those values into "actions".
+ * Never touches "user_snapshots"; rows that already have a clean "actions" key
+ * and no loose numeric keys are left untouched.
+ *
+ * @return void
+ */
+function tool_mergeusers_migrate_legacy_top_level_actions(): void {
+    global $DB;
+
+    $rows = $DB->get_recordset('tool_mergeusers');
+    foreach ($rows as $row) {
+        $logdata = json_decode($row->log, true);
+        if (!is_array($logdata)) {
+            continue;
+        }
+
+        $legacykeys = array_diff_key($logdata, ['user_snapshots' => true, 'actions' => true]);
+        if (empty($legacykeys)) {
+            continue;
+        }
+
+        ksort($legacykeys, SORT_NUMERIC);
+        $legacyactions = array_values($legacykeys);
+
+        $logdata = array_diff_key($logdata, $legacykeys);
+        $logdata['actions'] = array_merge($legacyactions, $logdata['actions'] ?? []);
+
+        $record = new stdClass();
+        $record->id = $row->id;
+        $record->log = json_encode($logdata);
+        $DB->update_record('tool_mergeusers', $record);
+    }
+    $rows->close();
 }

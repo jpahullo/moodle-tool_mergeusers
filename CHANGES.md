@@ -3,6 +3,16 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080500
+
+1. fix: #393: `db/upgrade.php`'s `2026080100` normalization step could turn a genuinely
+   legacy `log` row (the original pre-2025-11-12 flat action-list shape, with no
+   `user_snapshots`/`actions` wrapper at all) into `{"0": ..., "1": ..., "user_snapshots":
+   {...}}` — a shape with no `actions` key, so the results page silently showed no
+   recorded actions for these merges. Added a new upgrade step that moves any leftover
+   top-level numeric keys into `actions`, without touching `user_snapshots`.
+
+
 ## 2026080400
 
 1. fix: #393: CI: codechecker errors (blank line before `finally`; alphabetical order of `provider::implements`).
