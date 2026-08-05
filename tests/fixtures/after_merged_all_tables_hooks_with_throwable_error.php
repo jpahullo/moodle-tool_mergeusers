@@ -15,25 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Definition of the callback for the add_setting_before_merging hook.
+ * Definition of the callback for the after_merged_all_tables hook.
  *
  * @package   tool_mergeusers
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
- * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @copyright 2026 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-use tool_mergeusers\fixtures\add_empty_settings_before_merging_callbacks;
-use tool_mergeusers\hook\add_settings_before_merging;
+use tool_mergeusers\fixtures\after_merged_all_tables_callbacks;
+use tool_mergeusers\hook\after_merged_all_tables;
 
 $callbacks = [
     [
-        'hook' => add_settings_before_merging::class,
+        'hook' => after_merged_all_tables::class,
         'callback' => [
-            add_empty_settings_before_merging_callbacks::class,
-            'add_settings_before_merging',
+            after_merged_all_tables_callbacks::class,
+            'test_hook_after_merged_all_tables_throws_error',
         ],
     ],
 ];

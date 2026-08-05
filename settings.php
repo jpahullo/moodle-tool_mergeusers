@@ -168,6 +168,28 @@ if ($ADMIN->fulltree) {
         1
     ));
 
+    $generalsettings->add(new admin_setting_configcheckbox(
+        'tool_mergeusers/enableadhocmerge',
+        get_string('enableadhocmerge', 'tool_mergeusers'),
+        get_string('enableadhocmerge_desc', 'tool_mergeusers'),
+        0
+    ));
+
+    if (
+        (bool)(int)get_config('tool_mergeusers', 'enableadhocmerge')
+        && tool_mergeusers_is_adhoc_concurrency_limit_overridden()
+    ) {
+        $generalsettings->add(new admin_setting_description(
+            'tool_mergeusers/adhocconcurrencywarning',
+            new lang_string('adhocconcurrencywarning', 'tool_mergeusers'),
+            new lang_string(
+                'adhocconcurrencywarning_desc',
+                'tool_mergeusers',
+                \tool_mergeusers\task\merge_users_task::class,
+            ),
+        ));
+    }
+
     $fields = tool_mergeusers_inform_about_pending_user_profile_fields();
     if ($fields->exists) {
         $generalsettings->add(new admin_setting_description(

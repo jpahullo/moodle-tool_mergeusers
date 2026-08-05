@@ -15,21 +15,33 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @author    Daniel Tomé <danieltomefer@gmail.com>
- * @copyright 2018 Servei de Recursos Educatius (http://www.sre.urv.cat)
- * @package tool_mergeusers
+ * Tests for assignment submission duplicated data handling.
+ *
+ * @package    tool_mergeusers
+ * @copyright  2018 Servei de Recursos Educatius (http://www.sre.urv.cat)
+ * @author     Daniel Tomé <danieltomefer@gmail.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+namespace tool_mergeusers;
 
 use tool_mergeusers\local\merger\finder\in_memory_assign_submission_finder;
 use tool_mergeusers\local\merger\duplicateddata\assign_submission_duplicated_data_merger;
 use tool_mergeusers\local\merger\duplicateddata\duplicated_data;
 
-
-final class assign_submission_duplicated_test extends advanced_testcase {
+/**
+ * Tests for assignment submission duplicated data handling.
+ * @covers \tool_mergeusers\local\merger\duplicateddata\assign_submission_duplicated_data_merger
+ */
+final class assign_submission_duplicated_test extends \advanced_testcase {
     /**
      * Should do nothing with new submission and remove old submission when old user has no content submission
-     * and new user has content submission
+     * and new user has content submission.
      *
+     * @param array $expectedtomodify The expected records to modify.
+     * @param array $expectedtoremove The expected records to remove.
+     * @param \stdClass $oldusersubmission The old user submission.
+     * @param \stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider remove_old_ignore_new_data_provider
@@ -41,7 +53,12 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         $this->assertEquals($duplicateddata->to_remove(), $expectedtoremove);
     }
 
-    public static function remove_old_ignore_new_data_provider() {
+    /**
+     * Data provider for test_remove_old_ignore_new.
+     *
+     * @return array
+     */
+    public static function remove_old_ignore_new_data_provider(): array {
         return [
                 "when old is a new submission, new is submitted" => [
                         [],
@@ -72,20 +89,34 @@ final class assign_submission_duplicated_test extends advanced_testcase {
 
     /**
      * Should update old submission and remove new submission when old user has submitted
-     * submission and new user has new submission
+     * submission and new user has new submission.
      *
+     * @param array $expectedtomodify The expected records to modify.
+     * @param array $expectedtoremove The expected records to remove.
+     * @param \stdClass $oldusersubmission The old user submission.
+     * @param \stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider update_old_and_remove_new_data_provider
      */
-    public function test_update_old_and_remove_new($expectedtomodify, $expectedtoremove, $oldusersubmission, $newusersubmission): void {
+    public function test_update_old_and_remove_new(
+        $expectedtomodify,
+        $expectedtoremove,
+        $oldusersubmission,
+        $newusersubmission,
+    ): void {
         $duplicateddata = $this->get_duplicated_data($oldusersubmission, $newusersubmission);
 
         $this->assertEquals($duplicateddata->to_update(), $expectedtomodify);
         $this->assertEquals($duplicateddata->to_remove(), $expectedtoremove);
     }
 
-    public static function update_old_and_remove_new_data_provider() {
+    /**
+     * Data provider for test_update_old_and_remove_new.
+     *
+     * @return array
+     */
+    public static function update_old_and_remove_new_data_provider(): array {
         return [
                 "when old is submitted" => [
                         [1 => 1],
@@ -109,8 +140,12 @@ final class assign_submission_duplicated_test extends advanced_testcase {
     }
 
     /**
-     * Should update first submission submitted and remove last when user has duplicated submission submitted
+     * Should update first submission submitted and remove last when user has duplicated submission submitted.
      *
+     * @param array $expectedtomodify The expected records to modify.
+     * @param array $expectedtoremove The expected records to remove.
+     * @param \stdClass $oldusersubmission The old user submission.
+     * @param \stdClass $newusersubmission The new user submission.
      * @group tool_mergeusers
      * @group tool_mergeusers_assign_submission
      * @dataProvider update_first_and_remove_last_data_provider
@@ -127,7 +162,12 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         $this->assertEquals($duplicateddata->to_remove(), $expectedtoremove);
     }
 
-    public static function update_first_and_remove_last_data_provider() {
+    /**
+     * Data provider for test_update_first_and_remove_last.
+     *
+     * @return array
+     */
+    public static function update_first_and_remove_last_data_provider(): array {
 
         return [
                 "when both submitted" => [
@@ -151,6 +191,13 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         ];
     }
 
+    /**
+     * Get an assign submission with submitted status.
+     *
+     * @param int $id Submission ID
+     * @param int $assignid Assignment ID
+     * @return \stdClass
+     */
     private static function get_assign_submission_submitted($id, $assignid) {
         $anoldsubmittedassignsubmision = self::get_assign_submission($id);
         $anoldsubmittedassignsubmision->status = 'submitted';
@@ -159,6 +206,14 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         return $anoldsubmittedassignsubmision;
     }
 
+    /**
+     * Get an assign submission with submitted status and specific date.
+     *
+     * @param int $id Submission ID
+     * @param int $assignid Assignment ID
+     * @param int $date Modification date
+     * @return \stdClass
+     */
     private static function get_assign_submission_submitted_by_date($id, $assignid, $date) {
         $anewsubmittedassignsubmission = self::get_assign_submission($id);
         $anewsubmittedassignsubmission->status = 'submitted';
@@ -168,6 +223,13 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         return $anewsubmittedassignsubmission;
     }
 
+    /**
+     * Get an assign submission with new status.
+     *
+     * @param int $id Submission ID
+     * @param int $assignid Assignment ID
+     * @return \stdClass
+     */
     private static function get_assign_submission_new($id, $assignid) {
         $anoldsubmittedassignsubmision = self::get_assign_submission($id);
         $anoldsubmittedassignsubmision->status = 'new';
@@ -176,6 +238,14 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         return $anoldsubmittedassignsubmision;
     }
 
+    /**
+     * Get an assign submission with draft status and specific date.
+     *
+     * @param int $id Submission ID
+     * @param int $assignid Assignment ID
+     * @param int $date Modification date
+     * @return \stdClass
+     */
     private static function get_assign_submission_draft_by_date($id, $assignid, $date) {
         $draft = self::get_assign_submission_draft($id, $assignid);
         $draft->timemodified = $date;
@@ -183,6 +253,13 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         return $draft;
     }
 
+    /**
+     * Get an assign submission with draft status.
+     *
+     * @param int $id Submission ID
+     * @param int $assignid Assignment ID
+     * @return \stdClass
+     */
     private static function get_assign_submission_draft($id, $assignid) {
         $anassignsubmissiondraft = self::get_assign_submission($id);
         $anassignsubmissiondraft->status = 'draft';
@@ -191,6 +268,13 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         return $anassignsubmissiondraft;
     }
 
+    /**
+     * Get an assign submission with reopened status.
+     *
+     * @param int $id Submission ID
+     * @param int $assignid Assignment ID
+     * @return \stdClass
+     */
     private static function get_assign_submission_reopened($id, $assignid) {
         $anassignsubmissionreopened = self::get_assign_submission($id);
         $anassignsubmissionreopened->status = 'reopened';
@@ -199,8 +283,14 @@ final class assign_submission_duplicated_test extends advanced_testcase {
         return $anassignsubmissionreopened;
     }
 
+    /**
+     * Get a base assign submission object.
+     *
+     * @param int $id Submission ID
+     * @return \stdClass
+     */
     private static function get_assign_submission($id) {
-        $anewassignsubmision = new stdClass();
+        $anewassignsubmision = new \stdClass();
         $anewassignsubmision->id = $id;
         $anewassignsubmision->assignment = 123456;
         $anewassignsubmision->userid = 1234;
@@ -214,8 +304,10 @@ final class assign_submission_duplicated_test extends advanced_testcase {
     }
 
     /**
-     * @param $oldusersubmission
-     * @param $newusersubmission
+     * Get duplicated data for testing.
+     *
+     * @param \stdClass $oldusersubmission The old user submission.
+     * @param \stdClass $newusersubmission The new user submission.
      * @return duplicated_data
      */
     private function get_duplicated_data($oldusersubmission, $newusersubmission): duplicated_data {

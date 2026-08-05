@@ -28,11 +28,13 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core\task\manager;
 use tool_mergeusers\local\selected_users_to_merge;
 use tool_mergeusers\local\user_merger;
 use tool_mergeusers\local\user_searcher;
 use tool_mergeusers\output\merge_user_form;
 use tool_mergeusers\output\user_select_table;
+use tool_mergeusers\task\merge_users_task;
 
 require('../../../config.php');
 
@@ -128,6 +130,41 @@ if (!empty($option)) {
                 break; // Break execution for error.
             }
 
+            $adhocenabled = (bool)(int)get_config('tool_mergeusers', 'enableadhocmerge');
+            if ($adhocenabled) {
+                global $USER;
+
+                // Create pending log entry first.
+                $logger = new \tool_mergeusers\local\logger();
+                $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id);
+
+                if (!$logid) {
+                    $renderer->mu_error(get_string('error_log_creation_failed', 'tool_mergeusers'));
+                    break;
+                }
+
+                $task = new merge_users_task();
+                $task->set_custom_data([
+                    'toid' => $touser->id,
+                    'fromid' => $fromuser->id,
+                    'logid' => $logid,
+                ]);
+                if (!empty($USER->id)) {
+                    $task->set_userid($USER->id);
+                }
+                manager::queue_adhoc_task($task);
+
+                $currentuserselection->clear_users_selection();
+
+                $redirecturl = new moodle_url('/admin/tool/mergeusers/index.php');
+                $message = get_string('mergeusersqueued', 'tool_mergeusers', (object)[
+                    'fromuser' => $renderer->show_user($fromuser->id, $fromuser),
+                    'touser' => $renderer->show_user($touser->id, $touser),
+                    'logid' => $renderer->render_logid($logid),
+                ]);
+                redirect($redirecturl, $message, 0, \core\output\notification::NOTIFY_SUCCESS);
+            }
+
             // Merge the users.
             $log = [];
             $success = true;
@@ -137,7 +174,7 @@ if (!empty($option)) {
             $currentuserselection->clear_users_selection();
 
             // Render results page.
-            echo $renderer->results_page($touser, $fromuser, $success, $log, $logid);
+            echo $renderer->results_page($touser, $fromuser, $success ? 'success' : 'error', $log, $logid);
             break;
 
         // We have both users to merge selected, but we want to change any of them.

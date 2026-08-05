@@ -29,6 +29,7 @@ namespace tool_mergeusers\output;
 use coding_exception;
 use context_system;
 use core\exception\moodle_exception;
+use core\output\notification;
 use core_user;
 use dml_exception;
 use html_table;
@@ -41,6 +42,9 @@ use single_button;
 use stdClass;
 use tool_mergeusers\local\database_transactions;
 use tool_mergeusers\local\last_merge;
+use tool_mergeusers\local\logger;
+use tool_mergeusers\local\merge_user_display;
+use tool_mergeusers\local\status;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -67,6 +71,7 @@ class renderer extends plugin_renderer_base {
 
     /**
      * Renderers a progress bar.
+     *
      * @param array $items An array of items
      * @return string
      */
@@ -82,11 +87,13 @@ class renderer extends plugin_renderer_base {
                 $item = html_writer::tag('span', $text, $item);
             }
         }
+
         return html_writer::tag('div', join(get_separator(), $items), ['class' => 'merge_progress clearfix']);
     }
 
     /**
      * Returns the HTML for the progress bar, according to the current step.
+     *
      * @param int $step current step
      * @return string HTML for the progress bar.
      */
@@ -115,8 +122,8 @@ class renderer extends plugin_renderer_base {
     /**
      * Shows form for merging users.
      *
-     * @param moodleform $mform form for merging users.
-     * @param int $step step to show in the index page.
+     * @param moodleform $mform           form for merging users.
+     * @param int $step                   step to show in the index page.
      * @param user_select_table|null $ust table for users to merge after searching
      * @return string html to show on index page.
      * @throws coding_exception
@@ -144,6 +151,7 @@ class renderer extends plugin_renderer_base {
 
         $output .= $this->render_user_review_table($step);
         $output .= $this->footer();
+
         return $output;
     }
 
@@ -161,6 +169,7 @@ class renderer extends plugin_renderer_base {
     /**
      * Builds and renders a user review table
      *
+     * @param int $step current step.
      * @return string $reviewtable HTML of the review table section
      * @throws coding_exception
      */
@@ -177,7 +186,7 @@ class renderer extends plugin_renderer_base {
     /**
      * Displays merge users tool error message
      *
-     * @param string $message The error message
+     * @param string $message  The error message
      * @param bool $showreturn Shows a return button to the index page
      *
      * @throws coding_exception
@@ -202,27 +211,72 @@ class renderer extends plugin_renderer_base {
     /**
      * Shows the result of a merging action.
      *
-     * @param object $to stdClass with at least id and username fields.
-     * @param object $from stdClass with at least id and username fields.
-     * @param bool $success true if merging was ok; false otherwise.
-     * @param array $data logs of actions done if success, or list of errors on failure.
-     * @param int $logid id of the record with the whole detail of this merging action.
+     * @param object $to             stdClass with at least id and username fields (current/dynamic data).
+     * @param object $from           stdClass with at least id and username fields (current/dynamic data).
+     * @param string $status         status of the merging process.
+     * @param array|stdClass $data   logs of actions done if success, or list of errors on failure.
+     * @param int $logid             id of the record with the whole detail of this merging action.
+     * @param int|null $timecreated  timestamp when merge was queued/initiated.
+     * @param int|null $timemodified timestamp when merge was executed.
      * @return string html with the results.
      * @throws \coding_exception
      * @throws \ReflectionException
      */
-    public function results_page(object $to, object $from, bool $success, array $data, int $logid): string {
-        if ($success) {
-            $resulttype = 'ok';
-            $dbmessage = 'dbok';
-            $notifytype = 'notifysuccess';
-        } else {
-            $dbmessage = (database_transactions::are_supported()) ?
+    public function results_page(
+        object $to,
+        object $from,
+        ?string $status,
+        array|stdClass $data,
+        int $logid,
+        ?int $timecreated = null,
+        ?int $timemodified = null
+    ): string {
+        if (is_object($data)) {
+            $data = json_decode(json_encode($data), true);
+        }
+
+        // Extract normalized user snapshots (see logger::capture_user_snapshot()).
+        // A missing/malformed value should not happen once db/upgrade.php has
+        // normalized every log, but fall back to an "unrecoverable" snapshot from
+        // the live id passed in, rather than crash, just in case.
+        $snapshots = (is_array($data) && is_array($data['user_snapshots'] ?? null)) ? $data['user_snapshots'] : null;
+        $fromsnapshotdata = $snapshots['from_user'] ?? null;
+        $tosnapshotdata = $snapshots['to_user'] ?? null;
+        $fromsnapshot = is_array($fromsnapshotdata)
+            ? (object) $fromsnapshotdata
+            : logger::unrecoverable_snapshot((int) ($from->id ?? 0));
+        $tosnapshot = is_array($tosnapshotdata)
+            ? (object) $tosnapshotdata
+            : logger::unrecoverable_snapshot((int) ($to->id ?? 0));
+        $snapshotcapturedat = $snapshots['timemodified'] ?? null;
+        if ($snapshots !== null) {
+            $data = $data['actions'] ?? [];
+        }
+
+        $statusenum = status::safe_from($status);
+        switch ($statusenum) {
+            case status::PENDING:
+                $resulttype = '';
+                $dbmessage = "dbpending";
+                $notifytype = 'info';
+                break;
+            case status::INPROGRESS:
+                $resulttype = '';
+                $dbmessage = "dbinprogress";
+                $notifytype = 'info';
+                break;
+            case status::SUCCESS:
+                $resulttype = 'ok';
+                $dbmessage = 'dbok';
+                $notifytype = $statusenum->value;
+                break;
+            case status::ERROR:
+                $resulttype = 'ko';
+                $dbmessage = (database_transactions::are_supported()) ?
                     'dbko_transactions' :
                     'dbko_no_transactions';
-
-            $resulttype = 'ko';
-            $notifytype = 'notifyproblem';
+                $notifytype = $statusenum->value;
+                break;
         }
 
         $output = $this->header();
@@ -230,28 +284,72 @@ class renderer extends plugin_renderer_base {
         $output .= $this->build_progress_bar(self::INDEX_PAGE_RESULTS_STEP);
         $output .= html_writer::empty_tag('br');
         $output .= html_writer::start_tag('div', ['class' => 'result']);
+        $output .= $this->notification(
+            get_string('status:' . $statusenum->value, 'tool_mergeusers'),
+            $this->status_notification_type($statusenum),
+            false,
+        );
+        $output .= $this->render_merge_user_info(
+            merge_user_display::from_snapshot($fromsnapshot),
+            merge_user_display::from_snapshot($tosnapshot),
+            $snapshotcapturedat,
+        );
         $output .= html_writer::start_tag('div', ['class' => 'title']);
-        $output .= get_string('merging', 'tool_mergeusers') . ' ';
+        $output .= get_string('logline', 'tool_mergeusers', $this->render_logid($logid));
 
-        $fromheader = (object)[
-            'username' => $this->show_user($from->id, $from),
-            'id' => $from->id,
-        ];
-        $toheader = (object)[
-            'username' => $this->show_user($to->id, $to),
-            'id' => $to->id,
-        ];
-        $output .= get_string('usermergingheader', 'tool_mergeusers', $fromheader);
-        $output .= html_writer::empty_tag('br');
-        $output .= get_string('into', 'tool_mergeusers') . ' ';
-        $output .= get_string('usermergingheader', 'tool_mergeusers', $toheader);
+        // Display timestamps right under the log id reference, if available.
+        if ($timecreated !== null || $timemodified !== null) {
+            $output .= html_writer::empty_tag('br');
 
-        $output .= html_writer::empty_tag('br') . html_writer::empty_tag('br');
-        $output .= get_string('logid', 'tool_mergeusers', $logid);
-        $output .= html_writer::empty_tag('br');
-        $output .= get_string('log' . $resulttype, 'tool_mergeusers');
+            // Check if merge is still pending or in progress. This must be checked
+            // BEFORE comparing the two timestamps: update_log_status() also bumps
+            // timemodified when a task transitions to "in progress", so a pending/
+            // in-progress row can already have timecreated !== timemodified despite
+            // never having actually finished executing yet.
+            $ispending = ($status === 'pending' || $status === 'inprogress');
+
+            if ($ispending) {
+                // Pending/in-progress: only the queue time is meaningful yet.
+                if ($timecreated !== null) {
+                    $output .= html_writer::tag(
+                        'strong',
+                        get_string('snapshot_queued', 'tool_mergeusers')
+                    ) . ' ' . userdate($timecreated);
+                }
+            } else if ($timecreated !== null && $timemodified !== null && $timecreated !== $timemodified) {
+                // Completed (success/error) via adhoc task: show both queue and execution times.
+                $output .= html_writer::tag(
+                    'strong',
+                    get_string('snapshot_queued', 'tool_mergeusers')
+                ) . ' ' . userdate($timecreated);
+                $output .= html_writer::empty_tag('br');
+                $output .= html_writer::tag(
+                    'strong',
+                    get_string('snapshot_executed', 'tool_mergeusers')
+                ) . ' ' . userdate($timemodified);
+            } else if ($timemodified !== null) {
+                // Completed synchronously (no adhoc): show as "Executed at".
+                $output .= html_writer::tag(
+                    'strong',
+                    get_string('snapshot_executed', 'tool_mergeusers')
+                ) . ' ' . userdate($timemodified);
+            } else if ($timecreated !== null) {
+                // Fallback: just show created time.
+                $output .= html_writer::tag(
+                    'strong',
+                    get_string('snapshot_created', 'tool_mergeusers')
+                ) . ' ' . userdate($timecreated);
+            }
+        }
         $output .= html_writer::end_tag('div');
         $output .= html_writer::empty_tag('br');
+
+        if (!empty($resulttype)) {
+            $output .= html_writer::start_tag('div', ['class' => 'title']);
+            $output .= get_string('log' . $resulttype, 'tool_mergeusers');
+            $output .= html_writer::end_tag('div');
+            $output .= html_writer::empty_tag('br');
+        }
 
         $output .= html_writer::start_tag('div', ['class' => 'resultset' . $resulttype]);
         foreach ($data as $item) {
@@ -261,8 +359,9 @@ class renderer extends plugin_renderer_base {
         $output .= html_writer::end_tag('div');
         $output .= html_writer::tag('div', html_writer::empty_tag('br'));
         $output .= $this->notification(
-            html_writer::tag('center', get_string($dbmessage, 'tool_mergeusers')),
+            get_string($dbmessage, 'tool_mergeusers'),
             $notifytype,
+            false,
         );
         $output .= html_writer::tag(
             'center',
@@ -271,6 +370,25 @@ class renderer extends plugin_renderer_base {
         $output .= $this->footer();
 
         return $output;
+    }
+
+    /**
+     * Renders a log id as a link to the log details page.
+     *
+     * @param int $logid
+     * @return string HTML link to the log details page.
+     */
+    public function render_logid(int $logid): string {
+        $logurl = new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]);
+
+        return get_string(
+            'logidurl',
+            'tool_mergeusers',
+            (object) [
+                'id' => $logid,
+                'url' => $logurl->out(false),
+            ]
+        );
     }
 
     /**
@@ -291,7 +409,7 @@ class renderer extends plugin_renderer_base {
     /**
      * This method produces the HTML to show the details of a user.
      *
-     * @param int $userid user.id
+     * @param int $userid  user.id
      * @param object $user an object with firstname and lastname attributes.
      * @return string the corresponding HTML.
      * @throws moodle_exception
@@ -321,7 +439,80 @@ class renderer extends plugin_renderer_base {
         if ($deleted) {
             return html_writer::tag('span', $text, $attributes);
         }
+
         return html_writer::link(new moodle_url('/user/view.php', ['id' => $userid]), $text, $attributes);
+    }
+
+    /**
+     * Same as show_user(), but distinguishes a user id that was never real to begin
+     * with (id <= 0, e.g. a gathering that could not resolve a search into a real
+     * user id) from one that no longer resolves to a live {user} row.
+     *
+     * @param int $userid user.id (touserid/fromuserid column value; can be <= 0).
+     * @param object|false $user the live {user} record, or false when none was found
+     * ($DB->get_record() returns false, not null, on a miss).
+     * @param array|null $searchedhint [field, value] from extract_searched_hint(), if any.
+     * @return string the corresponding HTML.
+     * @throws moodle_exception
+     */
+    private function show_user_or_notfound(int $userid, object|false $user, ?array $searchedhint = null): string {
+        if ($userid <= 0) {
+            if ($searchedhint !== null) {
+                return get_string('usernotfoundatmergewithhint', 'tool_mergeusers', (object) [
+                    'field' => $this->searched_field_label($searchedhint[0]),
+                    'value' => $searchedhint[1],
+                ]);
+            }
+
+            return get_string('usernotfoundatmerge', 'tool_mergeusers');
+        }
+
+        return $user ? $this->show_user($userid, $user) : get_string('deleted', 'tool_mergeusers', $userid);
+    }
+
+    /**
+     * Extracts the [field, value] a gathering reported having searched for, from a
+     * notfound side of a user_snapshots value (see logger::notfound_snapshot()). At
+     * most one of username/idnumber/email is ever non-null on a notfound side.
+     *
+     * @param array|object|null $side a to_user/from_user side, decoded as array or object.
+     * @return array|null [field, value], or null when $side is not notfound or carries no hint.
+     */
+    private function extract_searched_hint($side): ?array {
+        if ($side === null) {
+            return null;
+        }
+
+        $side = (array) $side;
+        if (empty($side['notfound'])) {
+            return null;
+        }
+
+        foreach (['username', 'idnumber', 'email'] as $field) {
+            if (($side[$field] ?? null) !== null) {
+                return [$field, $side[$field]];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Translated label for a searched field, without its trailing colon - e.g.
+     * 'username' -> 'Username'. Reuses the same labels a found user's identity is
+     * shown with (snapshot_username, ...), so no separate strings are needed.
+     *
+     * @param string $field one of 'username', 'idnumber', 'email'.
+     * @return string
+     */
+    private function searched_field_label(string $field): string {
+        $labelkeys = [
+            'username' => 'snapshot_username',
+            'idnumber' => 'snapshot_idnumber',
+            'email' => 'snapshot_email',
+        ];
+
+        return rtrim(get_string($labelkeys[$field], 'tool_mergeusers'), ':');
     }
 
     /**
@@ -343,13 +534,6 @@ class renderer extends plugin_renderer_base {
             $output .= get_string('nologs', 'tool_mergeusers');
         } else {
             $output .= html_writer::tag('div', get_string('loglist', 'tool_mergeusers'), ['class' => 'title']);
-
-            $flags = [];
-            // Prepare failure icon.
-            $flags[] = $this->pix_icon('i/invalid', get_string('eventusermergedfailure', 'tool_mergeusers'));
-            // Prepare success icon.
-            $flags[] = $this->pix_icon('i/valid', get_string('eventusermergedsuccess', 'tool_mergeusers'));
-
             $output .= html_writer::link(
                 new moodle_url('/admin/tool/mergeusers/view.php', ['export' => 1]),
                 get_string('exportlogs', 'tool_mergeusers')
@@ -369,18 +553,26 @@ class renderer extends plugin_renderer_base {
             $rows = [];
             foreach ($logs as $i => $log) {
                 $row = new html_table_row();
+
+                // Determine status display.
+                $statusdisplay = $this->render_status($log->status);
+
+                // Display timecreated if available, otherwise fall back to timemodified.
+                $displaytime = (!empty($log->timecreated)) ? $log->timecreated : $log->timemodified;
+
+                $logdata = json_decode($log->log ?? '', true);
+                $snapshots = is_array($logdata) ? ($logdata['user_snapshots'] ?? null) : null;
+                $fromhint = $this->extract_searched_hint(is_array($snapshots) ? ($snapshots['from_user'] ?? null) : null);
+                $tohint = $this->extract_searched_hint(is_array($snapshots) ? ($snapshots['to_user'] ?? null) : null);
+
                 $row->cells = [
-                    ($log->from)
-                        ? $this->show_user($log->fromuserid, $log->from)
-                        : get_string('deleted', 'tool_mergeusers', $log->fromuserid),
-                    ($log->to)
-                        ? $this->show_user($log->touserid, $log->to)
-                        : get_string('deleted', 'tool_mergeusers', $log->touserid),
+                    $this->show_user_or_notfound($log->fromuserid, $log->from, $fromhint),
+                    $this->show_user_or_notfound($log->touserid, $log->to, $tohint),
                     ($log->mergedby)
                         ? $this->show_user($log->mergedbyuserid, $log->mergedby)
                         : get_string('nomergedby', 'tool_mergeusers'),
-                    userdate($log->timemodified, get_string('strftimedaydatetime', 'langconfig')),
-                    $flags[$log->success],
+                    userdate($displaytime, get_string('strftimedaydatetime', 'langconfig')),
+                    $statusdisplay,
                     html_writer::link(
                         new moodle_url(
                             '/' . $CFG->admin . '/tool/mergeusers/log.php',
@@ -404,16 +596,58 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
+     * Maps a merge status to the corresponding \core\output\notification type,
+     * used for the results page's full-width status box.
+     *
+     * Not shared with render_status()'s badge classes below: Bootstrap badge
+     * suffixes and notification types disagree for the error case
+     * (badge-danger vs notification type 'error'), so sharing this mapping
+     * silently broke the log-list status badge colours.
+     *
+     * @param status $statusenum
+     * @return string one of the \core\output\notification::NOTIFY_* constants.
+     */
+    private function status_notification_type(status $statusenum): string {
+        return match ($statusenum) {
+            status::PENDING => notification::NOTIFY_WARNING,
+            status::INPROGRESS => notification::NOTIFY_INFO,
+            status::SUCCESS => notification::NOTIFY_SUCCESS,
+            status::ERROR => notification::NOTIFY_ERROR,
+        };
+    }
+
+    /**
+     * Renders a status badge.
+     *
+     * @param string|null $status
+     * @return string HTML badge
+     */
+    public function render_status(?string $status): string {
+        $statusenum = status::safe_from($status);
+        $statusbadgeclass = match ($statusenum) {
+            status::PENDING => 'badge-warning',
+            status::INPROGRESS => 'badge-info',
+            status::SUCCESS => 'badge-success',
+            status::ERROR => 'badge-danger',
+            default => 'badge-secondary',
+        };
+        $statusstring = get_string('status:' . $statusenum->value, 'tool_mergeusers');
+
+        return html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
+    }
+
+    /**
      * Gathers detail data for merge detail display.
      *
      * @param int $userid
      * @param int $timemodified the time the merge occurred
-     * @param int $logid id of log
+     * @param int $logid        id of log
+     * @param string $status    the merge status: pending, inprogress, success, error
      * @return array Containing profile link, formatted timestamp and log link.
      * @throws coding_exception
      * @throws moodle_exception
      */
-    private function get_merge_detail_data(int $userid, int $timemodified, int $logid, bool $success): array {
+    private function get_merge_detail_data(int $userid, int $timemodified, int $logid, string $status): array {
         $profileuser = core_user::get_user($userid);
         $time = userdate($timemodified);
         $profilelink = !empty($profileuser) ? html_writer::link(
@@ -424,19 +658,19 @@ class renderer extends plugin_renderer_base {
             new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]),
             get_string('openlog', 'tool_mergeusers')
         );
-        $successstring = ($success) ? 'success' : 'error';
+
         return [
             'profilelink' => $profilelink,
             'time' => $time,
             'loglink' => $loglink,
-            'success' => strtolower(get_string($successstring)),
+            'success' => strtolower(get_string('status:' . $status, 'tool_mergeusers')),
         ];
     }
 
     /**
      * Builds merge detail HTML.
      *
-     * @param stdClass $user User object.
+     * @param stdClass $user        User object.
      * @param last_merge $lastmerge last merge
      * @return string HTML to display
      * @throws coding_exception
@@ -449,12 +683,12 @@ class renderer extends plugin_renderer_base {
         $tohtml = $tome ? get_string(
             'tomedetail',
             'tool_mergeusers',
-            $this->get_merge_detail_data($tome->fromuserid, $tome->timemodified, $tome->id, (bool)(int)$tome->success)
+            $this->get_merge_detail_data($tome->fromuserid, $tome->timemodified, $tome->id, $tome->status)
         ) : '';
         $fromhtml = $fromme ? get_string(
             'frommedetail',
             'tool_mergeusers',
-            $this->get_merge_detail_data($fromme->touserid, $fromme->timemodified, $fromme->id, (bool)(int)$fromme->success)
+            $this->get_merge_detail_data($fromme->touserid, $fromme->timemodified, $fromme->id, $fromme->status)
         ) : '';
         $output = implode('<br/>', array_filter([$tohtml, $fromhtml]));
 
@@ -473,5 +707,112 @@ class renderer extends plugin_renderer_base {
         $deletablestring = ($lastmerge->is_this_user_deletable()) ? 'deletableuser' : 'nondeletableuser';
 
         return $output . '<br/><br/>' . get_string($deletablestring, 'tool_mergeusers');
+    }
+
+    /**
+     * Renders the "who's being merged" info box: a shared capture timestamp line
+     * followed by the two user boxes (the user to remove, then the user to keep).
+     *
+     * @param merge_user_display $from
+     * @param merge_user_display $to
+     * @param int|null $capturedat unix timestamp shared by both snapshots, or null
+     * when it could not be determined.
+     * @return string HTML output.
+     */
+    private function render_merge_user_info(merge_user_display $from, merge_user_display $to, ?int $capturedat): string {
+        $output = html_writer::start_tag('div', ['class' => 'tool-mergeusers-user-info']);
+        $output .= html_writer::tag('h4', get_string('snapshot_header', 'tool_mergeusers'));
+
+        if ($capturedat !== null) {
+            $output .= html_writer::tag(
+                'p',
+                get_string('snapshot_capturedat', 'tool_mergeusers', userdate($capturedat)),
+                ['class' => 'tool-mergeusers-user-info__capturedat'],
+            );
+        }
+
+        $output .= html_writer::start_tag('div', ['class' => 'tool-mergeusers-user-info__row']);
+        $output .= $this->render_merge_user_box($from, get_string('olduser', 'tool_mergeusers'));
+        $output .= $this->render_merge_user_box($to, get_string('newuser', 'tool_mergeusers'));
+        $output .= html_writer::end_tag('div');
+        $output .= html_writer::end_tag('div');
+
+        return $output;
+    }
+
+    /**
+     * Renders a single user box within the merge user info section.
+     *
+     * @param merge_user_display $user
+     * @param string $label
+     * @return string HTML output.
+     */
+    private function render_merge_user_box(merge_user_display $user, string $label): string {
+        $boxclass = 'tool-mergeusers-user-info__box';
+        if (!$user->recoverable) {
+            $boxclass .= ' tool-mergeusers-user-info__box--unavailable';
+        }
+
+        $output = html_writer::start_tag('div', ['class' => $boxclass]);
+        $output .= html_writer::tag('strong', $label);
+        $output .= html_writer::empty_tag('br');
+
+        if ($user->notfound) {
+            // At most one field is non-null: the one a gathering reported having
+            // searched for, per logger::notfound_snapshot(). Reuses the same field
+            // labels a found user's identity is shown with, but only for that one field
+            // - not the full set, since there is nothing else known about this side.
+            $searchedhint = $this->extract_searched_hint($user);
+            if ($searchedhint !== null) {
+                $output .= html_writer::tag(
+                    'div',
+                    $this->searched_field_label($searchedhint[0]) . ': ' . s($searchedhint[1]),
+                );
+            }
+
+            $output .= html_writer::tag('em', get_string('usernotfoundatmerge', 'tool_mergeusers'));
+            $output .= html_writer::end_tag('div');
+
+            return $output;
+        }
+
+        if (!$user->recoverable) {
+            $output .= html_writer::tag('div', get_string('snapshot_id', 'tool_mergeusers') . ' ' . $user->id);
+            if ($user->erasedforgdpr) {
+                $output .= html_writer::tag(
+                    'em',
+                    get_string('userinfo_erasedforgdpr', 'tool_mergeusers', userdate($user->timeerased)),
+                );
+            } else {
+                $output .= html_writer::tag('em', get_string('userinfo_notavailable', 'tool_mergeusers', $user->id));
+            }
+            $output .= html_writer::end_tag('div');
+
+            return $output;
+        }
+
+        if ($user->profileurl !== null) {
+            $nametext = html_writer::link($user->profileurl, s($user->displayname ?? 'N/A'));
+        } else {
+            $nametext = s($user->displayname ?? 'N/A');
+        }
+        $output .= html_writer::tag('div', get_string('snapshot_name', 'tool_mergeusers') . ' ' . $nametext);
+
+        $output .= html_writer::tag('div', get_string('snapshot_username', 'tool_mergeusers') . ' ' . s($user->username ?? 'N/A'));
+        $output .= html_writer::tag('div', get_string('snapshot_email', 'tool_mergeusers') . ' ' . s($user->email ?? 'N/A'));
+        $output .= html_writer::tag(
+            'div',
+            get_string('snapshot_idnumber', 'tool_mergeusers') . ' ' . s($user->idnumber ?? 'N/A'),
+        );
+        $output .= html_writer::tag('div', get_string('snapshot_id', 'tool_mergeusers') . ' ' . $user->id);
+
+        $suspendedtext = $user->suspended ? get_string('yes') : get_string('no');
+        $deletedtext = $user->deleted ? get_string('yes') : get_string('no');
+        $output .= html_writer::tag('div', get_string('snapshot_suspended', 'tool_mergeusers') . ' ' . $suspendedtext);
+        $output .= html_writer::tag('div', get_string('snapshot_deleted', 'tool_mergeusers') . ' ' . $deletedtext);
+
+        $output .= html_writer::end_tag('div');
+
+        return $output;
     }
 }

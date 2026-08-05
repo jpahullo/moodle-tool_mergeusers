@@ -42,6 +42,7 @@ use html_writer;
 use moodle_exception;
 use moodle_url;
 use ReflectionException;
+use Throwable;
 use tool_mergeusers\event\user_merged_failure;
 use tool_mergeusers\event\user_merged_success;
 use tool_mergeusers\local\merger\table_merger;
@@ -200,6 +201,10 @@ final class user_merger {
      *
      * @param int $toid The user inheriting the data
      * @param int $fromid The user being replaced
+     * @param int|null $logid Optional existing log id to update instead of creating new log
+     * @param array|null $tohint optional ['field' => ..., 'value' => ...] describing what a gathering searched for
+     * when $toid could not be resolved (id <= 0). Ignored otherwise, and when $logid is given.
+     * @param array|null $fromhint same as $tohint, for $fromid.
      * @return array An array(bool, array, int) having the following cases: if array(true, log, id)
      * users' merging was successful and log contains all actions done; if array(false, errors, id)
      * means users' merging was aborted and errors contain the list of errors.
@@ -208,16 +213,29 @@ final class user_merger {
      * @throws coding_exception
      * @throws moodle_exception
      */
-    public function merge(int $toid, int $fromid): array {
+    public function merge(
+        int $toid,
+        int $fromid,
+        ?int $logid = null,
+        ?array $tohint = null,
+        ?array $fromhint = null,
+    ): array {
         [$success, $logs] = $this->merge_users($toid, $fromid);
 
+        $status = status::from_success($success)->value;
         if ($success) {
             $eventname = user_merged_success::class;
         } else {
             $eventname = user_merged_failure::class;
         }
 
-        $logid = $this->logger->log($toid, $fromid, $success, $logs);
+        if ($logid !== null) {
+            // Update existing log.
+            $this->logger->update_log_status($logid, $status, $logs);
+        } else {
+            // Create new log.
+            $logid = $this->logger->log($toid, $fromid, $success, $logs, $status, $tohint, $fromhint);
+        }
 
         $event = $eventname::create([
             'context' => context_system::instance(),
@@ -250,8 +268,11 @@ final class user_merger {
         global $DB;
 
         // Initial checks.
-        // Are they the same?
-        if ($fromid == $toid) {
+        // Are they the same real user? A gathering that could not resolve either side
+        // reports both as id 0 (or another non-positive id), which is not "the same
+        // user" but "neither user was found" - let that fall through to the per-id
+        // check below instead, so each unresolved side gets its own clear message.
+        if ($fromid === $toid && $toid > 0) {
             // Do nothing.
             return [false, [get_string('errorsameuser', 'tool_mergeusers')]];
         }
@@ -315,7 +336,7 @@ final class user_merger {
             \core\di::get(\core\hook\manager::class)->dispatch(
                 new \tool_mergeusers\hook\after_merged_all_tables($toid, $fromid, $logs, $errors),
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $errors[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
                     html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
                     'Trace:' . html_writer::empty_tag('br') .

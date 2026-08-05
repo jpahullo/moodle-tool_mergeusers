@@ -15,25 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Definition of the callback for the add_setting_before_merging hook.
+ * Message providers definition.
  *
  * @package   tool_mergeusers
- * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
- * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @copyright 2025 Nihaal Shaikh
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-use tool_mergeusers\fixtures\add_empty_settings_before_merging_callbacks;
-use tool_mergeusers\hook\add_settings_before_merging;
-
-$callbacks = [
-    [
-        'hook' => add_settings_before_merging::class,
-        'callback' => [
-            add_empty_settings_before_merging_callbacks::class,
-            'add_settings_before_merging',
+$messageproviders = [
+    'mergeusers_completion' => [
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
         ],
     ],
 ];

@@ -28,9 +28,12 @@ use tool_mergeusers\local\user_merger;
  * @author    Jordi Pujol-Ahulló <jordi.pujol@urv.cat>
  * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\selected_users_to_merge
  */
 final class selected_users_to_merge_test extends basic_testcase {
     /**
+     * Test initialization creates session attribute.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_selected_users
      */
@@ -47,6 +50,8 @@ final class selected_users_to_merge_test extends basic_testcase {
     }
 
     /**
+     * Test single users are set and unset.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_selected_users
      */
@@ -72,6 +77,8 @@ final class selected_users_to_merge_test extends basic_testcase {
     }
 
     /**
+     * Test selected users are cleared.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_selected_users
      */

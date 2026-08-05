@@ -63,6 +63,8 @@ final class config_test extends advanced_testcase {
     }
 
     /**
+     * Test config is initialized with default and custom settings.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_config
      */
@@ -74,6 +76,8 @@ final class config_test extends advanced_testcase {
     }
 
     /**
+     * Test config is initialized with default and hook settings.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_config
      */
@@ -85,6 +89,8 @@ final class config_test extends advanced_testcase {
     }
 
     /**
+     * Test config is initialized with default hook and custom settings.
+     *
      * @group tool_mergeusers
      * @group tool_mergeusers_config
      */

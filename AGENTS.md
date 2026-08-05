@@ -94,6 +94,19 @@ To support a new table or plugin without touching core merge logic:
    not covered by the default configuration of this plugin.
    You can, then, register your custom settings in the `add_settings_before_merging` hook or update the
    administration settings from the UI.
+5. A custom `gathering` implementation (see `classes/local/cli/gathering.php`,
+   an empty marker interface over `\Iterator`) can optionally expose
+   `fromsearchedfield`/`fromsearchedvalue` and/or `tosearchedfield`/
+   `tosearchedvalue` string properties on a produced action, for the side(s)
+   where it could not resolve a real user id (`toid`/`fromid` <= 0).
+   `gathering_merger::merge()` reads these via `property_exists()` — a
+   `gathering` that predates this or simply doesn't set them behaves exactly
+   as before. `field` must be one of `username`, `idnumber`, `email` (the
+   same fields the web UI itself searches by, minus `id` — a not-found
+   search by `id` is already represented by the existing id +
+   `recoverable=false` snapshot shape); any other field name is silently
+   ignored. The results/log detail page then shows that one field instead of
+   the generic "not found" message with no context.
 
 ## Coding standards
 
@@ -161,12 +174,26 @@ than extend the gap.
 
 - Repository: `github.com/jpahullo/moodle-tool_mergeusers`.
 - Commit messages follow `#<github-issue-number> - <short description>`,
-  every change tied to a GitHub issue.
+  every change tied to a GitHub issue. **The first line must start with a
+  leading space before the `#`** (` #393 - ...`, not `#393 - ...`): git's
+  default comment character is `#`, so a line starting with it at column 1
+  gets silently stripped as a comment by any editor-based git flow (merge
+  commit messages, interactive rebase, `git commit` without `-m`) - GitHub
+  itself also renders it more reliably with the leading space.
 - Plugin version is a Moodle-style timestamp `YYYYMMDDvv`, tracked in both
   `version.php` and `CHANGES.md`; releases happen roughly monthly to
   bimonthly.
 - Pushing a tag matching `2*` triggers the `moodle-release.yml` workflow,
   which publishes the release to the Moodle plugins directory.
+- **Never edit a `db/upgrade.php` savepoint once it has been committed** —
+  not even before it has been released or tagged. Any environment (a
+  developer's local install included) may already have run it, and Moodle
+  only re-runs an upgrade step whose savepoint number is newer than the
+  site's currently stored version; editing an already-executed step's body
+  silently never re-applies the edit anywhere it already ran, and the only
+  fix is a manual plugin downgrade + re-upgrade. Any further change to the
+  upgrade logic — even one line — must be a brand new `if ($oldversion <
+  ...)` block with its own new savepoint number.
 
 ## Quick file reference
 

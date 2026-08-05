@@ -3,6 +3,87 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080500
+
+1. improvement: #393: merge logs now capture a normalized snapshot of both users' identity
+   (username, email, idnumber, suspended/deleted) at merge time, replacing the previous
+   scattered/duplicated identity text on the results page with a single consolidated "who
+   was merged" table, including the shared capture timestamp.
+2. improvement: #393: `classes/privacy/provider.php` is no longer a `null_provider`: now that
+   merge logs store real identifying user data, GDPR erasure requests (`delete_data_for_user()`,
+   `delete_data_for_users()`, `delete_data_for_all_users_in_context()`) properly erase the
+   affected snapshot fields, marking each erased side with `erasedforgdpr`/`timeerased` so it
+   stays visually distinct on the results page from a side that simply never had any data.
+3. improvement: #393: an external "gathering" (e.g. a bulk/nightly merge process outside the
+   web UI) can now optionally report which field and value it searched for when it could not
+   resolve a user to a real id, shown on the results page instead of a bare "not found"
+   message. Fully optional and backward compatible: any existing gathering that does not
+   expose this keeps working unchanged.
+4. fix: #393: the merge log list showed the generic "user was deleted" text for a side that
+   was never a real user id (id <= 0, e.g. an unresolved gathering search) instead of the
+   clearer "not found at merge time" message the results page already used for the same case.
+5. fix: #393: a merge where NEITHER side could be resolved (both ids <= 0, a real case for
+   gatherings that search both users and find neither) was misreported as "the same user",
+   hiding that both sides were actually unresolved.
+6. fix: #393: `db/upgrade.php`'s `2026080100` normalization step could turn a genuinely
+   legacy `log` row (the original pre-2025-11-12 flat action-list shape, with no
+   `user_snapshots`/`actions` wrapper at all) into `{"0": ..., "1": ..., "user_snapshots":
+   {...}}` — a shape with no `actions` key, so the results page silently showed no
+   recorded actions for these merges. Added a new upgrade step that moves any leftover
+   top-level numeric keys into `actions`, without touching `user_snapshots`.
+
+### UPGRADING
+
+This version changes the internal JSON structure stored in the `tool_mergeusers.log` column
+(see the improvements above) to support the new snapshot and privacy features. Upgrading runs
+two data-migration steps over every existing row of the `tool_mergeusers` table (`db/upgrade.php`
+savepoints `2026080100` and `2026080500`), so **the upgrade can take several minutes on
+installations with a large merge history** — around 3 minutes for ~16,000 rows in our own
+testing. Plan accordingly if triggering the upgrade from the web UI on a busy site; running it
+via CLI (`php admin/cli/upgrade.php`) is recommended for large installations. No manual action
+is required beyond that: both steps are idempotent, so the migration is safe to run more than
+once (e.g. if interrupted and retried).
+
+Also worth calling out while reviewing this release: merging users can be queued as an adhoc
+task from the web UI when the `enableadhocmerge` setting is turned on (see the `2026052713`
+entry below). CLI/CRON-driven bulk merges (`cli/climerger.php`, or any custom `gathering`)
+never go through the adhoc task queue — they always merge synchronously, regardless of that
+setting. This distinction only applies to merges triggered from the web interface, at least
+for now.
+
+
+## 2026080400
+
+1. fix: #393: CI: codechecker errors (blank line before `finally`; alphabetical order of `provider::implements`).
+2. fix: #393: adhoc task notification crashed with undefined method `moodle_page::has_context()`; use
+   `set_context()` on the system context instead.
+3. fix: #393: PHPUnit risky-test warnings from output buffers left open when `merge_users_task::execute()` failed
+   inside a test.
+4. fix: #393: `user_merger::merge_users()` now catches `Throwable` instead of `Exception`, so a real merge failure
+   can never fire the `user_merged_failure` event twice.
+5. improvement: #393: `merge_users_task` now enforces, by default and with no configuration required, that only
+   one merge runs at a time and that a failed merge is never retried — guaranteeing chained merges (e.g. A into B,
+   then B into C) always execute in the order they were requested.
+6. improvement: #393: settings page now shows a note only when an administrator has explicitly overridden the
+   default concurrency limit above via `$CFG->task_concurrency_limit`, since doing so can let merges run out of
+   order; see `README.md` for details.
+7. fix: #393: `db/upgrade.php` savepoints for the `status`/`timecreated` schema changes were dated in 2025, before
+   the officially released `2026052713`. Anyone upgrading from that release had `$oldversion` already past those
+   savepoints, so they were silently skipped and the schema never actually changed. Renumbered them past
+   `2026052713`; added a test asserting savepoints stay ordered and within `$plugin->version`.
+
+
+## 2026052713
+
+1. 2025-10-07: improvement: #378: add support for asynchronous user merging via adhoc task.
+   1. New adhoc task `merge_users_task` allows queuing merge operations to run during cron execution.
+   2. New setting `enableadhocmerge` to enable/disable adhoc task-based merging from web interface.
+   3. When adhoc merge is enabled, web-based merges are queued and processed asynchronously,
+      reducing timeout risks for large merge operations.
+   4. Thanks to @nihaalshaikh and @luukverhoeven.
+4. fix: #409: CI: codechecker passes for all plugin files.
+
+
 ## 2026052700
 
 1. fix: #411: regrading after merging users: prevent errors when plugin is uninstalled or
@@ -11,25 +92,30 @@ plugin table is missing. Thanks to @terryaulenbach for reporting the issue.
    2. Aborting merge when plugin is installed but table is missing, treating it as critical database corruption consistent with other data integrity checks.
    3. Added tests covering all edge cases.
 
+
 ## 2026050500
 
 1. task: #407: add support for Moodle 5.2.
 2. fix: #405: remove execution permissions for db/install.xml and db/upgrade.php.
 3. fix: #399: fix suspended image path. Thanks @matheus1002 for reporting.
 
+
 ## 2025102100
 
 1. bug: #379: remove table lines for >= Moodle 5.0 and Bootstrap 5.0. Thanks @lucaboesch.
 
+
 ## 2025101701
 
 1. task: #383: Moodle 5.1 compatible.
+
 
 ## 2025101700
 
 1. fix: #381: add all user-related compound indexes into default plugin settings.
    1. default_db_config.php updated manually with structured section about compound indexes.
    2. listuserfields.php CLI script improved to list all user-related compound indexes. This script must help administrators to identify other compound indexes that affect their Moodle instances.
+
 
 ## 2025101400
 

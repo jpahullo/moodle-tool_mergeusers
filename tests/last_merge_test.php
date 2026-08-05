@@ -27,6 +27,7 @@ use tool_mergeusers\local\user_merger;
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
  * @copyright 2025 Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\last_merge
  */
 final class last_merge_test extends advanced_testcase {
     /**

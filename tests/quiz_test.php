@@ -29,8 +29,10 @@ use tool_mergeusers\local\user_merger;
  * Quiz merger tests.
  *
  * @package    tool_mergeusers
+ * @copyright  2024 Andrew Hancox <andrewdchancox@googlemail.com>
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\merger\quiz_attempts_table_merger
  */
 final class quiz_test extends advanced_testcase {
     /** @var object test course 1. */

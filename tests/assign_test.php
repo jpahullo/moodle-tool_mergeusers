@@ -15,12 +15,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Tests for assignment merging.
  *
  * @package    tool_mergeusers
+ * @copyright  2024 Andrew Hancox <andrewdchancox@googlemail.com>
  * @author     Andrew Hancox <andrewdchancox@googlemail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\user_merger
  */
+
+namespace tool_mergeusers;
 
 use tool_mergeusers\local\user_merger;
 
@@ -30,9 +34,10 @@ global $CFG;
 require_once("$CFG->dirroot/mod/assign/tests/generator.php");
 
 /**
- * Class assign_test
+ * Tests for assignment merging.
+ * @covers \tool_mergeusers\local\user_merger
  */
-final class assign_test extends advanced_testcase {
+final class assign_test extends \advanced_testcase {
     use \mod_assign_test_generator;
 
     public function setUp(): void {
@@ -57,7 +62,7 @@ final class assign_test extends advanced_testcase {
         $assign = $this->create_instance($course);
 
         // Give a grade to student 1.
-        $data = new stdClass();
+        $data = new \stdClass();
         $data->grade = '75.0';
         $assign->testable_apply_grade_to_user($data, $student2->id, 0);
 
@@ -103,10 +108,11 @@ final class assign_test extends advanced_testcase {
 
     /**
      * Utility method to get the grade for a user.
-     * @param $user
-     * @param $assign
-     * @param $course
-     * @return testable_assign
+     *
+     * @param stdClass $user The user object.
+     * @param testable_assign $assign The assignment instance.
+     * @param stdClass $course The course object.
+     * @return string The grade string.
      */
     private function get_user_assign_grade($user, $assign, $course) {
         $gradebookgrades = \grade_get_grades($course->id, 'mod', 'assign', $assign->get_instance()->id, $user->id);
@@ -122,7 +128,7 @@ final class assign_test extends advanced_testcase {
      * @group tool_mergeusers_assign
      * @throws dml_exception
      */
-    public function test_failed_merged_for_missing_course_module() {
+    public function test_failed_merged_for_missing_course_module(): void {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();
@@ -131,7 +137,7 @@ final class assign_test extends advanced_testcase {
         $assign = $this->create_instance($course);
 
         // Give a grade to student 1.
-        $data = new stdClass();
+        $data = new \stdClass();
         $data->grade = '75.0';
         $assign->testable_apply_grade_to_user($data, $student2->id, 0);
 
@@ -182,7 +188,7 @@ final class assign_test extends advanced_testcase {
      * @group tool_mergeusers_assign
      * @throws dml_exception
      */
-    public function test_failed_merged_for_missing_module_record() {
+    public function test_failed_merged_for_missing_module_record(): void {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();
@@ -191,7 +197,7 @@ final class assign_test extends advanced_testcase {
         $assign = $this->create_instance($course);
 
         // Give a grade to student 1.
-        $data = new stdClass();
+        $data = new \stdClass();
         $data->grade = '75.0';
         $assign->testable_apply_grade_to_user($data, $student2->id, 0);
 

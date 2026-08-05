@@ -190,6 +190,40 @@ We use the success event to suspend the user to remove when
 the setting `tool_mergeusers/suspenduser` is enabled.
 
 
+## Merging asynchronously via adhoc task
+
+Enabling the setting `tool_mergeusers/enableadhocmerge` changes how the web
+interface behaves: instead of merging users immediately within the web
+request, it queues a Moodle adhoc task (`\tool_mergeusers\task\merge_users_task`)
+that performs the merge the next time Moodle cron processes adhoc tasks.
+This avoids web request timeouts on large merges. CLI merging is not
+affected by this setting; it always runs synchronously.
+
+A failed merge processed this way is **never retried**: the task fires a
+`user_merged_failure` event and leaves the merge log with status `error`
+for review. Retrying a partially-applied merge automatically could corrupt
+data, particularly for chained merges (e.g. merging A into B, and later B
+into C), so this plugin deliberately never lets Moodle's adhoc task retry
+mechanism run again on a failed merge (`merge_users_task::retry_until_success()`
+returns `false`).
+
+For the same reason, `merge_users_task` only ever runs **one instance at a
+time**, by default, regardless of how many cron workers process adhoc tasks
+in parallel (`merge_users_task::get_default_concurrency_limit()` returns
+`1`). This guarantees merges are always applied in the order they were
+requested — you do not need to configure anything for this.
+
+If you specifically understand and accept the risk of merges running out of
+order, an administrator can override this via `config.php`:
+
+```php
+$CFG->task_concurrency_limit[\tool_mergeusers\task\merge_users_task::class] = 2; // Or any value other than 1.
+```
+
+When adhoc merging is enabled and this override is in place, the plugin's
+settings page shows a note about it as a reminder of the ordering risk.
+
+
 # An important note about provided hooks
 
 Providing callbacks for both hooks, Moodle core and plugins
@@ -242,7 +276,8 @@ local customization that asks users to merge to an external database every night
 
 Let us explain how to do it step by step:
 
-1. Create a class implementing the `Gathering` interface. See `lib/cligathering.php` for an example.
+1. Create a class implementing the `Gathering` interface (`classes/local/cli/gathering.php`).
+   See `classes/local/cli/cli_gathering.php` for an example.
 2. Inform about the new `Gathering` implementation to use:
    * Either using the setting `tool_mergeusers/customdbsettings`, with a content similar to the example from below,
    * Or using a callback for the `add_setting_before_merging` hook, informing about your new `Gathering`.
@@ -254,6 +289,39 @@ Example of JSON content for informing the new `Gathering`:
   'gathering': 'MyGathering'
 }
 ```
+
+### Reporting what your gathering searched for, when a user is not found
+
+Each iteration of your `Gathering` must produce an object exposing, at least, `toid`
+and `fromid` (see `classes/local/cli/merge_request.php` for the default shape used by
+the built-in gatherings). When your gathering cannot resolve one side to a real user
+id — e.g. it searches by `username` against an external system and finds no match —
+report `toid`/`fromid` as `0` for that side, exactly as you already do.
+
+Since #393, you can also optionally expose, for whichever side(s) you could not
+resolve, which field you searched by and what value you searched for:
+
+```php
+$action->fromsearchedfield = 'username'; // one of: 'username', 'idnumber', 'email'.
+$action->fromsearchedvalue = 'jsmith123'; // the value you searched for and could not find.
+$action->tosearchedfield = 'username';
+$action->tosearchedvalue = 'jdoe456';
+```
+
+This is entirely opt-in, per user side:
+
+* Both properties for a side (`*searchedfield` and `*searchedvalue`) are optional. A
+  `Gathering` that does not expose them — including every implementation predating
+  this feature — keeps working exactly as before, showing a generic "not found"
+  message for that side.
+* When present, the merge results/log detail page shows the searched value under the
+  matching field's label instead of the generic message, only for the side(s) you
+  report a hint for.
+* `*searchedfield` must be one of `username`, `idnumber` or `email` — the same fields
+  the web interface itself lets an administrator search a user by, except `id` (a
+  not-found search by `id` is already represented by reporting that id directly as
+  `toid`/`fromid`, rather than `0`). Any other field name is silently ignored, so a
+  typo or unsupported field never breaks the merge itself.
 
 
 ## cli/listuserfields.php

@@ -5,12 +5,12 @@ on: [push, pull_request]
 
 jobs:
   ci:
-    uses: jpahullo/catalyst-moodle-workflows/.github/workflows/ci.yml@main
+    uses: catalyst/catalyst-moodle-workflows/.github/workflows/ci.yml@main
     # Required if you plan to publish (uncomment the below)
     # secrets:
       # moodle_org_token: ${{ secrets.MOODLE_ORG_TOKEN }}
     with:
-      disable_phpcs: true
-      disable_phpdoc: true
       disable_grunt: true
-
+      disable_release: true
+      disable_behat: true
+      disable_version_bump_check: true

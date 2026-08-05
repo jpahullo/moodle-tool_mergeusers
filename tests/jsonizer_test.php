@@ -35,11 +35,14 @@ use tool_mergeusers\local\jsonizer;
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
  * @copyright 2025 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \tool_mergeusers\local\jsonizer
  */
 final class jsonizer_test extends basic_testcase {
     /**
      * Tests to_json() method.
      *
+     * @param mixed $valuetotest The value to convert to JSON.
+     * @param mixed $expectedresult The expected JSON result.
      * @group tool_mergeusers
      * @group tool_mergeusers_jsonizer
      * @dataProvider to_json_provider
@@ -69,6 +72,8 @@ final class jsonizer_test extends basic_testcase {
     /**
      * Tests from_json() method.
      *
+     * @param mixed $valuetotest The JSON string to convert.
+     * @param mixed $expectedresult The expected result after conversion.
      * @group tool_mergeusers
      * @group tool_mergeusers_jsonizer
      * @dataProvider from_json_provider
