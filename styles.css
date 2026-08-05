@@ -39,3 +39,30 @@
 .align-center {
     text-align: center;
 }
+
+.tool-mergeusers-user-info {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+}
+
+.tool-mergeusers-user-info__capturedat {
+    margin-top: 0;
+}
+
+.tool-mergeusers-user-info__row {
+    display: flex;
+    gap: 20px;
+}
+
+.tool-mergeusers-user-info__box {
+    flex: 1;
+    background-color: white;
+    padding: 10px;
+    border-radius: 3px;
+}
+
+.tool-mergeusers-user-info__box--unavailable {
+    border: 2px dashed #ccc;
+}

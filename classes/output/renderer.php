@@ -42,6 +42,8 @@ use single_button;
 use stdClass;
 use tool_mergeusers\local\database_transactions;
 use tool_mergeusers\local\last_merge;
+use tool_mergeusers\local\logger;
+use tool_mergeusers\local\merge_user_display;
 use tool_mergeusers\local\status;
 
 defined('MOODLE_INTERNAL') || die();
@@ -233,6 +235,24 @@ class renderer extends plugin_renderer_base {
             $data = json_decode(json_encode($data), true);
         }
 
+        // Extract normalized user snapshots (see logger::capture_user_snapshot()).
+        // A missing/malformed value should not happen once db/upgrade.php has
+        // normalized every log, but fall back to an "unrecoverable" snapshot from
+        // the live id passed in, rather than crash, just in case.
+        $snapshots = (is_array($data) && is_array($data['user_snapshots'] ?? null)) ? $data['user_snapshots'] : null;
+        $fromsnapshotdata = $snapshots['from_user'] ?? null;
+        $tosnapshotdata = $snapshots['to_user'] ?? null;
+        $fromsnapshot = is_array($fromsnapshotdata)
+            ? (object) $fromsnapshotdata
+            : logger::unrecoverable_snapshot((int) ($from->id ?? 0));
+        $tosnapshot = is_array($tosnapshotdata)
+            ? (object) $tosnapshotdata
+            : logger::unrecoverable_snapshot((int) ($to->id ?? 0));
+        $snapshotcapturedat = $snapshots['timemodified'] ?? null;
+        if ($snapshots !== null) {
+            $data = $data['actions'] ?? [];
+        }
+
         $statusenum = status::safe_from($status);
         switch ($statusenum) {
             case status::PENDING:
@@ -269,23 +289,12 @@ class renderer extends plugin_renderer_base {
             $this->status_notification_type($statusenum),
             false,
         );
+        $output .= $this->render_merge_user_info(
+            merge_user_display::from_snapshot($fromsnapshot),
+            merge_user_display::from_snapshot($tosnapshot),
+            $snapshotcapturedat,
+        );
         $output .= html_writer::start_tag('div', ['class' => 'title']);
-        $output .= get_string('merging', 'tool_mergeusers') . ' ';
-
-        $fromheader = (object) [
-            'username' => $this->show_user($from->id, $from),
-            'id' => $from->id,
-        ];
-        $toheader = (object) [
-            'username' => $this->show_user($to->id, $to),
-            'id' => $to->id,
-        ];
-        $output .= get_string('usermergingheader', 'tool_mergeusers', $fromheader);
-        $output .= html_writer::empty_tag('br');
-        $output .= get_string('into', 'tool_mergeusers') . ' ';
-        $output .= get_string('usermergingheader', 'tool_mergeusers', $toheader);
-
-        $output .= html_writer::empty_tag('br') . html_writer::empty_tag('br');
         $output .= get_string('logline', 'tool_mergeusers', $this->render_logid($logid));
         if (!empty($resulttype)) {
             $output .= html_writer::empty_tag('br');
@@ -334,27 +343,6 @@ class renderer extends plugin_renderer_base {
 
             $output .= html_writer::end_tag('div');
             $output .= html_writer::empty_tag('br');
-        }
-
-        // Display static user snapshots if available.
-        if (is_array($data) && isset($data['user_snapshots'])) {
-            // Check if user_snapshots is completely null (full anonymization).
-            if ($data['user_snapshots'] === null) {
-                $output .= $this->render_anonymized_notice();
-            } else {
-                // Convert user snapshot arrays to objects for rendering.
-                $snapshots = (object) [
-                    'to_user' => !empty($data['user_snapshots']['to_user']) ?
-                        (object) $data['user_snapshots']['to_user'] : null,
-                    'from_user' => !empty($data['user_snapshots']['from_user']) ?
-                        (object) $data['user_snapshots']['from_user'] : null,
-                ];
-                // Pass user IDs for anonymized snapshots.
-                $snapshots->to_user_id = $to->id ?? null;
-                $snapshots->from_user_id = $from->id ?? null;
-                $output .= $this->render_user_snapshots($snapshots);
-            }
-            $data = $data['actions'] ?? [];
         }
 
         $output .= html_writer::start_tag('div', ['class' => 'resultset' . $resulttype]);
@@ -643,45 +631,30 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Renders user snapshots from queue time.
+     * Renders the "who's being merged" info box: a shared capture timestamp line
+     * followed by the two user boxes (the user to remove, then the user to keep).
      *
-     * @param object $snapshots Object containing to_user and from_user snapshots.
-     * @return string HTML output for user snapshots.
+     * @param merge_user_display $from
+     * @param merge_user_display $to
+     * @param int|null $capturedat unix timestamp shared by both snapshots, or null
+     * when it could not be determined.
+     * @return string HTML output.
      */
-    private function render_user_snapshots(object $snapshots): string {
-        $output = html_writer::start_tag(
-            'div',
-            [
-                'class' => 'user-snapshots',
-                'style' => 'margin: 15px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px;',
-            ]
-        );
-        $output .= html_writer::tag('h4', get_string('snapshot_header', 'tool_mergeusers'), ['style' => 'margin-top: 0;']);
+    private function render_merge_user_info(merge_user_display $from, merge_user_display $to, ?int $capturedat): string {
+        $output = html_writer::start_tag('div', ['class' => 'tool-mergeusers-user-info']);
+        $output .= html_writer::tag('h4', get_string('snapshot_header', 'tool_mergeusers'));
 
-        $output .= html_writer::start_tag('div', ['style' => 'display: flex; gap: 20px;']);
-
-        // From user snapshot.
-        if (isset($snapshots->from_user) && $snapshots->from_user) {
-            $output .= $this->render_single_user_snapshot($snapshots->from_user, get_string('olduser', 'tool_mergeusers'));
-        } else if (isset($snapshots->from_user_id)) {
-            // Show anonymized notice for from_user.
-            $output .= $this->render_anonymized_user_box(
-                get_string('olduser', 'tool_mergeusers'),
-                $snapshots->from_user_id
+        if ($capturedat !== null) {
+            $output .= html_writer::tag(
+                'p',
+                get_string('snapshot_capturedat', 'tool_mergeusers', userdate($capturedat)),
+                ['class' => 'tool-mergeusers-user-info__capturedat'],
             );
         }
 
-        // To user snapshot.
-        if (isset($snapshots->to_user) && $snapshots->to_user) {
-            $output .= $this->render_single_user_snapshot($snapshots->to_user, get_string('newuser', 'tool_mergeusers'));
-        } else if (isset($snapshots->to_user_id)) {
-            // Show anonymized notice for to_user.
-            $output .= $this->render_anonymized_user_box(
-                get_string('newuser', 'tool_mergeusers'),
-                $snapshots->to_user_id
-            );
-        }
-
+        $output .= html_writer::start_tag('div', ['class' => 'tool-mergeusers-user-info__row']);
+        $output .= $this->render_merge_user_box($from, get_string('olduser', 'tool_mergeusers'));
+        $output .= $this->render_merge_user_box($to, get_string('newuser', 'tool_mergeusers'));
         $output .= html_writer::end_tag('div');
         $output .= html_writer::end_tag('div');
 
@@ -689,83 +662,56 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Renders a single user snapshot.
+     * Renders a single user box within the merge user info section.
      *
-     * @param object $snapshot User snapshot object.
-     * @param string $label    Label for this user.
+     * @param merge_user_display $user
+     * @param string $label
      * @return string HTML output.
      */
-    private function render_single_user_snapshot(object $snapshot, string $label): string {
-        $boxstyle = 'flex: 1; background-color: white; padding: 10px; border-radius: 3px;';
+    private function render_merge_user_box(merge_user_display $user, string $label): string {
+        $boxclass = 'tool-mergeusers-user-info__box';
+        if (!$user->recoverable) {
+            $boxclass .= ' tool-mergeusers-user-info__box--unavailable';
+        }
 
-        $output = html_writer::start_tag('div', ['style' => $boxstyle]);
+        $output = html_writer::start_tag('div', ['class' => $boxclass]);
         $output .= html_writer::tag('strong', $label);
         $output .= html_writer::empty_tag('br');
 
-        $usernametext = get_string('snapshot_username', 'tool_mergeusers') . ' ' . s($snapshot->username ?? 'N/A');
-        $output .= html_writer::tag('div', $usernametext);
+        if ($user->notfound) {
+            $output .= html_writer::tag('em', get_string('usernotfoundatmerge', 'tool_mergeusers'));
+            $output .= html_writer::end_tag('div');
 
-        $emailtext = get_string('snapshot_email', 'tool_mergeusers') . ' ' . s($snapshot->email ?? 'N/A');
-        $output .= html_writer::tag('div', $emailtext);
+            return $output;
+        }
 
-        $fullname = s(($snapshot->firstname ?? '') . ' ' . ($snapshot->lastname ?? ''));
-        $nametext = get_string('snapshot_name', 'tool_mergeusers') . ' ' . $fullname;
-        $output .= html_writer::tag('div', $nametext);
+        if (!$user->recoverable) {
+            $output .= html_writer::tag('div', get_string('snapshot_id', 'tool_mergeusers') . ' ' . $user->id);
+            $output .= html_writer::tag('em', get_string('userinfo_notavailable', 'tool_mergeusers', $user->id));
+            $output .= html_writer::end_tag('div');
 
-        $idnumbertext = get_string('snapshot_idnumber', 'tool_mergeusers') . ' ' . s($snapshot->idnumber ?? 'N/A');
-        $output .= html_writer::tag('div', $idnumbertext);
+            return $output;
+        }
 
-        $idtext = get_string('snapshot_id', 'tool_mergeusers') . ' ' . s($snapshot->id ?? 'N/A');
-        $output .= html_writer::tag('div', $idtext);
+        if ($user->profileurl !== null) {
+            $nametext = html_writer::link($user->profileurl, s($user->displayname ?? 'N/A'));
+        } else {
+            $nametext = s($user->displayname ?? 'N/A');
+        }
+        $output .= html_writer::tag('div', get_string('snapshot_name', 'tool_mergeusers') . ' ' . $nametext);
 
-        $suspendedtext = (!empty($snapshot->suspended)) ? get_string('yes') : get_string('no');
-        $deletedtext = (!empty($snapshot->deleted)) ? get_string('yes') : get_string('no');
+        $output .= html_writer::tag('div', get_string('snapshot_username', 'tool_mergeusers') . ' ' . s($user->username ?? 'N/A'));
+        $output .= html_writer::tag('div', get_string('snapshot_email', 'tool_mergeusers') . ' ' . s($user->email ?? 'N/A'));
+        $output .= html_writer::tag(
+            'div',
+            get_string('snapshot_idnumber', 'tool_mergeusers') . ' ' . s($user->idnumber ?? 'N/A'),
+        );
+        $output .= html_writer::tag('div', get_string('snapshot_id', 'tool_mergeusers') . ' ' . $user->id);
+
+        $suspendedtext = $user->suspended ? get_string('yes') : get_string('no');
+        $deletedtext = $user->deleted ? get_string('yes') : get_string('no');
         $output .= html_writer::tag('div', get_string('snapshot_suspended', 'tool_mergeusers') . ' ' . $suspendedtext);
         $output .= html_writer::tag('div', get_string('snapshot_deleted', 'tool_mergeusers') . ' ' . $deletedtext);
-
-        $output .= html_writer::end_tag('div');
-
-        return $output;
-    }
-
-    /**
-     * Renders a notice when all user snapshots have been anonymized.
-     *
-     * @return string HTML output for anonymization notice.
-     */
-    private function render_anonymized_notice(): string {
-        $output = html_writer::start_tag(
-            'div',
-            [
-                'class' => 'alert alert-info user-snapshots-anonymized',
-                'style' => 'margin: 15px 0; padding: 15px;',
-            ]
-        );
-        $output .= html_writer::tag('strong', get_string('snapshot_anonymized_header', 'tool_mergeusers'));
-        $output .= html_writer::empty_tag('br');
-        $output .= get_string('snapshot_anonymized_notice', 'tool_mergeusers');
-        $output .= html_writer::end_tag('div');
-
-        return $output;
-    }
-
-    /**
-     * Renders a box showing a user's data has been anonymized.
-     *
-     * @param string $label User label (e.g., "User to keep").
-     * @param int $userid The user ID.
-     * @return string HTML output.
-     */
-    private function render_anonymized_user_box(string $label, int $userid): string {
-        $boxstyle = 'flex: 1; background-color: white; padding: 10px; border-radius: 3px; border: 2px dashed #ccc;';
-
-        $output = html_writer::start_tag('div', ['style' => $boxstyle]);
-        $output .= html_writer::tag('strong', $label);
-        $output .= html_writer::empty_tag('br');
-        $output .= html_writer::empty_tag('br');
-
-        $notice = get_string('snapshot_user_anonymized', 'tool_mergeusers', ['userid' => $userid]);
-        $output .= html_writer::tag('em', $notice, ['style' => 'color: #666;']);
 
         $output .= html_writer::end_tag('div');
 
