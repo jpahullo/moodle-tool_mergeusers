@@ -101,6 +101,56 @@ final class renderer_test extends advanced_testcase {
         $displaytext = $this->get_renderer()->get_merge_detail($dummyuser, $lastmerge);
         $this->assertStringContainsString($fullname, $displaytext);
     }
+
+    /**
+     * Data provider for the results_page() status coverage below.
+     *
+     * @return array
+     */
+    public static function results_page_status_provider(): array {
+        return [
+            'pending' => ['pending', null],
+            'inprogress' => ['inprogress', null],
+            'success' => ['success', 'logok'],
+            'error' => ['error', 'logko'],
+        ];
+    }
+
+    /**
+     * Test that results_page() never leaks the [[ok]]/[[ko]] invalid string
+     * identifiers, and shows the status box with the correct status label.
+     *
+     * The status box is rendered through $this->notification(), whose actual
+     * markup (HTML alert-* classes vs the CLI renderer's plain-text markers)
+     * depends on the render target, which differs under PHPUnit - so this
+     * only asserts on the status label text, not on any specific CSS class.
+     *
+     * @param string $status
+     * @param string|null $expectedcaptionkey
+     *
+     * @dataProvider results_page_status_provider
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_status_box_without_broken_strings(
+        string $status,
+        ?string $expectedcaptionkey,
+    ): void {
+        $this->resetAfterTest();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $output = $this->get_renderer()->results_page($touser, $fromuser, $status, ['Some log line.'], 1);
+
+        $this->assertStringNotContainsString('[[ok]]', $output);
+        $this->assertStringNotContainsString('[[ko]]', $output);
+        $this->assertStringContainsString(get_string('status:' . $status, 'tool_mergeusers'), $output);
+
+        if ($expectedcaptionkey !== null) {
+            $this->assertStringContainsString(get_string($expectedcaptionkey, 'tool_mergeusers'), $output);
+        }
+    }
 }
 
 // @codingStandardsIgnoreStart
