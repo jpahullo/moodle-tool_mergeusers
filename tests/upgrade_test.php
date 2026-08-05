@@ -125,8 +125,21 @@ final class upgrade_test extends advanced_testcase {
         $normalizedlog = [
             'user_snapshots' => [
                 'timemodified' => 12345,
-                'to_user' => ['notfound' => false, 'recoverable' => true, 'id' => $touser->id, 'username' => 'kept'],
-                'from_user' => ['notfound' => true, 'recoverable' => false, 'id' => null],
+                'to_user' => [
+                    'notfound' => false,
+                    'recoverable' => true,
+                    'id' => $touser->id,
+                    'username' => 'kept',
+                    'erasedforgdpr' => false,
+                    'timeerased' => null,
+                ],
+                'from_user' => [
+                    'notfound' => true,
+                    'recoverable' => false,
+                    'id' => null,
+                    'erasedforgdpr' => false,
+                    'timeerased' => null,
+                ],
             ],
             'actions' => ['Untouched.'],
         ];

@@ -92,7 +92,7 @@ final class logger_test extends advanced_testcase {
 
         $this->assertFalse($snapshot->notfound);
         $this->assertTrue($snapshot->recoverable);
-        $this->assertSame($user->id, $snapshot->id);
+        $this->assertSame((int) $user->id, $snapshot->id);
         $this->assertSame($user->username, $snapshot->username);
         $this->assertSame($user->email, $snapshot->email);
         $this->assertSame('ID001', $snapshot->idnumber);
@@ -114,8 +114,8 @@ final class logger_test extends advanced_testcase {
 
         $this->assertArrayHasKey('timemodified', $snapshots);
         $this->assertIsInt($snapshots['timemodified']);
-        $this->assertSame($touser->id, $snapshots['to_user']->id);
-        $this->assertSame($fromuser->id, $snapshots['from_user']->id);
+        $this->assertSame((int) $touser->id, $snapshots['to_user']->id);
+        $this->assertSame((int) $fromuser->id, $snapshots['from_user']->id);
     }
 
     /**

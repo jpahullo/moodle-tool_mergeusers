@@ -75,6 +75,39 @@ final class merge_user_display_test extends advanced_testcase {
         $this->assertFalse($display->recoverable);
         $this->assertSame(999999, $display->id);
         $this->assertNull($display->profileurl);
+        $this->assertFalse($display->erasedforgdpr);
+        $this->assertNull($display->timeerased);
+    }
+
+    /**
+     * Test a side erased by a privacy request: unrecoverable, but flagged and
+     * dated distinctly from a plain "never had any data" side.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_from_snapshot_erased_for_gdpr(): void {
+        $timeerased = time() - 3600;
+        $snapshot = (object) [
+            'notfound' => false,
+            'recoverable' => false,
+            'id' => 123,
+            'username' => null,
+            'email' => null,
+            'firstname' => null,
+            'lastname' => null,
+            'idnumber' => null,
+            'suspended' => null,
+            'deleted' => null,
+            'erasedforgdpr' => true,
+            'timeerased' => $timeerased,
+        ];
+
+        $display = merge_user_display::from_snapshot($snapshot);
+
+        $this->assertFalse($display->recoverable);
+        $this->assertTrue($display->erasedforgdpr);
+        $this->assertSame($timeerased, $display->timeerased);
     }
 
     /**
