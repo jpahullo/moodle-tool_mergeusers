@@ -5,12 +5,51 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
 ## 2026080500
 
-1. fix: #393: `db/upgrade.php`'s `2026080100` normalization step could turn a genuinely
+1. improvement: #393: merge logs now capture a normalized snapshot of both users' identity
+   (username, email, idnumber, suspended/deleted) at merge time, replacing the previous
+   scattered/duplicated identity text on the results page with a single consolidated "who
+   was merged" table, including the shared capture timestamp.
+2. improvement: #393: `classes/privacy/provider.php` is no longer a `null_provider`: now that
+   merge logs store real identifying user data, GDPR erasure requests (`delete_data_for_user()`,
+   `delete_data_for_users()`, `delete_data_for_all_users_in_context()`) properly erase the
+   affected snapshot fields, marking each erased side with `erasedforgdpr`/`timeerased` so it
+   stays visually distinct on the results page from a side that simply never had any data.
+3. improvement: #393: an external "gathering" (e.g. a bulk/nightly merge process outside the
+   web UI) can now optionally report which field and value it searched for when it could not
+   resolve a user to a real id, shown on the results page instead of a bare "not found"
+   message. Fully optional and backward compatible: any existing gathering that does not
+   expose this keeps working unchanged.
+4. fix: #393: the merge log list showed the generic "user was deleted" text for a side that
+   was never a real user id (id <= 0, e.g. an unresolved gathering search) instead of the
+   clearer "not found at merge time" message the results page already used for the same case.
+5. fix: #393: a merge where NEITHER side could be resolved (both ids <= 0, a real case for
+   gatherings that search both users and find neither) was misreported as "the same user",
+   hiding that both sides were actually unresolved.
+6. fix: #393: `db/upgrade.php`'s `2026080100` normalization step could turn a genuinely
    legacy `log` row (the original pre-2025-11-12 flat action-list shape, with no
    `user_snapshots`/`actions` wrapper at all) into `{"0": ..., "1": ..., "user_snapshots":
    {...}}` — a shape with no `actions` key, so the results page silently showed no
    recorded actions for these merges. Added a new upgrade step that moves any leftover
    top-level numeric keys into `actions`, without touching `user_snapshots`.
+
+### UPGRADING
+
+This version changes the internal JSON structure stored in the `tool_mergeusers.log` column
+(see the improvements above) to support the new snapshot and privacy features. Upgrading runs
+two data-migration steps over every existing row of the `tool_mergeusers` table (`db/upgrade.php`
+savepoints `2026080100` and `2026080500`), so **the upgrade can take several minutes on
+installations with a large merge history** — around 3 minutes for ~16,000 rows in our own
+testing. Plan accordingly if triggering the upgrade from the web UI on a busy site; running it
+via CLI (`php admin/cli/upgrade.php`) is recommended for large installations. No manual action
+is required beyond that: both steps are idempotent, so the migration is safe to run more than
+once (e.g. if interrupted and retried).
+
+Also worth calling out while reviewing this release: merging users can be queued as an adhoc
+task from the web UI when the `enableadhocmerge` setting is turned on (see the `2026052713`
+entry below). CLI/CRON-driven bulk merges (`cli/climerger.php`, or any custom `gathering`)
+never go through the adhoc task queue — they always merge synchronously, regardless of that
+setting. This distinction only applies to merges triggered from the web interface, at least
+for now.
 
 
 ## 2026080400
