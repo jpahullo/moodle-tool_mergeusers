@@ -78,4 +78,84 @@ final class upgrade_test extends advanced_testcase {
             );
         }
     }
+
+    /**
+     * Test that tool_mergeusers_normalize_user_snapshots() backfills a legacy row
+     * (no user_snapshots key at all) and fixes an ambiguous one (a bare null side),
+     * while leaving actions untouched and an already-normalized row alone.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_upgrade
+     */
+    public function test_normalize_user_snapshots_backfills_legacy_and_ambiguous_rows(): void {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/admin/tool/mergeusers/db/upgrade.php');
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        // Legacy row: log has no user_snapshots key at all (pre-a6ec50c shape).
+        $legacyid = $DB->insert_record('tool_mergeusers', (object) [
+            'touserid' => $touser->id,
+            'fromuserid' => $fromuser->id,
+            'mergedbyuserid' => 2,
+            'timecreated' => time() - DAYSECS,
+            'timemodified' => time() - DAYSECS,
+            'log' => json_encode(['actions' => ['Old action.']]),
+            'status' => 'success',
+        ]);
+
+        // Ambiguous row: user_snapshots present, but a bare null side, and
+        // fromuserid = 0 (today's ambiguity between notfound and unrecoverable).
+        $ambiguousid = $DB->insert_record('tool_mergeusers', (object) [
+            'touserid' => $touser->id,
+            'fromuserid' => 0,
+            'mergedbyuserid' => 2,
+            'timecreated' => time() - DAYSECS,
+            'timemodified' => time() - DAYSECS,
+            'log' => json_encode([
+                'user_snapshots' => ['to_user' => null, 'from_user' => null],
+                'actions' => ['Another action.'],
+            ]),
+            'status' => 'success',
+        ]);
+
+        // Already-normalized row: must be left untouched.
+        $normalizedlog = [
+            'user_snapshots' => [
+                'timemodified' => 12345,
+                'to_user' => ['notfound' => false, 'recoverable' => true, 'id' => $touser->id, 'username' => 'kept'],
+                'from_user' => ['notfound' => true, 'recoverable' => false, 'id' => null],
+            ],
+            'actions' => ['Untouched.'],
+        ];
+        $normalizedid = $DB->insert_record('tool_mergeusers', (object) [
+            'touserid' => $touser->id,
+            'fromuserid' => 0,
+            'mergedbyuserid' => 2,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'log' => json_encode($normalizedlog),
+            'status' => 'success',
+        ]);
+
+        tool_mergeusers_normalize_user_snapshots();
+
+        $legacy = json_decode($DB->get_field('tool_mergeusers', 'log', ['id' => $legacyid]), true);
+        $this->assertArrayHasKey('timemodified', $legacy['user_snapshots']);
+        $this->assertTrue($legacy['user_snapshots']['to_user']['recoverable']);
+        $this->assertSame($touser->username, $legacy['user_snapshots']['to_user']['username']);
+        $this->assertTrue($legacy['user_snapshots']['from_user']['recoverable']);
+        $this->assertSame($fromuser->username, $legacy['user_snapshots']['from_user']['username']);
+        $this->assertSame(['Old action.'], $legacy['actions']);
+
+        $ambiguous = json_decode($DB->get_field('tool_mergeusers', 'log', ['id' => $ambiguousid]), true);
+        $this->assertTrue($ambiguous['user_snapshots']['to_user']['recoverable']);
+        $this->assertTrue($ambiguous['user_snapshots']['from_user']['notfound']);
+        $this->assertSame(['Another action.'], $ambiguous['actions']);
+
+        $normalized = json_decode($DB->get_field('tool_mergeusers', 'log', ['id' => $normalizedid]), true);
+        $this->assertSame($normalizedlog, $normalized, 'An already-normalized row must be left untouched.');
+    }
 }
