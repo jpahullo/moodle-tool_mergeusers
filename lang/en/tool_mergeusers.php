@@ -165,6 +165,7 @@ $string['unknownprofile'] = 'Unknown userid {$a}';
 $string['userinfo_erasedforgdpr'] = 'Data erased following a privacy request on {$a}.';
 $string['userinfo_notavailable'] = 'No information available for user ID {$a}.';
 $string['usernotfoundatmerge'] = 'User not found at merge time';
+$string['usernotfoundatmergewithhint'] = 'User not found at merge time ({$a->field}: {$a->value})';
 $string['userreviewtable_legend'] = '<b>Review users to merge</b>';
 $string['userselecttable_legend'] = '<b>Select users to merge</b>';
 $string['viewlog'] = 'Merge users logs';

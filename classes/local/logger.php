@@ -228,7 +228,7 @@ final class logger {
             'tool_mergeusers',
             $filter,
             $sort,
-            'id, touserid, fromuserid, mergedbyuserid, timecreated, timemodified, status',
+            'id, touserid, fromuserid, mergedbyuserid, timecreated, timemodified, status, log',
             $limitfrom,
             $limitnum,
         );

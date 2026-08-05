@@ -451,15 +451,68 @@ class renderer extends plugin_renderer_base {
      * @param int $userid user.id (touserid/fromuserid column value; can be <= 0).
      * @param object|false $user the live {user} record, or false when none was found
      * ($DB->get_record() returns false, not null, on a miss).
+     * @param array|null $searchedhint [field, value] from extract_searched_hint(), if any.
      * @return string the corresponding HTML.
      * @throws moodle_exception
      */
-    private function show_user_or_notfound(int $userid, object|false $user): string {
+    private function show_user_or_notfound(int $userid, object|false $user, ?array $searchedhint = null): string {
         if ($userid <= 0) {
+            if ($searchedhint !== null) {
+                return get_string('usernotfoundatmergewithhint', 'tool_mergeusers', (object) [
+                    'field' => $this->searched_field_label($searchedhint[0]),
+                    'value' => $searchedhint[1],
+                ]);
+            }
+
             return get_string('usernotfoundatmerge', 'tool_mergeusers');
         }
 
         return $user ? $this->show_user($userid, $user) : get_string('deleted', 'tool_mergeusers', $userid);
+    }
+
+    /**
+     * Extracts the [field, value] a gathering reported having searched for, from a
+     * notfound side of a user_snapshots value (see logger::notfound_snapshot()). At
+     * most one of username/idnumber/email is ever non-null on a notfound side.
+     *
+     * @param array|object|null $side a to_user/from_user side, decoded as array or object.
+     * @return array|null [field, value], or null when $side is not notfound or carries no hint.
+     */
+    private function extract_searched_hint($side): ?array {
+        if ($side === null) {
+            return null;
+        }
+
+        $side = (array) $side;
+        if (empty($side['notfound'])) {
+            return null;
+        }
+
+        foreach (['username', 'idnumber', 'email'] as $field) {
+            if (($side[$field] ?? null) !== null) {
+                return [$field, $side[$field]];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Translated label for a searched field, without its trailing colon - e.g.
+     * 'username' -> 'Username'. Reuses the same labels a found user's identity is
+     * shown with (snapshot_username, ...), so no separate strings are needed.
+     *
+     * @param string $field one of 'username', 'idnumber', 'email'.
+     * @return string
+     */
+    private function searched_field_label(string $field): string {
+        $labelkeys = [
+            'username' => 'snapshot_username',
+            'idnumber' => 'snapshot_idnumber',
+            'email' => 'snapshot_email',
+        ];
+
+        return rtrim(get_string($labelkeys[$field], 'tool_mergeusers'), ':');
     }
 
     /**
@@ -507,9 +560,14 @@ class renderer extends plugin_renderer_base {
                 // Display timecreated if available, otherwise fall back to timemodified.
                 $displaytime = (!empty($log->timecreated)) ? $log->timecreated : $log->timemodified;
 
+                $logdata = json_decode($log->log ?? '', true);
+                $snapshots = is_array($logdata) ? ($logdata['user_snapshots'] ?? null) : null;
+                $fromhint = $this->extract_searched_hint(is_array($snapshots) ? ($snapshots['from_user'] ?? null) : null);
+                $tohint = $this->extract_searched_hint(is_array($snapshots) ? ($snapshots['to_user'] ?? null) : null);
+
                 $row->cells = [
-                    $this->show_user_or_notfound($log->fromuserid, $log->from),
-                    $this->show_user_or_notfound($log->touserid, $log->to),
+                    $this->show_user_or_notfound($log->fromuserid, $log->from, $fromhint),
+                    $this->show_user_or_notfound($log->touserid, $log->to, $tohint),
                     ($log->mergedby)
                         ? $this->show_user($log->mergedbyuserid, $log->mergedby)
                         : get_string('nomergedby', 'tool_mergeusers'),
@@ -700,20 +758,16 @@ class renderer extends plugin_renderer_base {
         $output .= html_writer::empty_tag('br');
 
         if ($user->notfound) {
-            // At most one of these is non-null: the field a gathering reported having
+            // At most one field is non-null: the one a gathering reported having
             // searched for, per logger::notfound_snapshot(). Reuses the same field
             // labels a found user's identity is shown with, but only for that one field
             // - not the full set, since there is nothing else known about this side.
-            $searchedfieldlabels = [
-                'username' => 'snapshot_username',
-                'idnumber' => 'snapshot_idnumber',
-                'email' => 'snapshot_email',
-            ];
-            foreach ($searchedfieldlabels as $field => $labelkey) {
-                if ($user->$field !== null) {
-                    $output .= html_writer::tag('div', get_string($labelkey, 'tool_mergeusers') . ' ' . s($user->$field));
-                    break;
-                }
+            $searchedhint = $this->extract_searched_hint($user);
+            if ($searchedhint !== null) {
+                $output .= html_writer::tag(
+                    'div',
+                    $this->searched_field_label($searchedhint[0]) . ': ' . s($searchedhint[1]),
+                );
             }
 
             $output .= html_writer::tag('em', get_string('usernotfoundatmerge', 'tool_mergeusers'));

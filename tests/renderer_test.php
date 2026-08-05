@@ -351,6 +351,41 @@ final class renderer_test extends advanced_testcase {
         $this->assertStringContainsString(get_string('usernotfoundatmerge', 'tool_mergeusers'), $output);
         $this->assertStringNotContainsString(get_string('deleted', 'tool_mergeusers', 0), $output);
     }
+
+    /**
+     * Test that logs_page() shows the searched field and value alongside the "not
+     * found" message, using the translated field label (no trailing colon) - so an
+     * admin can tell which user a merge tried and failed to resolve without having to
+     * click into the detail page.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_searched_field_hint_for_not_found_row(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+
+        $logger = new \tool_mergeusers\local\logger();
+        $logger->log(
+            $touser->id,
+            0,
+            false,
+            ['Could not resolve username.'],
+            null,
+            null,
+            ['field' => 'username', 'value' => 'jsmith123'],
+        );
+
+        $output = $this->get_renderer()->logs_page($logger->get());
+
+        $this->assertStringContainsString(
+            get_string('usernotfoundatmergewithhint', 'tool_mergeusers', (object) ['field' => 'Username', 'value' => 'jsmith123']),
+            $output,
+        );
+    }
+
 }
 
 // @codingStandardsIgnoreStart
