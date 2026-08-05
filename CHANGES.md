@@ -18,6 +18,10 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 6. improvement: #393: settings page now shows a note only when an administrator has explicitly overridden the
    default concurrency limit above via `$CFG->task_concurrency_limit`, since doing so can let merges run out of
    order; see `README.md` for details.
+7. fix: #393: `db/upgrade.php` savepoints for the `status`/`timecreated` schema changes were dated in 2025, before
+   the officially released `2026052713`. Anyone upgrading from that release had `$oldversion` already past those
+   savepoints, so they were silently skipped and the schema never actually changed. Renumbered them past
+   `2026052713`; added a test asserting savepoints stay ordered and within `$plugin->version`.
 
 
 ## 2026052713
