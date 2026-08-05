@@ -365,8 +365,9 @@ class renderer extends plugin_renderer_base {
         $output .= html_writer::end_tag('div');
         $output .= html_writer::tag('div', html_writer::empty_tag('br'));
         $output .= $this->notification(
-            html_writer::tag('center', get_string($dbmessage, 'tool_mergeusers')),
+            get_string($dbmessage, 'tool_mergeusers'),
             $notifytype,
+            false,
         );
         $output .= html_writer::tag(
             'center',
@@ -529,7 +530,12 @@ class renderer extends plugin_renderer_base {
 
     /**
      * Maps a merge status to the corresponding \core\output\notification type,
-     * shared by the results page's full-width status box and the status badge.
+     * used for the results page's full-width status box.
+     *
+     * Not shared with render_status()'s badge classes below: Bootstrap badge
+     * suffixes and notification types disagree for the error case
+     * (badge-danger vs notification type 'error'), so sharing this mapping
+     * silently broke the log-list status badge colours.
      *
      * @param status $statusenum
      * @return string one of the \core\output\notification::NOTIFY_* constants.
@@ -551,7 +557,13 @@ class renderer extends plugin_renderer_base {
      */
     public function render_status(?string $status): string {
         $statusenum = status::safe_from($status);
-        $statusbadgeclass = 'badge-' . $this->status_notification_type($statusenum);
+        $statusbadgeclass = match ($statusenum) {
+            status::PENDING => 'badge-warning',
+            status::INPROGRESS => 'badge-info',
+            status::SUCCESS => 'badge-success',
+            status::ERROR => 'badge-danger',
+            default => 'badge-secondary',
+        };
         $statusstring = get_string('status:' . $statusenum->value, 'tool_mergeusers');
 
         return html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
