@@ -232,7 +232,10 @@ class provider implements
             return;
         }
 
-        $userid = $contextlist->get_user()->id;
+        // Cast explicitly: some DB drivers return numeric columns as strings, and
+        // the strict comparison below against ints decoded from JSON would then
+        // never match, silently skipping the erasure entirely.
+        $userid = (int) $contextlist->get_user()->id;
 
         // Anonymize user snapshots in logs where this user is involved.
         // This preserves audit trail while removing personal data from snapshots.
@@ -336,7 +339,9 @@ class provider implements
      * Erases the personal fields of one side (to_user/from_user) of a normalized
      * user snapshot, keeping its id (not personal data on its own - it is already
      * preserved unerased in the touserid/fromuserid columns) and its notfound flag
-     * as-is: a side that never had a real user id has nothing to erase.
+     * as-is: a side that never had a real user id has nothing to erase. Marks
+     * erasedforgdpr/timeerased so the results page can show that this side's data
+     * was deliberately removed by a privacy request, not simply never available.
      *
      * @param mixed $side the current to_user/from_user value, in whatever shape it
      * already had (normalized or not).
@@ -360,6 +365,8 @@ class provider implements
             'idnumber' => null,
             'suspended' => null,
             'deleted' => null,
+            'erasedforgdpr' => true,
+            'timeerased' => time(),
         ];
     }
 }

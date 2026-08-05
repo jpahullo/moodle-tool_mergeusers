@@ -240,6 +240,8 @@ function tool_mergeusers_snapshot_is_normalized($snapshots): bool {
             !is_array($snapshots[$side] ?? null)
             || !array_key_exists('notfound', $snapshots[$side])
             || !array_key_exists('recoverable', $snapshots[$side])
+            || !array_key_exists('erasedforgdpr', $snapshots[$side])
+            || !array_key_exists('timeerased', $snapshots[$side])
         ) {
             return false;
         }
@@ -261,9 +263,19 @@ function tool_mergeusers_normalize_user_snapshot_side(int $userid, $existing, ar
 
     // A previously captured snapshot with real data always wins (decision: the
     // snapshot has audit value as of merge time, even if the live row has since
-    // changed or disappeared).
+    // changed or disappeared). Older-shape data never had erasedforgdpr/timeerased,
+    // so default those in without overriding them if already present.
     if (is_array($existing) && !empty($existing['id'])) {
-        return array_merge(['notfound' => false, 'recoverable' => true], $existing);
+        $normalized = array_merge(
+            ['notfound' => false, 'recoverable' => true, 'erasedforgdpr' => false, 'timeerased' => null],
+            $existing,
+        );
+        // Older-shape data may have stored id as a numeric string, depending on
+        // the DB driver; force it to int so strict comparisons elsewhere never
+        // silently fail to match it.
+        $normalized['id'] = (int) $normalized['id'];
+
+        return $normalized;
     }
 
     if ($userid <= 0) {

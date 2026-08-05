@@ -162,6 +162,7 @@ $string['transactions_supported'] = 'For your information, your database <strong
 $string['uniquekeynewidtomaintain'] = 'Keep new user\'s data';
 $string['uniquekeynewidtomaintain_desc'] = 'In case of conflict, like when the user.id related column is a unique key, this plugin will keep data from new user (by default). This also means that data from old user is deleted to keep the consistence. Otherwise, if you uncheck this option, data from old user will be kept.';
 $string['unknownprofile'] = 'Unknown userid {$a}';
+$string['userinfo_erasedforgdpr'] = 'Data erased following a privacy request on {$a}.';
 $string['userinfo_notavailable'] = 'No information available for user ID {$a}.';
 $string['usernotfoundatmerge'] = 'User not found at merge time';
 $string['userreviewtable_legend'] = '<b>Review users to merge</b>';

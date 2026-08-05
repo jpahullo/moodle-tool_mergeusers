@@ -305,6 +305,8 @@ final class logger {
             'idnumber' => null,
             'suspended' => null,
             'deleted' => null,
+            'erasedforgdpr' => false,
+            'timeerased' => null,
         ];
     }
 
@@ -327,6 +329,8 @@ final class logger {
             'idnumber' => null,
             'suspended' => null,
             'deleted' => null,
+            'erasedforgdpr' => false,
+            'timeerased' => null,
         ];
     }
 
@@ -341,7 +345,7 @@ final class logger {
         return (object) [
             'notfound' => false,
             'recoverable' => true,
-            'id' => $user->id,
+            'id' => (int) $user->id,
             'username' => $user->username,
             'email' => $user->email,
             'firstname' => $user->firstname,
@@ -349,6 +353,8 @@ final class logger {
             'idnumber' => $user->idnumber,
             'suspended' => (bool) $user->suspended,
             'deleted' => (bool) $user->deleted,
+            'erasedforgdpr' => false,
+            'timeerased' => null,
         ];
     }
 }

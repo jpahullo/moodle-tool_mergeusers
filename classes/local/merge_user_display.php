@@ -70,6 +70,12 @@ final class merge_user_display {
     /** @var moodle_url|null only set when a live, non-deleted user exists now. */
     public readonly ?moodle_url $profileurl;
 
+    /** @var bool true when this side's data was deliberately erased by a privacy request. */
+    public readonly bool $erasedforgdpr;
+
+    /** @var int|null unix timestamp of the privacy erasure, when $erasedforgdpr is true. */
+    public readonly ?int $timeerased;
+
     /**
      * Constructor.
      *
@@ -83,6 +89,8 @@ final class merge_user_display {
      * @param bool|null $suspended current value when live, last known value otherwise.
      * @param bool $deleted current value when live, last known value otherwise.
      * @param moodle_url|null $profileurl only set when a live, non-deleted user exists now.
+     * @param bool $erasedforgdpr true when this side's data was erased by a privacy request.
+     * @param int|null $timeerased unix timestamp of that erasure, when $erasedforgdpr is true.
      */
     private function __construct(
         int $id,
@@ -95,6 +103,8 @@ final class merge_user_display {
         ?bool $suspended,
         bool $deleted,
         ?moodle_url $profileurl,
+        bool $erasedforgdpr,
+        ?int $timeerased,
     ) {
         $this->id = $id;
         $this->notfound = $notfound;
@@ -106,6 +116,8 @@ final class merge_user_display {
         $this->suspended = $suspended;
         $this->deleted = $deleted;
         $this->profileurl = $profileurl;
+        $this->erasedforgdpr = $erasedforgdpr;
+        $this->timeerased = $timeerased;
     }
 
     /**
@@ -116,11 +128,24 @@ final class merge_user_display {
      */
     public static function from_snapshot(stdClass $snapshot): self {
         if (!empty($snapshot->notfound)) {
-            return new self(0, true, false, null, null, null, null, null, false, null);
+            return new self(0, true, false, null, null, null, null, null, false, null, false, null);
         }
 
         if (empty($snapshot->recoverable)) {
-            return new self((int) $snapshot->id, false, false, null, null, null, null, null, false, null);
+            return new self(
+                (int) $snapshot->id,
+                false,
+                false,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                (bool) ($snapshot->erasedforgdpr ?? false),
+                isset($snapshot->timeerased) ? (int) $snapshot->timeerased : null,
+            );
         }
 
         global $DB;
@@ -149,6 +174,8 @@ final class merge_user_display {
             $suspended,
             $deleted,
             $profileurl,
+            false,
+            null,
         );
     }
 }

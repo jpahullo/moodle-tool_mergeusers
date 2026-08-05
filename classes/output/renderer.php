@@ -687,7 +687,14 @@ class renderer extends plugin_renderer_base {
 
         if (!$user->recoverable) {
             $output .= html_writer::tag('div', get_string('snapshot_id', 'tool_mergeusers') . ' ' . $user->id);
-            $output .= html_writer::tag('em', get_string('userinfo_notavailable', 'tool_mergeusers', $user->id));
+            if ($user->erasedforgdpr) {
+                $output .= html_writer::tag(
+                    'em',
+                    get_string('userinfo_erasedforgdpr', 'tool_mergeusers', userdate($user->timeerased)),
+                );
+            } else {
+                $output .= html_writer::tag('em', get_string('userinfo_notavailable', 'tool_mergeusers', $user->id));
+            }
             $output .= html_writer::end_tag('div');
 
             return $output;
