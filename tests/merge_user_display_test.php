@@ -73,7 +73,7 @@ final class merge_user_display_test extends advanced_testcase {
      * @group tool_mergeusers_renderer
      */
     public function test_from_snapshot_notfound_with_searched_field_hint(): void {
-        $display = merge_user_display::from_snapshot(logger::notfound_snapshot('idnumber', 'ID999'));
+        $display = merge_user_display::from_snapshot(logger::notfound_snapshot(logger::SEARCHED_FIELD_IDNUMBER, 'ID999'));
 
         $this->assertTrue($display->notfound);
         $this->assertSame('ID999', $display->idnumber);

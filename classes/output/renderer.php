@@ -488,7 +488,7 @@ class renderer extends plugin_renderer_base {
             return null;
         }
 
-        foreach (['username', 'idnumber', 'email'] as $field) {
+        foreach ([logger::SEARCHED_FIELD_USERNAME, logger::SEARCHED_FIELD_IDNUMBER, logger::SEARCHED_FIELD_EMAIL] as $field) {
             if (($side[$field] ?? null) !== null) {
                 return [$field, $side[$field]];
             }
@@ -507,9 +507,9 @@ class renderer extends plugin_renderer_base {
      */
     private function searched_field_label(string $field): string {
         $labelkeys = [
-            'username' => 'snapshot_username',
-            'idnumber' => 'snapshot_idnumber',
-            'email' => 'snapshot_email',
+            logger::SEARCHED_FIELD_USERNAME => 'snapshot_username',
+            logger::SEARCHED_FIELD_IDNUMBER => 'snapshot_idnumber',
+            logger::SEARCHED_FIELD_EMAIL => 'snapshot_email',
         ];
 
         return rtrim(get_string($labelkeys[$field], 'tool_mergeusers'), ':');

@@ -38,4 +38,22 @@ class merge_request {
     public int $fromid;
     /** @var int user.id from the user to keep. */
     public int $toid;
+    /**
+     * @var string|null field name searched for the 'from' user when fromid could not be resolved.
+     * One of \tool_mergeusers\local\logger::SEARCHED_FIELD_USERNAME,
+     * \tool_mergeusers\local\logger::SEARCHED_FIELD_IDNUMBER or
+     * \tool_mergeusers\local\logger::SEARCHED_FIELD_EMAIL; any other value is silently ignored.
+     */
+    public ?string $fromsearchedfield = null;
+    /** @var string|null value searched for the 'from' user when fromid could not be resolved. */
+    public ?string $fromsearchedvalue = null;
+    /**
+     * @var string|null field name searched for the 'to' user when toid could not be resolved.
+     * One of \tool_mergeusers\local\logger::SEARCHED_FIELD_USERNAME,
+     * \tool_mergeusers\local\logger::SEARCHED_FIELD_IDNUMBER or
+     * \tool_mergeusers\local\logger::SEARCHED_FIELD_EMAIL; any other value is silently ignored.
+     */
+    public ?string $tosearchedfield = null;
+    /** @var string|null value searched for the 'to' user when toid could not be resolved. */
+    public ?string $tosearchedvalue = null;
 }

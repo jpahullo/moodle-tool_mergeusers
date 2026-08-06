@@ -3,6 +3,25 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080600
+
+1. improvement: #390: `gathering::current()`/`key()` now declare `merge_request`/`int` return
+   types instead of `mixed`; the searched-field hint values are now backed by
+   `logger::SEARCHED_FIELD_USERNAME`/`SEARCHED_FIELD_IDNUMBER`/`SEARCHED_FIELD_EMAIL` constants
+   instead of raw string literals. Thanks to @matthewhilton for raising the issue.
+
+### UPGRADING
+
+This version tightens the `gathering` interface's contract: `current()` now must return
+a `merge_request` instance (instead of `mixed`) and `key()` must return an `int` (instead of
+`mixed`). This is a **breaking change** for any custom `gathering` implementation (e.g. a
+bulk/nightly merge process outside the web UI) that does not already return a `merge_request`
+object from `current()`. Before upgrading, review any custom `gathering` in use and adapt its
+`current()` method to construct and return a `merge_request` (setting `fromid`/`toid`, and
+optionally the `fromsearchedfield`/`fromsearchedvalue`/`tosearchedfield`/`tosearchedvalue` hint
+properties), and its `key()` method to return an `int`. Failing to do so will raise a fatal PHP
+error ("Declaration ... must be compatible ...") the next time that gathering class is loaded.
+
 ## 2026080500
 
 1. improvement: #393: merge logs now capture a normalized snapshot of both users' identity

@@ -27,6 +27,7 @@ namespace tool_mergeusers;
 
 use advanced_testcase;
 use tool_mergeusers\local\cli\gathering_merger;
+use tool_mergeusers\local\cli\merge_request;
 use tool_mergeusers\local\logger;
 use tool_mergeusers\local\user_merger;
 
@@ -59,12 +60,11 @@ final class gathering_merger_test extends advanced_testcase {
     public function test_merge_propagates_searched_field_hint_from_gathering_action(): void {
         $touser = $this->getDataGenerator()->create_user();
 
-        $action = (object) [
-            'toid' => $touser->id,
-            'fromid' => 0,
-            'fromsearchedfield' => 'username',
-            'fromsearchedvalue' => 'jsmith123',
-        ];
+        $action = new merge_request();
+        $action->toid = $touser->id;
+        $action->fromid = 0;
+        $action->fromsearchedfield = logger::SEARCHED_FIELD_USERNAME;
+        $action->fromsearchedvalue = 'jsmith123';
 
         $mut = new gathering_merger(new user_merger());
         $mut->merge(new in_memory_gathering([$action]));
@@ -90,12 +90,11 @@ final class gathering_merger_test extends advanced_testcase {
         $touser = $this->getDataGenerator()->create_user();
         $fromuser = $this->getDataGenerator()->create_user();
 
-        $action = (object) [
-            'toid' => $touser->id,
-            'fromid' => $fromuser->id,
-            'fromsearchedfield' => 'username',
-            'fromsearchedvalue' => 'oldusername',
-        ];
+        $action = new merge_request();
+        $action->toid = $touser->id;
+        $action->fromid = $fromuser->id;
+        $action->fromsearchedfield = logger::SEARCHED_FIELD_USERNAME;
+        $action->fromsearchedvalue = 'oldusername';
 
         $mut = new gathering_merger(new user_merger());
         $mut->merge(new in_memory_gathering([$action]));
@@ -119,14 +118,13 @@ final class gathering_merger_test extends advanced_testcase {
      * @group tool_mergeusers_cli
      */
     public function test_merge_propagates_hints_for_both_sides_when_neither_is_resolved(): void {
-        $action = (object) [
-            'toid' => 0,
-            'fromid' => 0,
-            'tosearchedfield' => 'username',
-            'tosearchedvalue' => 'tokeep123',
-            'fromsearchedfield' => 'username',
-            'fromsearchedvalue' => 'toremove123',
-        ];
+        $action = new merge_request();
+        $action->toid = 0;
+        $action->fromid = 0;
+        $action->tosearchedfield = logger::SEARCHED_FIELD_USERNAME;
+        $action->tosearchedvalue = 'tokeep123';
+        $action->fromsearchedfield = logger::SEARCHED_FIELD_USERNAME;
+        $action->fromsearchedvalue = 'toremove123';
 
         $mut = new gathering_merger(new user_merger());
         $mut->merge(new in_memory_gathering([$action]));
@@ -152,10 +150,9 @@ final class gathering_merger_test extends advanced_testcase {
         $usertoremove = $this->getDataGenerator()->create_user();
         $usertokeep = $this->getDataGenerator()->create_user();
 
-        $action = (object) [
-            'toid' => $usertokeep->id,
-            'fromid' => $usertoremove->id,
-        ];
+        $action = new merge_request();
+        $action->toid = $usertokeep->id;
+        $action->fromid = $usertoremove->id;
 
         $mut = new gathering_merger(new user_merger());
         $mut->merge(new in_memory_gathering([$action]));
@@ -188,7 +185,7 @@ class in_memory_gathering implements \tool_mergeusers\local\cli\gathering {
     /**
      * Constructor.
      *
-     * @param array $actions list of stdClass actions with at least toid/fromid.
+     * @param array $actions list of merge_request actions with at least toid/fromid.
      */
     public function __construct(array $actions) {
         $this->actions = $actions;
@@ -213,18 +210,18 @@ class in_memory_gathering implements \tool_mergeusers\local\cli\gathering {
     /**
      * Gets the current action.
      *
-     * @return mixed
+     * @return merge_request
      */
-    public function current(): mixed {
+    public function current(): merge_request {
         return $this->actions[$this->position];
     }
 
     /**
      * Gets the current position.
      *
-     * @return mixed
+     * @return int
      */
-    public function key(): mixed {
+    public function key(): int {
         return $this->position;
     }
 
