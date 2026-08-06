@@ -180,6 +180,17 @@ than extend the gap.
   gets silently stripped as a comment by any editor-based git flow (merge
   commit messages, interactive rebase, `git commit` without `-m`) - GitHub
   itself also renders it more reliably with the leading space.
+- **`CHANGES.md` attribution.** If a GitHub issue or PR being incorporated is
+  linked to a user other than Jordi (the maintainer), the `CHANGES.md` entry
+  at the point that actually incorporates their issue/commits must credit
+  them:
+  - `Thanks to @user for raising the issue.` when they only opened the
+    issue/PR (no code contributed).
+  - `Thanks to @user for their contributions.` when they contributed code to
+    the PR, fully or partially (code or review comments that shaped it both
+    count).
+  - When several external users are involved in the same PR/issue, list them
+    together, e.g. `Thanks to @user1 and @user2 for their contributions.`
 - Plugin version is a Moodle-style timestamp `YYYYMMDDvv`, tracked in both
   `version.php` and `CHANGES.md`; releases happen roughly monthly to
   bimonthly.
