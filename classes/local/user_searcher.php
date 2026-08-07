@@ -54,10 +54,41 @@ final class user_searcher {
      *
      * @param string $input Term to search by.
      * @param string $searchfield The user's field to search by. Empty string means searching by all fields.
-     * @return array the results of the search.
+     * @param int $limitnum maximum number of records to get. 0 to get all.
+     * @return array the results of the search, at most $limitnum entries when $limitnum > 0.
      * @throws dml_exception
      */
-    public function search_users(string $input, string $searchfield): array {
+    public function search_users(string $input, string $searchfield, int $limitnum = 0): array {
+        global $DB;
+
+        [$where, $params] = $this->build_search_where($input, $searchfield);
+        return $DB->get_records_select('user', $where, $params, 'lastname, firstname', '*', 0, $limitnum);
+    }
+
+    /**
+     * Counts users matching the same condition search_users() would use, regardless of any limit.
+     * Used to detect a search that is too broad before rendering every matching user.
+     *
+     * @param string $input Term to search by.
+     * @param string $searchfield The user's field to search by. Empty string means searching by all fields.
+     * @return int number of matching users.
+     * @throws dml_exception
+     */
+    public function count_users(string $input, string $searchfield): int {
+        global $DB;
+
+        [$where, $params] = $this->build_search_where($input, $searchfield);
+        return $DB->count_records_select('user', $where, $params);
+    }
+
+    /**
+     * Builds the WHERE clause and bound parameters shared by search_users() and count_users().
+     *
+     * @param string $input Term to search by.
+     * @param string $searchfield The user's field to search by. Empty string means searching by all fields.
+     * @return array{0: string, 1: array} [$where, $params].
+     */
+    private function build_search_where(string $input, string $searchfield): array {
         global $DB;
 
         switch ($searchfield) {
@@ -101,7 +132,7 @@ final class user_searcher {
 
         $where .= ' AND deleted = :deleted';
         $params['deleted'] = 0;
-        return $DB->get_records_select('user', $where, $params, 'lastname, firstname');
+        return [$where, $params];
     }
 
     /**

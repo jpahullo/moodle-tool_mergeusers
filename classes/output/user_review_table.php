@@ -93,23 +93,12 @@ class user_review_table extends html_table implements renderable {
 
         // Show the selected users to merge. At least, there is one selected user for merging.
         $this->id = 'merge_users_tool_user_review_table';
-        $this->attributes['class'] = 'generaltable table-reboot boxaligncenter';
-
-        if (
-            (isset($this->olduser->idnumber) && !empty($this->olduser->idnumber))
-            || (isset($this->newuser->idnumber) && !empty($this->newuser->idnumber))
-        ) {
-            $extrafield = 'idnumber';
-        } else {
-            $extrafield = 'description';
-        }
+        $this->attributes['class'] = 'generaltable table-reboot';
 
         $columns = [
             'col_label' => '',
             'col_userid' => 'Id',
             'col_username' => get_string('user'),
-            'col_email' => get_string('email'),
-            'col_extra' => get_string($extrafield),
         ];
         $this->head = array_values($columns);
         $this->colclasses = array_keys($columns);
@@ -127,9 +116,7 @@ class user_review_table extends html_table implements renderable {
             } else {
                 $spanclass = ($user->suspended) ? ('usersuspended') : ('');
                 $row[] = html_writer::tag('span', $user->id, ['class' => $spanclass]);
-                $row[] = $this->renderer->show_user($user->id, $user);
-                $row[] = html_writer::tag('span', $user->email, ['class' => $spanclass]);
-                $row[] = html_writer::tag('span', $user->$extrafield, ['class' => $spanclass]);
+                $row[] = $this->renderer->show_user_with_description($user->id, $user);
             }
             $this->data[] = $row;
         }
