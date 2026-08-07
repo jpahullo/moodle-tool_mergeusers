@@ -162,11 +162,37 @@ final class user_searcher {
 
         // Check for existing user matching the specified criteria.
         $message = '';
-        try {
-            $user = $DB->get_record('user', [$field => $value, 'deleted' => 0], '*', MUST_EXIST);
-        } catch (Exception $e) {
-            $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
-            $user = null;
+        if (is_numeric($field)) {
+            // The field is a custom user profile field id. Reject it outright if it
+            // is not allow-listed, rather than falling back to any other search
+            // strategy; and require an *exact* match on a single user - unlike
+            // search_users(), which does partial (LIKE) matching and could
+            // otherwise silently resolve to the wrong one of several users sharing
+            // an overlapping profile-field value.
+            $fieldid = (int) $field;
+            if (!array_key_exists($fieldid, profile_fields::allowed())) {
+                $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
+                $user = null;
+            } else {
+                try {
+                    $user = $DB->get_record_sql(
+                        'SELECT u.* FROM {user} u JOIN {user_info_data} d ON d.userid = u.id ' .
+                        'WHERE d.fieldid = :fieldid AND d.data = :data AND u.deleted = 0',
+                        ['fieldid' => $fieldid, 'data' => $value],
+                        MUST_EXIST,
+                    );
+                } catch (Exception $e) {
+                    $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
+                    $user = null;
+                }
+            }
+        } else {
+            try {
+                $user = $DB->get_record('user', [$field => $value, 'deleted' => 0], '*', MUST_EXIST);
+            } catch (Exception $e) {
+                $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
+                $user = null;
+            }
         }
 
         return [$user, $message];
