@@ -163,6 +163,14 @@ if ($ADMIN->fulltree) {
         $quizoptions->options
     ));
 
+    $generalsettings->add(new admin_setting_configselect(
+        'tool_mergeusers/maxsearchresults',
+        get_string('maxsearchresults_setting', 'tool_mergeusers'),
+        get_string('maxsearchresults_setting_desc', 'tool_mergeusers'),
+        25,
+        [25 => 25, 50 => 50, 100 => 100, 200 => 200],
+    ));
+
     $generalsettings->add(new logpagesize_setting(
         'tool_mergeusers/logpagesize',
         get_string('logpagesize_setting', 'tool_mergeusers'),

@@ -197,10 +197,30 @@ if (!empty($option)) {
 } else if ($data) {
     // If there is a search argument use this instead of advanced form.
     if (!empty($data->searchgroup['searcharg'])) {
-        $searchedusers = $usersearcher->search_users($data->searchgroup['searcharg'], $data->searchgroup['searchfield']);
+        $searchterm = $data->searchgroup['searcharg'];
+        $searchfield = $data->searchgroup['searchfield'];
+
+        $maxresults = (int) get_config('tool_mergeusers', 'maxsearchresults');
+        if ($maxresults < 1) {
+            $maxresults = 25; // Defensive fallback: the setting has not been saved yet on this site.
+        }
+
+        $totalmatches = $usersearcher->count_users($searchterm, $searchfield);
+        $searchedusers = $usersearcher->search_users($searchterm, $searchfield, $maxresults);
         $userselecttable = new user_select_table($searchedusers, $renderer);
 
-        echo $renderer->index_page($mergeuserform, $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP, $userselecttable);
+        $toomanyresults = ($totalmatches > $maxresults) ? (object) [
+            'count' => $totalmatches,
+            'shown' => count($searchedusers),
+            'search' => $searchterm,
+        ] : null;
+
+        echo $renderer->index_page(
+            $mergeuserform,
+            $renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP,
+            $userselecttable,
+            $toomanyresults,
+        );
 
         // Only run this step if there are both a new and old userids.
     } else if (!empty($data->oldusergroup['olduserid']) && !empty($data->newusergroup['newuserid'])) {
