@@ -3,6 +3,14 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080703
+
+1. cleanup: #414: remove the `E_STRICT` reference in `cli/listuserfields.php`. `E_STRICT`
+   has been part of `E_ALL` since PHP 5.4, and its notices were progressively
+   reclassified into `E_NOTICE` starting in PHP 7.0 (completed in PHP 8.0); the
+   constant itself is now deprecated in PHP 8.4. `E_ALL` already covers everything
+   it used to add. Thanks to @danowar2k for raising the issue.
+
 ## 2026080702
 
 1. improvement: #416: the "find users to merge" search on the main page now caps
