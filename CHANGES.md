@@ -3,6 +3,30 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080702
+
+1. improvement: #416: the "find users to merge" search on the main page now caps
+   how many matching users are shown at once, defaulting to 25
+   (`tool_mergeusers/maxsearchresults`, a dropdown of 25/50/100/200). When a search
+   matches more users than that, the first ones (sorted by last name, first name,
+   same order as before) are still shown and can still be picked to merge as usual,
+   alongside a message stating how many matched in total and asking to narrow the
+   search - mirroring the precedent in Moodle core's role assignment page
+   (`/admin/roles/assign.php`), but showing the capped results instead of hiding
+   them outright. The warning sits between the results table and the "save
+   selection" button (same form as the table), not above the table nor after the
+   button, so it only draws attention when actually needed.
+2. improvement: #416: the search-results and review-before-merging tables no
+   longer repeat the email/idnumber already shown in the "User" column. The review
+   table shows the user's description on a line underneath the user info instead
+   of as its own column, to help tell similar users apart when confirming who is
+   about to be merged, without wasting space on very long descriptions. Long
+   descriptions are collapsed to a short preview (core's `shorten_text()`, so
+   markup is never cut in half) with the full text reachable on demand via a
+   native `<details>` element - no JavaScript needed.
+3. bugfix: #416: both tables are now left-aligned under their section heading,
+   instead of shifted towards the centre of the page.
+
 ## 2026080701
 
 1. improvement: #363: CI's `codechecker` step is now a hard gate

@@ -97,3 +97,15 @@
 .tool-mergeusers-logs-showall {
     margin-top: 10px;
 }
+
+.tool-mergeusers-user-description {
+    margin-top: 4px;
+}
+
+.tool-mergeusers-user-description__details summary {
+    cursor: pointer;
+}
+
+.tool-mergeusers-user-description__details[open] summary {
+    margin-bottom: 4px;
+}

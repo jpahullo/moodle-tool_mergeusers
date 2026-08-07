@@ -28,6 +28,7 @@ namespace tool_mergeusers\output;
 
 use coding_exception;
 use context_system;
+use context_user;
 use core\exception\moodle_exception;
 use core\output\notification;
 use core_user;
@@ -70,6 +71,8 @@ class renderer extends plugin_renderer_base {
     const INDEX_PAGE_RESULTS_STEP = 4;
     /** Safety cap for the "show all" merge log listing link: never render more rows than this at once. */
     public const SHOW_ALL_PAGE_SIZE = 20000;
+    /** Longest a user description preview is allowed to be, on the review-before-merging table, before it is collapsed. */
+    private const DESCRIPTION_PREVIEW_LENGTH = 200;
 
     /**
      * Renderers a progress bar.
@@ -124,13 +127,22 @@ class renderer extends plugin_renderer_base {
     /**
      * Shows form for merging users.
      *
-     * @param moodleform $mform           form for merging users.
-     * @param int $step                   step to show in the index page.
-     * @param user_select_table|null $ust table for users to merge after searching
+     * @param moodleform $mform             form for merging users.
+     * @param int $step                     step to show in the index page.
+     * @param user_select_table|null $ust   table for users to merge after searching
+     * @param stdClass|null $toomanyresults when the search matched more users than
+     * tool_mergeusers/maxsearchresults, an object with count/shown/search
+     * properties, used to warn the admin - shown between the (truncated) $ust
+     * table and its "save selection" button, both part of the same form.
      * @return string html to show on index page.
      * @throws coding_exception
      */
-    public function index_page(moodleform $mform, int $step, ?user_select_table $ust = null): string {
+    public function index_page(
+        moodleform $mform,
+        int $step,
+        ?user_select_table $ust = null,
+        ?stdClass $toomanyresults = null,
+    ): string {
         $output = $this->header();
         $output .= $this->heading_with_help(get_string('mergeusers', 'tool_mergeusers'), 'header', 'tool_mergeusers');
 
@@ -144,7 +156,7 @@ class renderer extends plugin_renderer_base {
                 $output .= $this->moodleform($mform);
                 // Render user select table if available.
                 if ($ust !== null) {
-                    $output .= $this->render_user_select_table($ust);
+                    $output .= $this->render_user_select_table($ust, $toomanyresults);
                 }
                 break;
             case self::INDEX_PAGE_CONFIRMATION_STEP:
@@ -158,14 +170,30 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Renders user select table
+     * Renders user select table, plus a "too many results" warning right below it
+     * and above the save button, when the search was too broad.
      *
      * @param user_select_table $ust the user select table
+     * @param stdClass|null $toomanyresults when the search matched more users than
+     * tool_mergeusers/maxsearchresults, an object with count/shown/search properties.
      *
      * @return string $tablehtml html string rendering
      */
-    public function render_user_select_table(user_select_table $ust) {
-        return $this->moodleform(new select_user_form($ust));
+    public function render_user_select_table(user_select_table $ust, ?stdClass $toomanyresults = null) {
+        $warninghtml = null;
+        if ($toomanyresults !== null) {
+            $warninghtml = $this->notification(
+                get_string('toomanyusersmatchsearch', 'tool_mergeusers', (object) [
+                    'count' => $toomanyresults->count,
+                    'shown' => $toomanyresults->shown,
+                    'search' => s($toomanyresults->search),
+                ]),
+                notification::NOTIFY_WARNING,
+                false,
+            );
+        }
+
+        return $this->moodleform(new select_user_form($ust, $warninghtml));
     }
 
     /**
@@ -443,6 +471,55 @@ class renderer extends plugin_renderer_base {
         }
 
         return html_writer::link(new moodle_url('/user/view.php', ['id' => $userid]), $text, $attributes);
+    }
+
+    /**
+     * Same as show_user(), but with the user's profile description shown on a
+     * second line underneath - always shown, even when empty, so there is never any
+     * doubt about whether a user has one. Used on the review-before-merging table,
+     * to help tell similar users apart before confirming who is about to be merged;
+     * not used on the (much longer) search-results table, where a per-row
+     * description would make every row needlessly tall.
+     *
+     * Long descriptions are collapsed to a short preview, expandable on demand with
+     * no JavaScript via a native <details> element. The preview is built with core's
+     * shorten_text(), which is HTML-tag-aware (it never cuts markup in half; it closes
+     * any tag left open), so the truncation is always safe regardless of what
+     * formatting the description contains.
+     *
+     * @param int $userid  user.id
+     * @param object $user an object with firstname/lastname/description attributes.
+     * @return string the corresponding HTML.
+     * @throws moodle_exception
+     */
+    public function show_user_with_description(int $userid, object $user): string {
+        $output = html_writer::start_tag('div');
+        $output .= $this->show_user($userid, $user);
+        $output .= html_writer::start_tag('div', ['class' => 'tool-mergeusers-user-description small text-muted']);
+
+        if (empty($user->description)) {
+            $output .= get_string('userdescription', 'tool_mergeusers', get_string('nouserdescription', 'tool_mergeusers'));
+        } else {
+            $description = format_text(
+                $user->description,
+                $user->descriptionformat ?? FORMAT_MOODLE,
+                ['context' => context_user::instance($userid)],
+            );
+            $preview = shorten_text($description, self::DESCRIPTION_PREVIEW_LENGTH);
+
+            $output .= get_string('userdescription', 'tool_mergeusers', $preview);
+            if ($preview !== $description) {
+                $output .= html_writer::start_tag('details', ['class' => 'tool-mergeusers-user-description__details']);
+                $output .= html_writer::tag('summary', get_string('showfulldescription', 'tool_mergeusers'));
+                $output .= $description;
+                $output .= html_writer::end_tag('details');
+            }
+        }
+
+        $output .= html_writer::end_tag('div');
+        $output .= html_writer::end_tag('div');
+
+        return $output;
     }
 
     /**

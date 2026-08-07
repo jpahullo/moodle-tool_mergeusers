@@ -28,7 +28,9 @@ namespace tool_mergeusers;
 use advanced_testcase;
 use moodle_url;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\output\merge_user_form;
 use tool_mergeusers\output\renderer;
+use tool_mergeusers\output\user_select_table;
 use tool_mergeusers_renderer;
 
 defined('MOODLE_INTERNAL') || die();
@@ -700,6 +702,170 @@ final class renderer_test extends advanced_testcase {
         $this->assertStringContainsString($user->email, $tobox);
         $this->assertStringContainsString('ID: ' . $user->id, $frombox);
         $this->assertStringContainsString('ID: ' . $user->id, $tobox);
+    }
+
+    /**
+     * Test that index_page() shows the "too many results" warning, naming the
+     * search term and how many matched vs. how many are shown, when a
+     * $toomanyresults object is passed - and that the (truncated) user select
+     * table is still rendered alongside it, so users within the shown page can
+     * still be picked to merge normally.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_index_page_shows_too_many_results_warning_when_provided(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $user = $this->getDataGenerator()->create_user(['firstname' => 'Findme']);
+        $ust = new user_select_table([$user->id => $user], $this->get_renderer());
+        $toomanyresults = (object) ['count' => 5, 'shown' => 1, 'search' => 'Findme'];
+
+        $output = $this->get_renderer()->index_page(
+            new merge_user_form(),
+            renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP,
+            $ust,
+            $toomanyresults,
+        );
+
+        $warningmessage = get_string('toomanyusersmatchsearch', 'tool_mergeusers', $toomanyresults);
+        $this->assertStringContainsString($warningmessage, $output);
+        // The truncated table is still rendered: a matched user can still be picked.
+        $this->assertStringContainsString((string) $user->id, $output);
+        // The warning comes after the table, not before: an admin who already found
+        // who they were looking for never needs to notice it was truncated.
+        $this->assertGreaterThan(
+            strpos($output, (string) $user->id),
+            strpos($output, $warningmessage),
+        );
+        // The warning comes before the "save selection" button, not after: it must
+        // be part of the same form as the table, between the two, not appended once
+        // the whole form (table + button) has already been rendered.
+        $savebuttonlabel = get_string('saveselection_submit', 'tool_mergeusers');
+        $this->assertStringContainsString($savebuttonlabel, $output);
+        $this->assertGreaterThan(
+            strpos($output, $warningmessage),
+            strpos($output, $savebuttonlabel),
+        );
+    }
+
+    /**
+     * Test that index_page() shows no warning at all when $toomanyresults is null
+     * (the normal case, search matched at most the configured limit).
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_index_page_hides_too_many_results_warning_when_null(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $user = $this->getDataGenerator()->create_user(['firstname' => 'Findme']);
+        $ust = new user_select_table([$user->id => $user], $this->get_renderer());
+
+        $output = $this->get_renderer()->index_page(
+            new merge_user_form(),
+            renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP,
+            $ust,
+            null,
+        );
+
+        $this->assertStringNotContainsString('Please be more specific', $output);
+    }
+
+    /**
+     * Test that the "too many results" warning escapes the search term, so a
+     * search containing HTML-significant characters cannot inject markup into the
+     * page.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_index_page_escapes_search_term_in_too_many_results_warning(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $toomanyresults = (object) ['count' => 5, 'shown' => 1, 'search' => '<script>alert(1)</script>'];
+
+        $output = $this->get_renderer()->index_page(
+            new merge_user_form(),
+            renderer::INDEX_PAGE_SEARCH_AND_SELECT_STEP,
+            new user_select_table([], $this->get_renderer()),
+            $toomanyresults,
+        );
+
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $output);
+        $this->assertStringContainsString('&lt;script&gt;', $output);
+    }
+
+    /**
+     * Test that show_user_with_description() shows the formatted description
+     * underneath the usual user info.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_show_user_with_description_shows_formatted_description(): void {
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user([
+            'description' => 'Some <b>bio</b>.',
+            'descriptionformat' => FORMAT_HTML,
+        ]);
+
+        $output = $this->get_renderer()->show_user_with_description($user->id, $user);
+
+        $this->assertStringContainsString(
+            get_string('userdescription', 'tool_mergeusers', 'Some <b>bio</b>.'),
+            $output,
+        );
+        // Short enough to show in full: no need for a collapse/expand widget.
+        $this->assertStringNotContainsString('<details', $output);
+    }
+
+    /**
+     * Test that show_user_with_description() collapses a long description to a
+     * short preview, with the full text still reachable (no JavaScript) via a
+     * native <details> element - and that the preview is built with core's
+     * shorten_text(), which never cuts HTML markup in half.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_show_user_with_description_collapses_long_description(): void {
+        $this->resetAfterTest();
+        $longdescription = str_repeat('Lorem ipsum dolor sit amet. ', 30);
+        $user = $this->getDataGenerator()->create_user([
+            'description' => $longdescription,
+            'descriptionformat' => FORMAT_PLAIN,
+        ]);
+
+        $output = $this->get_renderer()->show_user_with_description($user->id, $user);
+
+        $formatted = format_text($longdescription, FORMAT_PLAIN, ['context' => \context_user::instance($user->id)]);
+        $preview = shorten_text($formatted, 200);
+
+        $this->assertStringContainsString(get_string('userdescription', 'tool_mergeusers', $preview), $output);
+        $this->assertStringContainsString('<details', $output);
+        $this->assertStringContainsString(get_string('showfulldescription', 'tool_mergeusers'), $output);
+        // The full, untruncated description is still present, reachable via <details>.
+        $this->assertStringContainsString($formatted, $output);
+    }
+
+    /**
+     * Test that show_user_with_description() shows a placeholder when the user
+     * has no description, so it is always clear one was never set.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_show_user_with_description_shows_placeholder_when_empty(): void {
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user(['description' => '']);
+
+        $output = $this->get_renderer()->show_user_with_description($user->id, $user);
+
+        $this->assertStringContainsString(get_string('nouserdescription', 'tool_mergeusers'), $output);
     }
 }
 

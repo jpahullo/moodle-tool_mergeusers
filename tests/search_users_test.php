@@ -157,4 +157,67 @@ final class search_users_test extends advanced_testcase {
             ],
         ];
     }
+
+    /**
+     * Test that count_users() reports the same number of matches search_users()
+     * would return unbounded, regardless of any limit later applied to search_users().
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_count_users_matches_unbounded_search_users_count(): void {
+        $this->resetAfterTest(true);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->getDataGenerator()->create_user(['firstname' => 'Findme', 'lastname' => "Number$i"]);
+        }
+
+        $mus = new user_searcher();
+
+        $this->assertSame(5, $mus->count_users('Findme', 'firstname'));
+        $this->assertCount(5, $mus->search_users('Findme', 'firstname'));
+    }
+
+    /**
+     * Test that search_users()'s $limitnum caps the number of returned rows, while
+     * count_users() still reports the true, uncapped total - the combination that
+     * lets the "too many results" warning show an accurate count alongside a
+     * deliberately truncated table.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_search_users_limitnum_caps_results_but_count_users_does_not(): void {
+        $this->resetAfterTest(true);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->getDataGenerator()->create_user(['firstname' => 'Findme', 'lastname' => "Number$i"]);
+        }
+
+        $mus = new user_searcher();
+
+        $this->assertCount(2, $mus->search_users('Findme', 'firstname', 2));
+        $this->assertSame(5, $mus->count_users('Findme', 'firstname'));
+    }
+
+    /**
+     * Test that search_users() with $limitnum = 0 (the default) still returns every
+     * matching row, i.e. the new parameter does not change existing behaviour when
+     * left at its default.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_search_users_default_limitnum_returns_everything(): void {
+        $this->resetAfterTest(true);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->getDataGenerator()->create_user(['firstname' => 'Findme', 'lastname' => "Number$i"]);
+        }
+
+        $mus = new user_searcher();
+
+        $this->assertCount(5, $mus->search_users('Findme', 'firstname'));
+        $this->assertCount(5, $mus->search_users('Findme', 'firstname', 0));
+    }
 }

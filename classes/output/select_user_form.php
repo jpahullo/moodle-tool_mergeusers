@@ -46,14 +46,20 @@ class select_user_form extends moodleform {
     /** @var user_select_table Table to select users. */
     protected user_select_table $ust;
 
+    /** @var string|null Pre-rendered "too many results" warning, shown between the table and the action buttons. */
+    protected ?string $toomanywarninghtml;
+
     /**
      * Builds the form.
      *
-     * @param user_select_table|null $ust
+     * @param user_select_table $ust
+     * @param string|null $toomanywarninghtml pre-rendered warning HTML to show right below the
+     * table and above the "save selection" button, or null to show no warning.
      */
-    public function __construct(?user_select_table $ust = null) {
+    public function __construct(user_select_table $ust, ?string $toomanywarninghtml = null) {
         // Just before parent's constructor.
         $this->ust = $ust;
+        $this->toomanywarninghtml = $toomanywarninghtml;
         parent::__construct();
     }
 
@@ -69,6 +75,13 @@ class select_user_form extends moodleform {
 
         // Add the table content.
         $mform->addElement('static', 'selectuserslist', '', html_writer::table($this->ust));
+
+        // Shown right after the table and before the save button - the natural
+        // place to notice "there might be more matches" while still being able to
+        // act on what is already visible.
+        if ($this->toomanywarninghtml !== null) {
+            $mform->addElement('static', 'toomanyresultswarning', '', $this->toomanywarninghtml);
+        }
 
         // Provide all necessary hidden elements.
         $mform->addElement('hidden', 'option', 'saveselection');
