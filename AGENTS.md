@@ -125,10 +125,51 @@ To support a new table or plugin without touching core merge logic:
   superglobals), check `require_login()` / `require_capability()` /
   `require_sesskey()` on state-changing requests, and escape all output
   (`s()`, `format_string()`, `format_text()`).
-- CI does **not** run `phpcs`, `phpdoc` or `grunt` checks automatically
-  (they are explicitly disabled in the CI workflow) — run them locally
-  before proposing a change: `make phpcs` / `make phpcbf` (these ignore
-  `tests/`).
+- CI (`.github/workflows/moodle-ci.yml`) runs `phpcs`/`phpdoc` via
+  `moodle-plugin-ci`'s `codechecker` step, against the whole plugin
+  (including `tests/`), using the base `moodle` standard. It is a hard gate:
+  `codechecker_max_warnings: 0` means any warning, not just an error, fails
+  the build. `grunt`, `behat`, the release job and the version-bump check are
+  explicitly disabled (`disable_*: true`); `phpunit` runs normally.
+- **Before proposing any change, run the checks locally and make sure they
+  are clean — the GitHub Actions build must always stay green.**
+  - **`make ci-local`** is the primary/authoritative check: it runs the real
+    `moodle-plugin-ci` tool (`.bin/moodle-plugin-ci.phar`, gitignored,
+    downloaded on demand — see below) against every step
+    `.github/workflows/moodle-ci.yml` currently enables:
+    `phplint`, `codechecker --max-warnings=0`, `validate`, `savepoints`,
+    `mustache`, `phpdoc` (`grunt`/`behat`/release/version-bump-check are
+    disabled there, so have no local equivalent). This is the *same tool*
+    CI runs, not a separate reimplementation of it (see the warning about
+    `local_codechecker` below). Run a single step on its own with `make
+    ci-<step>` (e.g. `make ci-codechecker`). `phpunit` is intentionally not
+    part of this group — use `make pass-tests` for that, it needs no
+    `moodle-plugin-ci` at all.
+  - `.bin/moodle-plugin-ci.phar` tracks the latest GitHub release of
+    `moodlehq/moodle-plugin-ci`, refreshed at most once a day: any `ci-*`
+    target depends on `ensure-moodle-plugin-ci`, which is a no-op if the
+    phar's mtime is already today, or otherwise checks GitHub and downloads
+    only if a newer version exists (touching the phar either way, so it
+    won't check again until tomorrow). Run `make update-moodle-plugin-ci`
+    directly to force an immediate re-check/upgrade — e.g. right after a
+    `moodle-plugin-ci` release you know fixes something relevant, without
+    waiting for the daily window.
+  - Use `make phpcbf` to auto-fix coding-standard violations `make
+    ci-codechecker` reports — it runs `local_codechecker`'s bundled
+    `phpcbf`, since `moodle-plugin-ci` has no auto-fix command of its own.
+
+  **Don't use `local_codechecker`'s own phpcs check (`--standard=moodle` or
+  `moodle-extra`) to decide whether CI will pass — only `make ci-local`/
+  `make ci-codechecker` can answer that.** CI never runs the stricter
+  `moodle-extra` standard at all, and `local_codechecker`'s bundled
+  `moodle-cs`/`phpcsextra` version is a separate Moodle plugin with its own,
+  slower release cadence, so it can lag behind what `moodle-plugin-ci` (and
+  therefore CI) actually installs — specific sniffs can behave differently
+  release to release. This bit once: `Universal.OOStructures.
+  AlphabeticExtendsImplements` (interface order in a `class ... implements`
+  statement) sorted by a different key in an older `local_codechecker`
+  install vs. a current `moodle-plugin-ci.phar`, each insisting the
+  *other*'s order was wrong.
 
 ## Testing requirements
 

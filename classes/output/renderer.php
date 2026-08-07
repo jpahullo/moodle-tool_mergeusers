@@ -215,7 +215,7 @@ class renderer extends plugin_renderer_base {
      *
      * @param object $to             stdClass with at least id and username fields (current/dynamic data).
      * @param object $from           stdClass with at least id and username fields (current/dynamic data).
-     * @param string $status         status of the merging process.
+     * @param string|null $status    status of the merging process.
      * @param array|stdClass $data   logs of actions done if success, or list of errors on failure.
      * @param int $logid             id of the record with the whole detail of this merging action.
      * @param int|null $timecreated  timestamp when merge was queued/initiated.

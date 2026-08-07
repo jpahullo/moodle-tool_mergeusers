@@ -31,6 +31,8 @@ use tool_mergeusers\local\cli\merge_request;
 use tool_mergeusers\local\logger;
 use tool_mergeusers\local\user_merger;
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Tests for tool_mergeusers\local\cli\gathering_merger.
  *
