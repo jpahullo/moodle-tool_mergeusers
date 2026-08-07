@@ -68,6 +68,8 @@ class renderer extends plugin_renderer_base {
     const INDEX_PAGE_CONFIRMATION_STEP = 3;
     /** On index page, show the merging results. */
     const INDEX_PAGE_RESULTS_STEP = 4;
+    /** Safety cap for the "show all" merge log listing link: never render more rows than this at once. */
+    public const SHOW_ALL_PAGE_SIZE = 20000;
 
     /**
      * Renderers a progress bar.
@@ -516,28 +518,71 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Produces the page with the list of logs.
-     * TODO: make pagination.
+     * Produces the page with the list of logs: a search box, an export link, the
+     * paginated table of logs and a paging bar above and below it.
      *
-     * @param array $logs array of logs.
+     * @param array $logs page of logs to show (already sliced to $perpage).
+     * @param int $totalcount total number of logs matching $searchterm (all pages).
+     * @param int $page current page number, 0-based.
+     * @param int $perpage number of logs shown per page.
+     * @param moodle_url $baseurl base URL for the paging bar and search form action (without the page param).
+     * @param string|null $searchterm current search term, or null when no search is active.
      * @return string the corresponding HTML.
      * @throws \coding_exception
      * @throws moodle_exception
      */
-    public function logs_page($logs) {
+    public function logs_page(
+        array $logs,
+        int $totalcount,
+        int $page,
+        int $perpage,
+        moodle_url $baseurl,
+        ?string $searchterm = null,
+    ): string {
         global $CFG;
 
         $output = $this->header();
         $output .= $this->heading(get_string('viewlog', 'tool_mergeusers'));
         $output .= html_writer::start_tag('div', ['class' => 'result']);
-        if (empty($logs)) {
-            $output .= get_string('nologs', 'tool_mergeusers');
-        } else {
-            $output .= html_writer::tag('div', get_string('loglist', 'tool_mergeusers'), ['class' => 'title']);
-            $output .= html_writer::link(
-                new moodle_url('/admin/tool/mergeusers/view.php', ['export' => 1]),
-                get_string('exportlogs', 'tool_mergeusers')
+
+        $output .= html_writer::start_tag('div', ['class' => 'tool-mergeusers-logs-toolbar']);
+        $output .= $this->render_logs_search_form($searchterm);
+
+        $exportparams = ['export' => 1];
+        if ($searchterm !== null) {
+            // Not array_filter(): a falsy-but-meaningful search term (e.g. the
+            // literal string "0") must still reach the export URL.
+            $exportparams['search'] = $searchterm;
+        }
+        $output .= html_writer::start_tag('div', ['class' => 'tool-mergeusers-logs-toolbar__export']);
+        $output .= html_writer::link(
+            new moodle_url('/admin/tool/mergeusers/view.php', $exportparams),
+            get_string('exportlogs', 'tool_mergeusers')
+        );
+        $output .= $this->help_icon('exportlogs', 'tool_mergeusers');
+        $output .= html_writer::end_tag('div');
+        $output .= html_writer::end_tag('div'); // Close .tool-mergeusers-logs-toolbar.
+
+        if ($totalcount === 0) {
+            $output .= html_writer::tag(
+                'div',
+                ($searchterm !== null)
+                    ? get_string('nologsforsearch', 'tool_mergeusers', s($searchterm))
+                    : get_string('nologs', 'tool_mergeusers'),
             );
+        } else {
+            $output .= html_writer::tag(
+                'div',
+                ($searchterm !== null)
+                    ? get_string(
+                        'loglistforsearch',
+                        'tool_mergeusers',
+                        (object) ['count' => $totalcount, 'search' => s($searchterm)],
+                    )
+                    : get_string('loglist', 'tool_mergeusers', $totalcount),
+                ['class' => 'title'],
+            );
+            $output .= $this->render(new \core\output\paging_bar($totalcount, $page, $perpage, $baseurl));
 
             $table = new html_table();
             $table->align = ['center', 'center', 'center', 'center', 'center', 'center'];
@@ -587,10 +632,96 @@ class renderer extends plugin_renderer_base {
 
             $table->data = $rows;
             $output .= html_writer::table($table);
+            $output .= $this->render(new \core\output\paging_bar($totalcount, $page, $perpage, $baseurl));
+            $output .= $this->render_logs_showall_toggle($totalcount, $perpage, $baseurl);
         }
 
         $output .= html_writer::end_tag('div');
         $output .= $this->footer();
+
+        return $output;
+    }
+
+    /**
+     * Renders the "show all" / "show N per page" toggle link shown at the foot of
+     * the merge log listing, mirroring the pattern used by core screens like
+     * report/participation/index.php: a link to re-request the same $baseurl (so it
+     * keeps any active search) with a different "perpage" value. Reuses core's own
+     * generic 'showall'/'showperpage' moodle.php strings rather than defining new
+     * plugin-specific ones.
+     *
+     * @param int $totalcount total number of logs matching the current search.
+     * @param int $perpage number of logs shown per page right now.
+     * @param moodle_url $baseurl base URL (already carrying the active search term, if any).
+     * @return string HTML for the toggle link, or '' when everything already fits on one page.
+     */
+    private function render_logs_showall_toggle(int $totalcount, int $perpage, moodle_url $baseurl): string {
+        $defaultperpage = (int) get_config('tool_mergeusers', 'logpagesize');
+        if ($defaultperpage < 1) {
+            $defaultperpage = 100;
+        }
+
+        if ($perpage >= self::SHOW_ALL_PAGE_SIZE && $totalcount > $defaultperpage) {
+            $url = new moodle_url($baseurl, ['perpage' => $defaultperpage]);
+            return html_writer::div(
+                html_writer::link($url, get_string('showperpage', '', $defaultperpage)),
+                'tool-mergeusers-logs-showall',
+            );
+        }
+
+        if ($perpage < $totalcount) {
+            $showallcount = min($totalcount, self::SHOW_ALL_PAGE_SIZE);
+            $url = new moodle_url($baseurl, ['perpage' => self::SHOW_ALL_PAGE_SIZE]);
+            return html_writer::div(
+                html_writer::link($url, get_string('showall', '', $showallcount)),
+                'tool-mergeusers-logs-showall',
+            );
+        }
+
+        return '';
+    }
+
+    /**
+     * Renders the plain GET search form shown above the merge log list, with no
+     * JavaScript: submitting it reloads view.php with the "search" param set (and
+     * "page" reset to the first page, since it is not included in the form).
+     *
+     * @param string|null $searchterm current search term, to repopulate the input.
+     * @return string HTML for the search form.
+     */
+    private function render_logs_search_form(?string $searchterm): string {
+        $inputid = 'tool-mergeusers-logs-search-input';
+
+        $output = html_writer::start_tag('form', [
+            'method' => 'get',
+            'action' => new moodle_url('/admin/tool/mergeusers/view.php'),
+            'class' => 'tool-mergeusers-logs-search',
+        ]);
+        $output .= html_writer::tag(
+            'label',
+            get_string('searchlogs', 'tool_mergeusers'),
+            ['for' => $inputid, 'class' => 'tool-mergeusers-logs-search__label'],
+        );
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'text',
+            'id' => $inputid,
+            'name' => 'search',
+            'value' => $searchterm ?? '',
+            'class' => 'tool-mergeusers-logs-search__input',
+        ]);
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'submit',
+            'value' => get_string('search'),
+            'class' => 'btn btn-secondary tool-mergeusers-logs-search__submit',
+        ]);
+        if ($searchterm !== null) {
+            $output .= html_writer::link(
+                new moodle_url('/admin/tool/mergeusers/view.php'),
+                get_string('clear'),
+                ['class' => 'tool-mergeusers-logs-search__clear'],
+            );
+        }
+        $output .= html_writer::end_tag('form');
 
         return $output;
     }

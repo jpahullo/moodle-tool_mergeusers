@@ -3,6 +3,27 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080700
+
+1. improvement: #420: the merge log listing (`view.php`) is now paginated instead of
+   rendering every merge log row at once, using a configurable page size
+   (`tool_mergeusers/logpagesize`, a free-text setting with a minimum of 1 and no
+   upper bound, default 100) and core's `\core\output\paging_bar` - no JavaScript
+   involved. A new search box replaces the browser `Ctrl+F` that no longer covers
+   every row once paginated: it matches the numeric id/touserid/fromuserid/
+   mergedbyuserid, the current username/firstname/lastname/email of the users
+   involved, their combined full name (firstname + lastname together, so a
+   "firstname lastname"-shaped term still matches even with a two-part surname, as
+   is common in Spanish naming), the merge status, and the beginning of the stored
+   log content (`log`, capped by the new `tool_mergeusers/logsearchmaxlength`
+   setting - also free-text, minimum 100, no upper bound, default 1000 characters) -
+   which keeps a username/email snapshot from merge time, so a merge involving a
+   user who has since been deleted can still be found by their old username. The CSV
+   export (`view.php?export=1`) now honors an active search (exporting only matching
+   rows), but is never limited by pagination - it always downloads every matching
+   row. A new `mdl_toolmerg_tim_ix` index on `timemodified` (the default sort column)
+   was added to support this.
+
 ## 2026080600
 
 1. improvement: #390: `gathering::current()`/`key()` now declare `merge_request`/`int` return
