@@ -85,4 +85,25 @@ final class settingslib_test extends advanced_testcase {
 
         $this->assertTrue(tool_mergeusers_is_adhoc_concurrency_limit_overridden());
     }
+
+    /**
+     * Test that the profile-field options list every real custom user profile field,
+     * keyed by field id, and carry no other attribute (no "any field" sentinel to
+     * represent, unlike tool_mergeusers_build_exceptions_options()).
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_settings
+     */
+    public function test_build_profilefields_options_lists_custom_fields(): void {
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+
+        $result = tool_mergeusers_build_profilefields_options();
+
+        $this->assertArrayHasKey($fieldid, $result->options);
+        $this->assertSame('Name of frog', $result->options[$fieldid]);
+        $this->assertFalse(property_exists($result, 'defaultkey'));
+    }
 }

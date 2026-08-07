@@ -220,4 +220,92 @@ final class search_users_test extends advanced_testcase {
         $this->assertCount(5, $mus->search_users('Findme', 'firstname'));
         $this->assertCount(5, $mus->search_users('Findme', 'firstname', 0));
     }
+
+    /**
+     * Test that a numeric $searchfield not listed in the searchbyprofilefields
+     * setting is rejected and falls back to the "search all fields" behaviour,
+     * instead of exposing an arbitrary profile field's data.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_search_users_ignores_non_allowlisted_profile_field_id(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        // Deliberately not added to tool_mergeusers/searchbyprofilefields.
+
+        $user = $this->getDataGenerator()->create_user();
+        $uid = new \stdClass();
+        $uid->userid = $user->id;
+        $uid->fieldid = $fieldid;
+        $uid->data = 'frogvalueone';
+        $DB->insert_record('user_info_data', $uid);
+
+        $mus = new user_searcher();
+
+        $this->assertCount(0, $mus->search_users('frogvalueone', (string) $fieldid));
+    }
+
+    /**
+     * Test that the "search all fields" branch also matches allow-listed profile
+     * field data, not just the built-in user columns.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_search_users_all_fields_also_matches_allowlisted_profile_field(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+
+        $user = $this->getDataGenerator()->create_user(['firstname' => 'Nomatch', 'lastname' => 'Nomatch']);
+        $uid = new \stdClass();
+        $uid->userid = $user->id;
+        $uid->fieldid = $fieldid;
+        $uid->data = 'uniquefrogvalue';
+        $DB->insert_record('user_info_data', $uid);
+
+        $mus = new user_searcher();
+
+        $this->assertCount(1, $mus->search_users('uniquefrogvalue', 'all'));
+        $this->assertSame(1, $mus->count_users('uniquefrogvalue', 'all'));
+    }
+
+    /**
+     * Regression test: once an allow-listed profile field extends the "search all
+     * fields" WHERE clause with an extra OR term, a deleted user matching one of
+     * the built-in fields (username/name/email/idnumber/id) must still be excluded.
+     * SQL's AND binds tighter than OR, so appending "AND deleted = 0" without
+     * parenthesising the whole OR expression would only constrain the last term.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_search_users_all_fields_excludes_deleted_users_when_profile_field_allowed(): void {
+        $this->resetAfterTest(true);
+
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+
+        $deleteduser = $this->getDataGenerator()->create_user(['username' => 'deletedmatch']);
+        delete_user($deleteduser);
+
+        $mus = new user_searcher();
+
+        $this->assertCount(0, $mus->search_users('deletedmatch', 'all'));
+        $this->assertSame(0, $mus->count_users('deletedmatch', 'all'));
+    }
 }

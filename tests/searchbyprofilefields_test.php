@@ -169,4 +169,101 @@ final class searchbyprofilefields_test extends advanced_testcase {
         $this->assertNotNull($founduser);
         $this->assertEquals($user->id, $founduser->id);
     }
+
+    /**
+     * Test that verify_user() rejects a numeric field id that is not allow-listed,
+     * instead of silently falling back to the "search all fields" strategy.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_verify_user_rejects_non_allowlisted_profile_field(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        // Deliberately not added to tool_mergeusers/searchbyprofilefields.
+
+        $user = $this->getDataGenerator()->create_user();
+        $uid = new \stdClass();
+        $uid->userid = $user->id;
+        $uid->fieldid = $fieldid;
+        $uid->data = 'frogvalueone';
+        $DB->insert_record('user_info_data', $uid);
+
+        $mus = new user_searcher();
+        [$founduser, $message] = $mus->verify_user('frogvalueone', (string) $fieldid);
+
+        $this->assertNull($founduser);
+        $this->assertNotSame('', $message);
+    }
+
+    /**
+     * Test that verify_user() requires an exact match on the profile field value,
+     * unlike search_users()'s partial (LIKE) matching - a value that is only a
+     * substring of the stored data must not resolve to a user.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_verify_user_requires_exact_profile_field_match(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+
+        $user = $this->getDataGenerator()->create_user();
+        $uid = new \stdClass();
+        $uid->userid = $user->id;
+        $uid->fieldid = $fieldid;
+        $uid->data = 'frogvalueone';
+        $DB->insert_record('user_info_data', $uid);
+
+        $mus = new user_searcher();
+        // Only a partial match of the stored "frogvalueone" value.
+        [$founduser, $message] = $mus->verify_user('frogvalue', (string) $fieldid);
+
+        $this->assertNull($founduser);
+        $this->assertNotSame('', $message);
+    }
+
+    /**
+     * Test that verify_user() refuses to silently pick one of several users who
+     * happen to share the exact same profile field value, instead of returning an
+     * arbitrary match.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_verify_user_rejects_ambiguous_profile_field_value(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+
+        foreach ([$this->getDataGenerator()->create_user(), $this->getDataGenerator()->create_user()] as $user) {
+            $uid = new \stdClass();
+            $uid->userid = $user->id;
+            $uid->fieldid = $fieldid;
+            $uid->data = 'sharedvalue';
+            $DB->insert_record('user_info_data', $uid);
+        }
+
+        $mus = new user_searcher();
+        [$founduser, $message] = $mus->verify_user('sharedvalue', (string) $fieldid);
+
+        $this->assertNull($founduser);
+        $this->assertNotSame('', $message);
+    }
 }
