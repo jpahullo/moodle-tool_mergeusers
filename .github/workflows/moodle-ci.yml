@@ -14,3 +14,4 @@ jobs:
       disable_release: true
       disable_behat: true
       disable_version_bump_check: true
+      codechecker_max_warnings: 0
