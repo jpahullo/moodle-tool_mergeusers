@@ -1,0 +1,70 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Lists custom user profile fields available for searching users to merge.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2026 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace tool_mergeusers\local;
+
+/**
+ * Class that abstracts how to list custom user profile fields, and which of them the
+ * site administrator has allowed for searching users to merge.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2026 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+final class profile_fields {
+    /**
+     * Lists every custom user profile field defined on this site.
+     *
+     * @return array<int,string> fieldid => display name.
+     */
+    public static function all(): array {
+        global $CFG;
+        require_once($CFG->dirroot . '/user/profile/lib.php');
+
+        $fields = [];
+        foreach (profile_get_custom_fields() as $fieldid => $field) {
+            $fields[$fieldid] = $field->name;
+        }
+        return $fields;
+    }
+
+    /**
+     * Lists the custom user profile fields the site administrator has allowed for
+     * searching users to merge, via the tool_mergeusers/searchbyprofilefields setting.
+     * Silently ignores any configured field id that no longer exists.
+     *
+     * @return array<int,string> fieldid => display name.
+     */
+    public static function allowed(): array {
+        $allowedids = get_config('tool_mergeusers', 'searchbyprofilefields');
+        if (empty($allowedids)) {
+            return [];
+        }
+
+        $allowedids = array_map('intval', explode(',', $allowedids));
+        return array_intersect_key(self::all(), array_flip($allowedids));
+    }
+}

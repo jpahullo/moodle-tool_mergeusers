@@ -109,24 +109,49 @@ final class user_searcher {
                 break;
             // Search on all fields by default.
             default:
-                $where = '(' .
-                         $DB->sql_cast_to_char('id') . ' = :userid OR ' .
-                         $DB->sql_like('username', ':username', false, false)
-                         . ' OR ' .
-                         $DB->sql_like('firstname', ':firstname', false, false)
-                         . ' OR ' .
-                         $DB->sql_like('lastname', ':lastname', false, false)
-                         . ' OR ' .
-                         $DB->sql_like('email', ':email', false, false)
-                         . ' OR ' .
-                         $DB->sql_like('idnumber', ':idnumber', false, false)
-                         . ')';
-                $params['userid'] = $input;
-                $params['username'] = '%' . $input . '%';
-                $params['firstname'] = '%' . $input . '%';
-                $params['lastname'] = '%' . $input . '%';
-                $params['email'] = '%' . $input . '%';
-                $params['idnumber'] = '%' . $input . '%';
+                $allowedfields = array_keys(profile_fields::allowed());
+
+                if (is_numeric($searchfield) && in_array((int) $searchfield, $allowedfields, true)) {
+                    // Search on a specific custom user profile field, allow-listed at settings.
+                    $where = 'id IN (SELECT userid FROM {user_info_data} WHERE fieldid = :fieldid AND ' .
+                             $DB->sql_like('data', ':data', false, false) . ')';
+                    $params = ['fieldid' => (int) $searchfield, 'data' => '%' . $input . '%'];
+                } else {
+                    $where = '(' .
+                             $DB->sql_cast_to_char('id') . ' = :userid OR ' .
+                             $DB->sql_like('username', ':username', false, false)
+                             . ' OR ' .
+                             $DB->sql_like('firstname', ':firstname', false, false)
+                             . ' OR ' .
+                             $DB->sql_like('lastname', ':lastname', false, false)
+                             . ' OR ' .
+                             $DB->sql_like('email', ':email', false, false)
+                             . ' OR ' .
+                             $DB->sql_like('idnumber', ':idnumber', false, false)
+                             . ')';
+                    $params['userid'] = $input;
+                    $params['username'] = '%' . $input . '%';
+                    $params['firstname'] = '%' . $input . '%';
+                    $params['lastname'] = '%' . $input . '%';
+                    $params['email'] = '%' . $input . '%';
+                    $params['idnumber'] = '%' . $input . '%';
+
+                    // The "all fields" search also looks inside any custom user profile field
+                    // allow-listed at settings, via a subquery - never a JOIN, so no risk of
+                    // duplicate {user} rows.
+                    if (!empty($allowedfields)) {
+                        [$insql, $inparams] = $DB->get_in_or_equal($allowedfields, SQL_PARAMS_NAMED, 'apf');
+                        $where .= ' OR id IN (SELECT userid FROM {user_info_data} WHERE fieldid ' . $insql .
+                                  ' AND ' . $DB->sql_like('data', ':pfdata', false, false) . ')';
+                        $params += $inparams;
+                        $params['pfdata'] = '%' . $input . '%';
+                    }
+
+                    // Parenthesise the whole OR expression: AND binds tighter than OR in SQL, so
+                    // without this the "AND deleted = :deleted" appended below would only apply to
+                    // the last OR term, letting deleted users leak back into the results.
+                    $where = '(' . $where . ')';
+                }
                 break;
         }
 
