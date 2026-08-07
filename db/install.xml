@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/mergeusers/db" VERSION="20260224" COMMENT="XMLDB file for Moodle admin/tool/mergeusers"
+<XMLDB PATH="admin/tool/mergeusers/db" VERSION="20260907" COMMENT="XMLDB file for Moodle admin/tool/mergeusers"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -22,6 +22,7 @@
         <INDEX NAME="mdl_toolmerg_tou_ix" UNIQUE="false" FIELDS="touserid" COMMENT="index for touserid field."/>
         <INDEX NAME="mdl_toolmerg_fru_ix" UNIQUE="false" FIELDS="fromuserid" COMMENT="index for fromuserid field."/>
         <INDEX NAME="mdl_toolmerg_sta_ix" UNIQUE="false" FIELDS="status" COMMENT="Index for filtering by merge status."/>
+        <INDEX NAME="mdl_toolmerg_tim_ix" UNIQUE="false" FIELDS="timemodified" COMMENT="Index for the default timemodified DESC sort/pagination of the log listing."/>
       </INDEXES>
     </TABLE>
   </TABLES>

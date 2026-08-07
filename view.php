@@ -44,11 +44,14 @@ admin_externalpage_setup('tool_mergeusers_viewlog');
 $logger = new logger();
 
 $export = optional_param('export', 0, PARAM_BOOL);
+$search = optional_param('search', '', PARAM_RAW_TRIMMED);
+$page = max(0, optional_param('page', 0, PARAM_INT));
+$searchterm = ($search !== '') ? $search : null;
 
 if ($export) {
     require_once($CFG->dirroot . '/lib/csvlib.class.php');
     $csv = new csv_export_writer();
-    $logs = $logger->get();
+    $logs = $logger->search($searchterm, 0, 0);
     $headings = [
         'id',
         'touserid',
@@ -81,6 +84,30 @@ if ($export) {
     $csv->download_file();
 }
 
+$requestedperpage = optional_param('perpage', 0, PARAM_INT);
+if ($requestedperpage > 0) {
+    // Also covers the "show all" toggle link, capped so a manually-crafted URL
+    // can't force rendering an unbounded number of rows at once.
+    $perpage = min($requestedperpage, renderer::SHOW_ALL_PAGE_SIZE);
+} else {
+    $perpage = (int) get_config('tool_mergeusers', 'logpagesize');
+    if ($perpage < 1) {
+        $perpage = 100; // Defensive fallback: the setting has not been saved yet on this site.
+    }
+}
+
+$totalcount = $logger->count_search($searchterm);
+$limitfrom = $page * $perpage;
+if ($totalcount > 0 && $limitfrom >= $totalcount) {
+    // Stale bookmark, or a search that shrank the result set below the requested
+    // page: fall back to the actual last page instead of showing an empty table.
+    $page = (int) floor(($totalcount - 1) / $perpage);
+    $limitfrom = $page * $perpage;
+}
+$logs = $logger->search($searchterm, $limitfrom, $perpage);
+
+$baseurl = new moodle_url('/admin/tool/mergeusers/view.php', ($searchterm !== null) ? ['search' => $searchterm] : []);
+
 // phpcs:disable
 /**
  * @var renderer $renderer
@@ -88,4 +115,4 @@ if ($export) {
 $renderer = $PAGE->get_renderer('tool_mergeusers');
 // phpcs:enable
 
-echo $renderer->logs_page($logger->get());
+echo $renderer->logs_page($logs, $totalcount, $page, $perpage, $baseurl, $searchterm);

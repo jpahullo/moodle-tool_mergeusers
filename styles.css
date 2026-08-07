@@ -66,3 +66,34 @@
 .tool-mergeusers-user-info__box--unavailable {
     border: 2px dashed #ccc;
 }
+
+.tool-mergeusers-logs-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tool-mergeusers-logs-toolbar__export {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tool-mergeusers-logs-search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.tool-mergeusers-logs-search__label {
+    margin: 0;
+    font-weight: bold;
+}
+
+.tool-mergeusers-logs-showall {
+    margin-top: 10px;
+}

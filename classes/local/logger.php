@@ -246,7 +246,162 @@ final class logger {
         if (!$logs) {
             return $logs;
         }
-        foreach ($logs as $id => &$log) {
+        $this->attach_related_users($logs);
+        return $logs;
+    }
+
+    /**
+     * Searches merge logs, matching $searchterm against the numeric id/touserid/
+     * fromuserid/mergedbyuserid columns (exact match, when the term is numeric), the
+     * merge status, the current username/firstname/lastname/email/fullname (firstname
+     * and lastname combined, so a "firstname lastname"-shaped term matches even with
+     * two-part surnames) of the users involved, and the beginning of the raw log
+     * content (which keeps a username/email snapshot captured at merge time, still
+     * searchable even after the real {user} row has since been deleted). A null/empty
+     * $searchterm returns every log, in the same shape and order as get() without a
+     * filter.
+     *
+     * @param string|null $searchterm free-text term to search for, or null/empty for no filter.
+     * @param int $limitfrom starting number of record to get. 0 to get all.
+     * @param int $limitnum maximum number of records to get. 0 to get all.
+     * @param string $sort SQL ordering, defaults to "timemodified DESC".
+     * @return array list of merging logs matching the search, in the same shape as get().
+     * @throws dml_exception
+     */
+    public function search(
+        ?string $searchterm,
+        int $limitfrom = 0,
+        int $limitnum = 0,
+        string $sort = "timemodified DESC",
+    ): array {
+        global $DB;
+
+        [$where, $params] = $this->build_search_where($searchterm);
+        $sql = "SELECT tm.id, tm.touserid, tm.fromuserid, tm.mergedbyuserid, tm.timecreated, tm.timemodified,
+                       tm.status, tm.log
+                  FROM {tool_mergeusers} tm
+             LEFT JOIN {user} tou ON tou.id = tm.touserid
+             LEFT JOIN {user} fru ON fru.id = tm.fromuserid
+             LEFT JOIN {user} mbu ON mbu.id = tm.mergedbyuserid
+                 WHERE $where
+              ORDER BY $sort";
+
+        $logs = $DB->get_records_sql($sql, $params, $limitfrom, $limitnum);
+        if (!$logs) {
+            return [];
+        }
+        $this->attach_related_users($logs);
+        return $logs;
+    }
+
+    /**
+     * Counts merge logs matching $searchterm, using the same criteria as search().
+     *
+     * @param string|null $searchterm free-text term to search for, or null/empty for no filter.
+     * @return int number of matching logs.
+     * @throws dml_exception
+     */
+    public function count_search(?string $searchterm): int {
+        global $DB;
+
+        [$where, $params] = $this->build_search_where($searchterm);
+        $sql = "SELECT COUNT(1)
+                  FROM {tool_mergeusers} tm
+             LEFT JOIN {user} tou ON tou.id = tm.touserid
+             LEFT JOIN {user} fru ON fru.id = tm.fromuserid
+             LEFT JOIN {user} mbu ON mbu.id = tm.mergedbyuserid
+                 WHERE $where";
+
+        return (int) $DB->count_records_sql($sql, $params);
+    }
+
+    /**
+     * Builds the WHERE clause and bound parameters shared by search() and
+     * count_search(). Assumes a query aliasing {tool_mergeusers} as "tm" and left
+     * joining {user} as "tou"/"fru"/"mbu" for touserid/fromuserid/mergedbyuserid.
+     *
+     * @param string|null $searchterm free-text term to search for, or null/empty for no filter.
+     * @return array{0: string, 1: array} [$where, $params].
+     */
+    private function build_search_where(?string $searchterm): array {
+        global $DB;
+
+        $term = trim((string) $searchterm);
+        if ($term === '') {
+            return ['1 = 1', []];
+        }
+
+        // Moodle's DML layer does not support reusing the same named placeholder more
+        // than once in a single query (moodle_database::fix_sql_params() requires the
+        // number of :name occurrences to match the number of distinct keys in
+        // $params), so every LIKE/equality branch below gets its own uniquely-named
+        // parameter, all bound to the same value.
+        $like = '%' . $DB->sql_like_escape($term) . '%';
+        $loglength = $this->get_log_search_maxlength();
+        $logexpr = $DB->sql_substr('tm.log', 1, $loglength);
+
+        $likecolumns = [
+            'tm.status',
+            $logexpr,
+            'tou.username',
+            'tou.firstname',
+            'tou.lastname',
+            'tou.email',
+            $DB->sql_fullname('tou.firstname', 'tou.lastname'),
+            'fru.username',
+            'fru.firstname',
+            'fru.lastname',
+            'fru.email',
+            $DB->sql_fullname('fru.firstname', 'fru.lastname'),
+            'mbu.username',
+            'mbu.firstname',
+            'mbu.lastname',
+            'mbu.email',
+            $DB->sql_fullname('mbu.firstname', 'mbu.lastname'),
+        ];
+
+        $params = [];
+        $likeparts = [];
+        foreach ($likecolumns as $i => $column) {
+            $paramname = 'term' . $i;
+            $params[$paramname] = $like;
+            $likeparts[] = $DB->sql_like($column, ":$paramname", false, false);
+        }
+
+        if (ctype_digit($term)) {
+            $idcolumns = ['tm.id', 'tm.touserid', 'tm.fromuserid', 'tm.mergedbyuserid'];
+            foreach ($idcolumns as $i => $column) {
+                $paramname = 'idexact' . $i;
+                $params[$paramname] = (int) $term;
+                $likeparts[] = "$column = :$paramname";
+            }
+        }
+
+        return ['(' . implode(' OR ', $likeparts) . ')', $params];
+    }
+
+    /**
+     * Reads the tool_mergeusers/logsearchmaxlength setting, falling back to 1000
+     * when unset or invalid, so search() never scans an unbounded amount of the
+     * log column per row.
+     *
+     * @return int
+     */
+    private function get_log_search_maxlength(): int {
+        $length = (int) get_config('tool_mergeusers', 'logsearchmaxlength');
+        return ($length > 0) ? $length : 1000;
+    }
+
+    /**
+     * Attaches the related {user} records (to/from/mergedby) onto each log row,
+     * shared by get() and search().
+     *
+     * @param array $logs list of tool_mergeusers rows, modified in place.
+     */
+    private function attach_related_users(array &$logs): void {
+        global $DB;
+
+        foreach ($logs as &$log) {
             $log->to = $DB->get_record('user', ['id' => $log->touserid]);
             $log->from = $DB->get_record('user', ['id' => $log->fromuserid]);
 
@@ -256,7 +411,6 @@ final class logger {
                 $log->mergedby = $DB->get_record('user', ['id' => $log->mergedbyuserid]);
             }
         }
-        return $logs;
     }
 
     /**
