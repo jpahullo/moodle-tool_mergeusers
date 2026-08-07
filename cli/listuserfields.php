@@ -28,7 +28,7 @@ define("CLI_SCRIPT", true);
 require_once(__DIR__ . '/../../../../config.php');
 
 ini_set('display_errors', true);
-ini_set('error_reporting', E_ALL | E_STRICT);
+ini_set('error_reporting', E_ALL);
 
 global $CFG, $DB;
 require_once($CFG->libdir . '/clilib.php');
