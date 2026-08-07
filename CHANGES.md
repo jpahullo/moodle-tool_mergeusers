@@ -15,7 +15,8 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    (`/admin/roles/assign.php`), but showing the capped results instead of hiding
    them outright. The warning sits between the results table and the "save
    selection" button (same form as the table), not above the table nor after the
-   button, so it only draws attention when actually needed.
+   button, so it only draws attention when actually needed. Thanks to @lcaylat
+   for raising the issue.
 2. improvement: #416: the search-results and review-before-merging tables no
    longer repeat the email/idnumber already shown in the "User" column. The review
    table shows the user's description on a line underneath the user info instead
