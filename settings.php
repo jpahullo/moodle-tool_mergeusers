@@ -153,6 +153,17 @@ if ($ADMIN->fulltree) {
         $exceptionoptions->options
     ));
 
+    $profilefieldoptions = tool_mergeusers_build_profilefields_options();
+    if (!empty($profilefieldoptions->options)) {
+        $generalsettings->add(new admin_setting_configmultiselect(
+            'tool_mergeusers/searchbyprofilefields',
+            get_string('searchbyprofilefields', 'tool_mergeusers'),
+            get_string('searchbyprofilefields_desc', 'tool_mergeusers'),
+            [], // Default value: no fields allowed.
+            $profilefieldoptions->options
+        ));
+    }
+
     // Quiz attempts.
     $quizoptions = tool_mergeusers_build_quiz_options();
     $generalsettings->add(new admin_setting_configselect(

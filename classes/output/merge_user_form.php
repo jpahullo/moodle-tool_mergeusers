@@ -31,6 +31,7 @@ namespace tool_mergeusers\output;
 
 use coding_exception;
 use moodleform;
+use tool_mergeusers\local\profile_fields;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -64,6 +65,7 @@ class merge_user_form extends moodleform {
             'idnumber' => get_string('idnumber'),
             'id'       => 'Id',
         ];
+        $idstype += profile_fields::allowed();
         asort($idstype);
 
         $searchfields = [
@@ -75,6 +77,7 @@ class merge_user_form extends moodleform {
             'lastname'  => get_string('lastname'),
             'email'     => get_string('email'),
         ];
+        $searchfields += profile_fields::allowed();
         asort($searchfields);
 
         $mform->addElement('header', 'mergeusers', get_string('header', 'tool_mergeusers'));

@@ -25,6 +25,7 @@
 
 use tool_mergeusers\local\config;
 use tool_mergeusers\local\merger\quiz_attempts_table_merger;
+use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\task\merge_users_task;
 
 /**
@@ -75,6 +76,18 @@ function tool_mergeusers_build_quiz_options(): stdClass {
     $result->allstrings = $optionsstrings;
     $result->defaultkey = quiz_attempts_table_merger::ACTION_RENUMBER;
     $result->options = $quizoptions;
+
+    return $result;
+}
+
+/**
+ * Builds the form options for searching users by custom user profile field.
+ *
+ * @return stdClass instance with the options (fieldid => name) to be used.
+ */
+function tool_mergeusers_build_profilefields_options(): stdClass {
+    $result = new stdClass();
+    $result->options = profile_fields::all();
 
     return $result;
 }
