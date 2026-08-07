@@ -41,4 +41,18 @@ namespace tool_mergeusers\local\cli;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 interface gathering extends \Iterator {
+    /**
+     * Gets the current pair of users to merge.
+     *
+     * @return merge_request object with fromid and toid fields, among others.
+     * @see merge_request
+     */
+    public function current(): merge_request;
+
+    /**
+     * Gets current int zero-based index.
+     *
+     * @return int zero-based index value.
+     */
+    public function key(): int;
 }

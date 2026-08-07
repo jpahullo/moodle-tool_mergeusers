@@ -29,7 +29,6 @@ defined('MOODLE_INTERNAL') || die();
 defined('CLI_SCRIPT') || die();
 
 use coding_exception;
-use stdClass;
 
 global $CFG;
 require_once($CFG->dirroot . '/lib/clilib.php');
@@ -130,9 +129,10 @@ class cli_gathering implements gathering {
     /**
      * Gets the current pair of users to merge.
      *
-     * @return stdClass object with fromid and toid fields
+     * @return merge_request object with fromid and toid fields, among others.
+     * @see merge_request
      */
-    public function current(): mixed {
+    public function current(): merge_request {
         return $this->current;
     }
 
@@ -141,7 +141,7 @@ class cli_gathering implements gathering {
      *
      * @return int zero-based index value
      */
-    public function key(): mixed {
+    public function key(): int {
         return $this->index;
     }
 }

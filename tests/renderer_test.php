@@ -26,6 +26,7 @@
 namespace tool_mergeusers;
 
 use advanced_testcase;
+use tool_mergeusers\local\logger;
 use tool_mergeusers\output\renderer;
 use tool_mergeusers_renderer;
 
@@ -167,7 +168,7 @@ final class renderer_test extends advanced_testcase {
         $touser = $this->getDataGenerator()->create_user();
         $fromuser = $this->getDataGenerator()->create_user();
 
-        $logger = new \tool_mergeusers\local\logger();
+        $logger = new logger();
         $logid = $logger->log($touser->id, $fromuser->id, true, ['Some action.']);
         $stored = $logger->detail_from($logid);
 
@@ -274,7 +275,7 @@ final class renderer_test extends advanced_testcase {
 
         $touser = $this->getDataGenerator()->create_user();
 
-        $logger = new \tool_mergeusers\local\logger();
+        $logger = new logger();
         $logid = $logger->log($touser->id, 0, false, ['Could not resolve username.']);
         $stored = $logger->detail_from($logid);
 
@@ -300,7 +301,7 @@ final class renderer_test extends advanced_testcase {
 
         $touser = $this->getDataGenerator()->create_user();
 
-        $logger = new \tool_mergeusers\local\logger();
+        $logger = new logger();
         $logid = $logger->log(
             $touser->id,
             0,
@@ -308,7 +309,7 @@ final class renderer_test extends advanced_testcase {
             ['Could not resolve email.'],
             null,
             null,
-            ['field' => 'email', 'value' => 'missing@example.com'],
+            ['field' => logger::SEARCHED_FIELD_EMAIL, 'value' => 'missing@example.com'],
         );
         $stored = $logger->detail_from($logid);
 
@@ -341,7 +342,7 @@ final class renderer_test extends advanced_testcase {
 
         $touser = $this->getDataGenerator()->create_user();
 
-        $logger = new \tool_mergeusers\local\logger();
+        $logger = new logger();
         $logger->log($touser->id, 0, false, ['Could not resolve username.']);
 
         $logs = $logger->get();
@@ -367,7 +368,7 @@ final class renderer_test extends advanced_testcase {
 
         $touser = $this->getDataGenerator()->create_user();
 
-        $logger = new \tool_mergeusers\local\logger();
+        $logger = new logger();
         $logger->log(
             $touser->id,
             0,
@@ -375,7 +376,7 @@ final class renderer_test extends advanced_testcase {
             ['Could not resolve username.'],
             null,
             null,
-            ['field' => 'username', 'value' => 'jsmith123'],
+            ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'jsmith123'],
         );
 
         $output = $this->get_renderer()->logs_page($logger->get());
@@ -406,7 +407,7 @@ final class renderer_test extends advanced_testcase {
         // username, which would make it overlap with the username assertions below.
         $user = $this->getDataGenerator()->create_user(['username' => 'newusername', 'email' => 'person@example.com']);
 
-        $logger = new \tool_mergeusers\local\logger();
+        $logger = new logger();
         $logid = $logger->log(
             $user->id,
             $user->id,
@@ -414,7 +415,7 @@ final class renderer_test extends advanced_testcase {
             ['Renamed username in place.'],
             null,
             null,
-            ['field' => 'username', 'value' => 'oldusername'],
+            ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'oldusername'],
         );
         $stored = $logger->detail_from($logid);
 

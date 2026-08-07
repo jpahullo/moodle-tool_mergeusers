@@ -46,13 +46,24 @@ require_once($CFG->libdir . '/clilib.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class logger {
+    /** @var string searched-field value for the username field. */
+    public const SEARCHED_FIELD_USERNAME = 'username';
+    /** @var string searched-field value for the idnumber field. */
+    public const SEARCHED_FIELD_IDNUMBER = 'idnumber';
+    /** @var string searched-field value for the email field. */
+    public const SEARCHED_FIELD_EMAIL = 'email';
+
     /**
      * Fields a gathering is allowed to report as the one it searched by when it
      * could not resolve a user. Matches the fields the web UI itself lets an
      * admin search by; excludes 'id' because a not-found search by id is already
      * represented by the existing id + recoverable=false snapshot shape.
      */
-    private const ALLOWED_SEARCH_FIELDS = ['username', 'idnumber', 'email'];
+    private const ALLOWED_SEARCH_FIELDS = [
+        self::SEARCHED_FIELD_USERNAME,
+        self::SEARCHED_FIELD_IDNUMBER,
+        self::SEARCHED_FIELD_EMAIL,
+    ];
 
     /**
      * Adds a merging action log into tool log.

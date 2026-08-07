@@ -154,7 +154,7 @@ final class logger_test extends advanced_testcase {
      * @group tool_mergeusers_logger
      */
     public function test_notfound_snapshot_reuses_matching_field_for_allowed_searched_field(): void {
-        $snapshot = logger::notfound_snapshot('email', 'x@example.com');
+        $snapshot = logger::notfound_snapshot(logger::SEARCHED_FIELD_EMAIL, 'x@example.com');
 
         $this->assertTrue($snapshot->notfound);
         $this->assertFalse($snapshot->recoverable);
@@ -199,7 +199,7 @@ final class logger_test extends advanced_testcase {
      * @group tool_mergeusers_logger
      */
     public function test_capture_user_snapshot_propagates_hint_when_not_found(): void {
-        $snapshot = logger::capture_user_snapshot(0, ['field' => 'username', 'value' => 'jsmith123']);
+        $snapshot = logger::capture_user_snapshot(0, ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'jsmith123']);
         $this->assertTrue($snapshot->notfound);
         $this->assertSame('jsmith123', $snapshot->username);
 
@@ -220,7 +220,10 @@ final class logger_test extends advanced_testcase {
     public function test_capture_user_snapshot_hint_prevails_for_a_resolved_user(): void {
         $user = $this->getDataGenerator()->create_user(['idnumber' => 'ID001']);
 
-        $snapshot = logger::capture_user_snapshot($user->id, ['field' => 'username', 'value' => 'oldusername']);
+        $snapshot = logger::capture_user_snapshot(
+            $user->id,
+            ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'oldusername'],
+        );
 
         $this->assertFalse($snapshot->notfound);
         $this->assertTrue($snapshot->recoverable);
@@ -256,7 +259,10 @@ final class logger_test extends advanced_testcase {
      * @group tool_mergeusers_logger
      */
     public function test_capture_user_snapshot_hint_prevails_for_unrecoverable_id(): void {
-        $snapshot = logger::capture_user_snapshot(999999, ['field' => 'email', 'value' => 'old@example.com']);
+        $snapshot = logger::capture_user_snapshot(
+            999999,
+            ['field' => logger::SEARCHED_FIELD_EMAIL, 'value' => 'old@example.com'],
+        );
 
         $this->assertFalse($snapshot->notfound);
         $this->assertFalse($snapshot->recoverable);
@@ -285,7 +291,7 @@ final class logger_test extends advanced_testcase {
             ['Could not resolve username.'],
             null,
             null,
-            ['field' => 'username', 'value' => 'jsmith123'],
+            ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'jsmith123'],
         );
         $stored = $mut->detail_from($logid);
         $this->assertSame('jsmith123', $stored->log->user_snapshots->from_user->username);

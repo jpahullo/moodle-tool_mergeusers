@@ -19,6 +19,7 @@ namespace tool_mergeusers;
 use advanced_testcase;
 use dml_exception;
 use moodle_exception;
+use tool_mergeusers\local\logger;
 use tool_mergeusers\local\user_merger;
 
 /**
@@ -177,9 +178,15 @@ final class user_merger_test extends advanced_testcase {
         $usertokeep = $this->getDataGenerator()->create_user();
 
         $mut = new user_merger();
-        [, , $logidwithhint] = $mut->merge($usertokeep->id, 0, null, null, ['field' => 'username', 'value' => 'jsmith123']);
+        [, , $logidwithhint] = $mut->merge(
+            $usertokeep->id,
+            0,
+            null,
+            null,
+            ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'jsmith123'],
+        );
 
-        $logger = new \tool_mergeusers\local\logger();
+        $logger = new logger();
         $storedwithhint = $logger->detail_from($logidwithhint);
         $this->assertSame('jsmith123', $storedwithhint->log->user_snapshots->from_user->username);
 
@@ -206,14 +213,14 @@ final class user_merger_test extends advanced_testcase {
             0,
             0,
             null,
-            ['field' => 'username', 'value' => 'tokeep123'],
-            ['field' => 'username', 'value' => 'toremove123'],
+            ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'tokeep123'],
+            ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'toremove123'],
         );
 
         $this->assertFalse($success);
         $this->assertStringNotContainsString(get_string('errorsameuser', 'tool_mergeusers'), implode(' ', $log));
 
-        $logger = new \tool_mergeusers\local\logger();
+        $logger = new logger();
         $stored = $logger->detail_from($logid);
         $this->assertSame('tokeep123', $stored->log->user_snapshots->to_user->username);
         $this->assertSame('toremove123', $stored->log->user_snapshots->from_user->username);
