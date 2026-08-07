@@ -3,6 +3,15 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080704
+
+1. improvement: #402: allow searching for a user to merge by a custom user
+   profile field (e.g. an institution's "employee ID" field), in addition to
+   the existing username/email/etc. search. Which profile fields are
+   searchable is opt-in via a new `tool_mergeusers/searchbyprofilefields`
+   setting (empty by default). Originally proposed in #231. Thanks to
+   @Tsheke for their contributions.
+
 ## 2026080703
 
 1. cleanup: #414: remove the `E_STRICT` reference in `cli/listuserfields.php`. `E_STRICT`
