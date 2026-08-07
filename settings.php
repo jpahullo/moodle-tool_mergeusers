@@ -29,6 +29,8 @@
 
 use tool_mergeusers\local\database_transactions;
 use tool_mergeusers\local\settings\json_setting;
+use tool_mergeusers\local\settings\logpagesize_setting;
+use tool_mergeusers\local\settings\logsearchmaxlength_setting;
 use tool_mergeusers\local\config;
 
 defined('MOODLE_INTERNAL') || die;
@@ -159,6 +161,20 @@ if ($ADMIN->fulltree) {
         get_string('quizattemptsaction_desc', 'tool_mergeusers', $quizoptions->allstrings),
         $quizoptions->defaultkey,
         $quizoptions->options
+    ));
+
+    $generalsettings->add(new logpagesize_setting(
+        'tool_mergeusers/logpagesize',
+        get_string('logpagesize_setting', 'tool_mergeusers'),
+        get_string('logpagesize_setting_desc', 'tool_mergeusers'),
+        '100',
+    ));
+
+    $generalsettings->add(new logsearchmaxlength_setting(
+        'tool_mergeusers/logsearchmaxlength',
+        get_string('logsearchmaxlength_setting', 'tool_mergeusers'),
+        get_string('logsearchmaxlength_setting_desc', 'tool_mergeusers'),
+        '1000',
     ));
 
     $generalsettings->add(new admin_setting_configcheckbox(
