@@ -26,6 +26,7 @@
 namespace tool_mergeusers;
 
 use advanced_testcase;
+use moodle_url;
 use tool_mergeusers\local\logger;
 use tool_mergeusers\output\renderer;
 use tool_mergeusers_renderer;
@@ -347,7 +348,8 @@ final class renderer_test extends advanced_testcase {
 
         $logs = $logger->get();
 
-        $output = $this->get_renderer()->logs_page($logs);
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page($logs, count($logs), 0, 20, $baseurl);
 
         $this->assertStringContainsString(get_string('usernotfoundatmerge', 'tool_mergeusers'), $output);
         $this->assertStringNotContainsString(get_string('deleted', 'tool_mergeusers', 0), $output);
@@ -379,12 +381,275 @@ final class renderer_test extends advanced_testcase {
             ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'jsmith123'],
         );
 
-        $output = $this->get_renderer()->logs_page($logger->get());
+        $logs = $logger->get();
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page($logs, count($logs), 0, 20, $baseurl);
 
         $this->assertStringContainsString(
             get_string('usernotfoundatmergewithhint', 'tool_mergeusers', (object) ['field' => 'Username', 'value' => 'jsmith123']),
             $output,
         );
+    }
+
+    /**
+     * Test that logs_page() shows the plain "no logs" string when there is no
+     * search active and the log table is genuinely empty.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_nologs_string_when_no_search_and_zero_total(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page([], 0, 0, 20, $baseurl, null);
+
+        $this->assertStringContainsString(get_string('nologs', 'tool_mergeusers'), $output);
+    }
+
+    /**
+     * Test that logs_page() shows a search-specific "no results" string (naming the
+     * search term) instead of the generic "no logs" string, when a search is active
+     * and it matched nothing.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_nologsforsearch_string_when_search_active_and_zero_total(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php', ['search' => 'nomatch']);
+        $output = $this->get_renderer()->logs_page([], 0, 0, 20, $baseurl, 'nomatch');
+
+        $this->assertStringContainsString(
+            get_string('nologsforsearch', 'tool_mergeusers', 'nomatch'),
+            $output,
+        );
+        $this->assertStringNotContainsString(get_string('nologs', 'tool_mergeusers'), $output);
+    }
+
+    /**
+     * Test that logs_page() shows the total number of matching logs alongside the
+     * "here is the list" message when there is no search active.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_total_count_when_no_search(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page([], 5, 0, 20, $baseurl, null);
+
+        $this->assertStringContainsString(get_string('loglist', 'tool_mergeusers', 5), $output);
+    }
+
+    /**
+     * Test that logs_page() shows how many logs matched the active search, and the
+     * search term itself, instead of the generic "here is the list" message.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_matching_count_and_term_when_search_active(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php', ['search' => 'jsmith']);
+        $output = $this->get_renderer()->logs_page([], 3, 0, 20, $baseurl, 'jsmith');
+
+        $this->assertStringContainsString(
+            get_string('loglistforsearch', 'tool_mergeusers', (object) ['count' => 3, 'search' => 'jsmith']),
+            $output,
+        );
+    }
+
+    /**
+     * Test that logs_page() renders paging bar links when there are more matching
+     * rows than fit on a single page.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_renders_paging_bar_links_when_totalcount_exceeds_perpage(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $logger = new logger();
+        $logger->log($touser->id, 0, true, ['ok']);
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        // 1 row fits on a page of 1, but a totalcount of 3 forces at least a second page link.
+        $output = $this->get_renderer()->logs_page([current($logger->get())], 3, 0, 1, $baseurl);
+
+        $this->assertStringContainsString('page=1', $output);
+    }
+
+    /**
+     * Test that a "show all N" link appears at the foot of the listing when there
+     * are more matching rows than the current page size, and that it points at
+     * perpage=renderer::SHOW_ALL_PAGE_SIZE.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_showall_link_when_paginated(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        set_config('logpagesize', 20, 'tool_mergeusers');
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page([], 30, 0, 20, $baseurl);
+
+        $this->assertStringContainsString('perpage=' . renderer::SHOW_ALL_PAGE_SIZE, $output);
+        $this->assertStringContainsString(get_string('showall', '', 30), $output);
+    }
+
+    /**
+     * Test that once "show all" is active (perpage >= SHOW_ALL_PAGE_SIZE), the
+     * listing shows a "show N per page" link back to the configured page size
+     * instead of the "show all" link.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_showperpage_link_when_already_showing_all(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        set_config('logpagesize', 20, 'tool_mergeusers');
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page([], 30, 0, renderer::SHOW_ALL_PAGE_SIZE, $baseurl);
+
+        $this->assertStringContainsString('perpage=20', $output);
+        $this->assertStringContainsString(get_string('showperpage', '', 20), $output);
+        $this->assertStringNotContainsString(get_string('showall', '', 30), $output);
+    }
+
+    /**
+     * Test that no "show all"/"show per page" toggle link is rendered when every
+     * matching row already fits on a single page.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_hides_showall_toggle_when_everything_fits_on_one_page(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        set_config('logpagesize', 20, 'tool_mergeusers');
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page([], 5, 0, 20, $baseurl);
+
+        $this->assertStringNotContainsString('tool-mergeusers-logs-showall', $output);
+    }
+
+    /**
+     * Test that the search input value is HTML-escaped and repopulated from the
+     * current search term, so the admin sees what they searched for after
+     * submitting the form.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_search_input_value_is_escaped_and_repopulated(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php', ['search' => '<b>jsmith</b>']);
+        $output = $this->get_renderer()->logs_page([], 0, 0, 20, $baseurl, '<b>jsmith</b>');
+
+        $this->assertStringContainsString('value="&lt;b&gt;jsmith&lt;/b&gt;"', $output);
+        $this->assertStringNotContainsString('value="<b>jsmith</b>"', $output);
+    }
+
+    /**
+     * Test that the CSV export link carries the current search term, so exporting
+     * while a search is active only downloads the matching rows (view.php honors the
+     * "search" param on the export path too).
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_export_link_carries_current_search_term(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php', ['search' => 'jsmith']);
+        $output = $this->get_renderer()->logs_page([], 0, 0, 20, $baseurl, 'jsmith');
+
+        $this->assertStringContainsString('export=1', $output);
+        $this->assertStringContainsString('search=jsmith', $output);
+    }
+
+    /**
+     * Test that a falsy-but-meaningful search term ("0") still reaches the export
+     * link. array_filter()'s default callback would otherwise drop it, since "0" is
+     * falsy in PHP, silently making the export ignore the active search.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_export_link_carries_zero_search_term(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php', ['search' => '0']);
+        $output = $this->get_renderer()->logs_page([], 0, 0, 20, $baseurl, '0');
+
+        $this->assertStringContainsString('export=1', $output);
+        $this->assertStringContainsString('search=0', $output);
+    }
+
+    /**
+     * Test that the search box has an accessible label (not just a placeholder),
+     * so screen reader users can identify the field.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_search_input_has_accessible_label(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page([], 0, 0, 20, $baseurl);
+
+        $this->assertMatchesRegularExpression(
+            '/<label[^>]*for="tool-mergeusers-logs-search-input"[^>]*>/',
+            $output,
+        );
+        $this->assertStringContainsString('id="tool-mergeusers-logs-search-input"', $output);
+    }
+
+    /**
+     * Test that the search form and the export link are wrapped in the expected
+     * toolbar markup, so a future refactor of logs_page() cannot silently drop the
+     * grouping that keeps the header from looking cramped/mixed together.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_wraps_search_and_export_in_toolbar_markup(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page([], 0, 0, 20, $baseurl);
+
+        $this->assertStringContainsString('class="tool-mergeusers-logs-toolbar"', $output);
+        $this->assertStringContainsString('class="tool-mergeusers-logs-toolbar__export"', $output);
+
+        // The export link/help icon must be nested inside the toolbar, after the search form.
+        $toolbarstart = strpos($output, 'class="tool-mergeusers-logs-toolbar"');
+        $exportstart = strpos($output, 'class="tool-mergeusers-logs-toolbar__export"');
+        $searchforminput = strpos($output, 'id="tool-mergeusers-logs-search-input"');
+        $this->assertGreaterThan($toolbarstart, $searchforminput);
+        $this->assertGreaterThan($searchforminput, $exportstart);
     }
 
     /**

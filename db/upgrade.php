@@ -183,6 +183,22 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080500, 'tool', 'mergeusers');
     }
 
+    if ($oldversion < 2026080700) {
+        // Define index mdl_toolmerg_tim_ix to be added to tool_mergeusers, needed to
+        // paginate/sort the merge log listing by timemodified DESC (its default sort)
+        // without a full table scan.
+        $table = new xmldb_table('tool_mergeusers');
+        $index = new xmldb_index('mdl_toolmerg_tim_ix', XMLDB_INDEX_NOTUNIQUE, ['timemodified']);
+
+        // Conditionally launch add index mdl_toolmerg_tim_ix.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2026080700, 'tool', 'mergeusers');
+    }
+
     return true;
 }
 
