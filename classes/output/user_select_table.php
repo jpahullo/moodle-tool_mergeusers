@@ -73,15 +73,13 @@ class user_select_table extends html_table implements renderable {
         $this->data = [];
 
         $this->id = 'merge_users_tool_user_select_table';
-        $this->attributes['class'] = 'generaltable table-reboot boxaligncenter';
+        $this->attributes['class'] = 'generaltable table-reboot';
 
         $columns = [
             'col_select_olduser' => get_string('olduser', 'tool_mergeusers'),
             'col_master_newuser' => get_string('newuser', 'tool_mergeusers'),
             'col_userid' => 'Id',
             'col_username' => get_string('user'),
-            'col_email' => get_string('email'),
-            'col_idnumber' => get_string('idnumber'),
         ];
 
         $this->head = array_values($columns);
@@ -113,8 +111,6 @@ class user_select_table extends html_table implements renderable {
             );
             $row[] = html_writer::tag('span', $user->id, ['class' => $spanclass]);
             $row[] = $this->renderer->show_user($user->id, $user);
-            $row[] = html_writer::tag('span', $user->email, ['class' => $spanclass]);
-            $row[] = html_writer::tag('span', $user->idnumber, ['class' => $spanclass]);
             $this->data[] = $row;
         }
     }
