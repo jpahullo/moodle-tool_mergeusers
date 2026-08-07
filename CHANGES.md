@@ -3,6 +3,35 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080701
+
+1. improvement: #363: CI's `codechecker` step is now a hard gate
+   (`codechecker_max_warnings: 0`): a coding-standard warning fails the build, not
+   just an error. It turns out this step (and `phpdoc`) had actually been enabled
+   since `690a5cf`, just never enforced strictly and never documented as such.
+2. improvement: #363: local development now has its own `.bin/moodle-plugin-ci.phar`
+   (gitignored, auto-synced to the latest GitHub release at most once a day), the
+   same tool CI itself is built on. `make ci-<step>`/`make ci-local` run every
+   `moodle-ci.yml` step that has a local equivalent (`phplint`, `codechecker`,
+   `validate`, `savepoints`, `mustache`, `phpdoc`) and are now the authoritative way
+   to check "will CI pass" - superseding the old `local_codechecker`-based `phpcs`
+   target (removed; `make phpcbf` stays for auto-fixing, moodle-plugin-ci has no
+   equivalent). `local_codechecker`'s bundled `moodle-cs` can lag behind what
+   moodle-plugin-ci installs and disagree with it on specific sniffs, so it should no
+   longer be used to judge CI outcomes, including with the stricter `moodle-extra`
+   standard, which CI never checks at all.
+3. improvement: #363: the `Makefile` derives every path (plugin dir, Moodle dirroot,
+   `vendor/`) from where the `Makefile` itself lives instead of hardcoding it, so it
+   works the same on Moodle's classic dirroot layout and on 5.x's split `public/`
+   docroot. `docker exec` wrapping is now based on whether `/.dockerenv` indicates
+   make is actually running inside the dev container, rather than solely on whether
+   `.env` defines `container_name` - so the same `.env` works unmodified whether
+   invoked from the host or from a shell already inside the container. Also fixed a
+   latent bug where `ifndef x:`'s stray trailing colon made those blocks
+   unconditionally true, silently ignoring any override from `.env`.
+4. fix: #363: `renderer::results_page()`'s phpdoc documented `$status` as `string`,
+   but the parameter is `?string`; caught by the new `make ci-phpdoc`.
+
 ## 2026080700
 
 1. improvement: #420: the merge log listing (`view.php`) is now paginated instead of

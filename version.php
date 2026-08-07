@@ -30,8 +30,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version = 2026080700;
-$plugin->release = '(2026080700: Focus on stability and extensibility)';
+$plugin->version = 2026080701;
+$plugin->release = '(2026080701: Focus on stability and extensibility)';
 $plugin->requires = 2024100700; // Moodle 4.5+, https://moodledev.io/general/releases#moodle-45-lts.
 $plugin->component = 'tool_mergeusers';
 $plugin->maturity = MATURITY_STABLE;
