@@ -128,4 +128,50 @@ final class profile_fields_test extends advanced_testcase {
 
         $this->assertSame([], profile_fields::allowed());
     }
+
+    /**
+     * Test that unavailable_field_notice() names the field when it can still be
+     * resolved - the field itself still exists, it is just no longer allowed for
+     * searching (e.g. the master switch was turned off, or it was deselected).
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_unavailable_field_notice_names_existing_field(): void {
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+
+        $notice = profile_fields::unavailable_field_notice((string) $fieldid);
+
+        $this->assertSame(get_string('searchfieldnolongeravailable', 'tool_mergeusers', 'Name of frog'), $notice);
+    }
+
+    /**
+     * Test that unavailable_field_notice() falls back to a generic message when the
+     * field id no longer resolves to any real field (e.g. it was deleted, not just
+     * disallowed).
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_unavailable_field_notice_falls_back_when_field_deleted(): void {
+        $notice = profile_fields::unavailable_field_notice('999999');
+
+        $this->assertSame(get_string('searchfieldnolongeravailable_generic', 'tool_mergeusers'), $notice);
+    }
+
+    /**
+     * Test that unavailable_field_notice() falls back to the generic message for a
+     * non-numeric raw value too, rather than erroring.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_unavailable_field_notice_falls_back_for_non_numeric_value(): void {
+        $notice = profile_fields::unavailable_field_notice('');
+
+        $this->assertSame(get_string('searchfieldnolongeravailable_generic', 'tool_mergeusers'), $notice);
+    }
 }

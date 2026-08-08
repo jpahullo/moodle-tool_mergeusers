@@ -73,4 +73,26 @@ final class profile_fields {
         $allowedids = array_map('intval', explode(',', $allowedids));
         return array_intersect_key(self::all(), array_flip($allowedids));
     }
+
+    /**
+     * Builds the notice to show when a submitted search/verification field turned out
+     * to be null after moodleform processing - meaning the submitted value (most
+     * likely a custom profile field id) no longer matches any option the form
+     * currently defines. This happens when another administrator disables profile-
+     * field search, or deselects that specific field, between this page being loaded
+     * and being submitted.
+     *
+     * @param string $rawfield the raw submitted field value, read directly from the
+     * request (moodleform already discarded it, since it did not match any option).
+     * @return string the notice message, naming the field by name when it can still
+     * be resolved (the profile field itself still exists, just is no longer allowed
+     * for searching), or generically otherwise.
+     */
+    public static function unavailable_field_notice(string $rawfield): string {
+        $fieldname = self::all()[(int) $rawfield] ?? null;
+        if ($fieldname !== null) {
+            return get_string('searchfieldnolongeravailable', 'tool_mergeusers', $fieldname);
+        }
+        return get_string('searchfieldnolongeravailable_generic', 'tool_mergeusers');
+    }
 }

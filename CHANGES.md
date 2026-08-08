@@ -3,6 +3,15 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080801
+
+1. bugfix: #402: searching (or the old/new-user advanced form) no longer fatals with
+   a `TypeError` when the submitted field was a custom profile field that another
+   administrator disabled, or deselected from the allow-list, between the page
+   loading and being submitted (e.g. on a plain browser refresh). Redirects back to
+   the search page instead, with a dismissible notice naming the field that is no
+   longer available when it can still be resolved.
+
 ## 2026080800
 
 1. improvement: #402: profile-field search is now gated by its own master

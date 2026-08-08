@@ -29,6 +29,7 @@
  */
 
 use core\task\manager;
+use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\selected_users_to_merge;
 use tool_mergeusers\local\user_merger;
 use tool_mergeusers\local\user_searcher;
@@ -200,6 +201,19 @@ if (!empty($option)) {
         $searchterm = $data->searchgroup['searcharg'];
         $searchfield = $data->searchgroup['searchfield'];
 
+        if ($searchfield === null) {
+            // The submitted field (most likely a custom profile field id) no longer
+            // matches any option the form currently defines - e.g. another
+            // administrator disabled/deselected it since this page was loaded.
+            $rawsearchfield = optional_param_array('searchgroup', [], PARAM_RAW_TRIMMED)['searchfield'] ?? '';
+            redirect(
+                new moodle_url('/admin/tool/mergeusers/index.php'),
+                profile_fields::unavailable_field_notice($rawsearchfield),
+                0,
+                \core\output\notification::NOTIFY_WARNING,
+            );
+        }
+
         $maxresults = (int) get_config('tool_mergeusers', 'maxsearchresults');
         if ($maxresults < 1) {
             $maxresults = 25; // Defensive fallback: the setting has not been saved yet on this site.
@@ -224,6 +238,20 @@ if (!empty($option)) {
 
         // Only run this step if there are both a new and old userids.
     } else if (!empty($data->oldusergroup['olduserid']) && !empty($data->newusergroup['newuserid'])) {
+        if ($data->oldusergroup['olduseridtype'] === null || $data->newusergroup['newuseridtype'] === null) {
+            // Same as above: one of the field types (most likely a custom profile
+            // field id) no longer matches any option the form currently defines.
+            $rawoldtype = optional_param_array('oldusergroup', [], PARAM_RAW_TRIMMED)['olduseridtype'] ?? '';
+            $rawnewtype = optional_param_array('newusergroup', [], PARAM_RAW_TRIMMED)['newuseridtype'] ?? '';
+            $rawtype = $data->oldusergroup['olduseridtype'] === null ? $rawoldtype : $rawnewtype;
+            redirect(
+                new moodle_url('/admin/tool/mergeusers/index.php'),
+                profile_fields::unavailable_field_notice($rawtype),
+                0,
+                \core\output\notification::NOTIFY_WARNING,
+            );
+        }
+
         // Get and verify the userids from the selection form usig the verify_user function (second field is column).
         [$olduser, $oumessage] = $usersearcher->verify_user($data->oldusergroup['olduserid'], $data->oldusergroup['olduseridtype']);
         [$newuser, $numessage] = $usersearcher->verify_user($data->newusergroup['newuserid'], $data->newusergroup['newuseridtype']);
