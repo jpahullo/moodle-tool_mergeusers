@@ -3,6 +3,16 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080802
+
+1. improvement: #402: every checkbox setting on the plugin's admin settings page
+   (suspend old user, transactions only, search by profile fields, unique key to
+   maintain, enable ad-hoc merge) is now rendered as a toggle switch, matching core's
+   own "Turn editing on" switch and the notification preferences page - a new
+   `toggle_setting` class reuses core's own `form-switch`/`form-check-input` markup;
+   no JavaScript, no core markup patched, only a different template for what was
+   already a plain checkbox.
+
 ## 2026080801
 
 1. bugfix: #402: searching (or the old/new-user advanced form) no longer fatals with

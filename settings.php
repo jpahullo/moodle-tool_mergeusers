@@ -31,6 +31,7 @@ use tool_mergeusers\local\database_transactions;
 use tool_mergeusers\local\settings\json_setting;
 use tool_mergeusers\local\settings\logpagesize_setting;
 use tool_mergeusers\local\settings\logsearchmaxlength_setting;
+use tool_mergeusers\local\settings\toggle_setting;
 use tool_mergeusers\local\config;
 
 defined('MOODLE_INTERNAL') || die;
@@ -127,7 +128,7 @@ if ($ADMIN->fulltree) {
     }
 
     // Add configuration for making user suspension optional.
-    $generalsettings->add(new admin_setting_configcheckbox(
+    $generalsettings->add(new toggle_setting(
         'tool_mergeusers/suspenduser',
         get_string('suspenduser_setting', 'tool_mergeusers'),
         get_string('suspenduser_setting_desc', 'tool_mergeusers'),
@@ -136,7 +137,7 @@ if ($ADMIN->fulltree) {
 
     $supportinglang = (database_transactions::are_supported()) ? 'transactions_supported' : 'transactions_not_supported';
 
-    $generalsettings->add(new admin_setting_configcheckbox(
+    $generalsettings->add(new toggle_setting(
         'tool_mergeusers/transactions_only',
         get_string('transactions_setting', 'tool_mergeusers'),
         get_string('transactions_setting_desc', 'tool_mergeusers') . '<br /><br />' .
@@ -155,7 +156,7 @@ if ($ADMIN->fulltree) {
 
     $profilefieldoptions = tool_mergeusers_build_profilefields_options();
     if (!empty($profilefieldoptions->options)) {
-        $generalsettings->add(new admin_setting_configcheckbox(
+        $generalsettings->add(new toggle_setting(
             'tool_mergeusers/searchbyprofilefieldsenabled',
             get_string('searchbyprofilefieldsenabled', 'tool_mergeusers'),
             get_string('searchbyprofilefieldsenabled_desc', 'tool_mergeusers'),
@@ -202,14 +203,14 @@ if ($ADMIN->fulltree) {
         '1000',
     ));
 
-    $generalsettings->add(new admin_setting_configcheckbox(
+    $generalsettings->add(new toggle_setting(
         'tool_mergeusers/uniquekeynewidtomaintain',
         get_string('uniquekeynewidtomaintain', 'tool_mergeusers'),
         get_string('uniquekeynewidtomaintain_desc', 'tool_mergeusers'),
         1
     ));
 
-    $generalsettings->add(new admin_setting_configcheckbox(
+    $generalsettings->add(new toggle_setting(
         'tool_mergeusers/enableadhocmerge',
         get_string('enableadhocmerge', 'tool_mergeusers'),
         get_string('enableadhocmerge_desc', 'tool_mergeusers'),
