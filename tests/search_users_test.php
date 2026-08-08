@@ -266,6 +266,7 @@ final class search_users_test extends advanced_testcase {
             'shortname' => 'frogname', 'name' => 'Name of frog',
             'datatype' => 'text',
         ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
 
         $user = $this->getDataGenerator()->create_user(['firstname' => 'Nomatch', 'lastname' => 'Nomatch']);
@@ -298,6 +299,7 @@ final class search_users_test extends advanced_testcase {
             'shortname' => 'frogname', 'name' => 'Name of frog',
             'datatype' => 'text',
         ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
 
         $deleteduser = $this->getDataGenerator()->create_user(['username' => 'deletedmatch']);
@@ -307,5 +309,50 @@ final class search_users_test extends advanced_testcase {
 
         $this->assertCount(0, $mus->search_users('deletedmatch', 'all'));
         $this->assertSame(0, $mus->count_users('deletedmatch', 'all'));
+    }
+
+    /**
+     * Test that when more than one custom user profile field is allow-listed for
+     * searching, the "search all fields" branch finds a match in either of them,
+     * not just the first configured field id.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_search_users_all_fields_matches_any_of_several_allowlisted_profile_fields(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+
+        $frogfieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        $toadfieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'toadname', 'name' => 'Name of toad',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
+        set_config('searchbyprofilefields', $frogfieldid . ',' . $toadfieldid, 'tool_mergeusers');
+
+        $froguser = $this->getDataGenerator()->create_user(['firstname' => 'Nomatch', 'lastname' => 'Nomatch']);
+        $froguid = new \stdClass();
+        $froguid->userid = $froguser->id;
+        $froguid->fieldid = $frogfieldid;
+        $froguid->data = 'uniquefrogvalue';
+        $DB->insert_record('user_info_data', $froguid);
+
+        $toaduser = $this->getDataGenerator()->create_user(['firstname' => 'Nomatch', 'lastname' => 'Nomatch']);
+        $toaduid = new \stdClass();
+        $toaduid->userid = $toaduser->id;
+        $toaduid->fieldid = $toadfieldid;
+        $toaduid->data = 'uniquetoadvalue';
+        $DB->insert_record('user_info_data', $toaduid);
+
+        $mus = new user_searcher();
+
+        $this->assertCount(1, $mus->search_users('uniquefrogvalue', 'all'));
+        $this->assertCount(1, $mus->search_users('uniquetoadvalue', 'all'));
+        $this->assertSame(1, $mus->count_users('uniquefrogvalue', 'all'));
+        $this->assertSame(1, $mus->count_users('uniquetoadvalue', 'all'));
     }
 }

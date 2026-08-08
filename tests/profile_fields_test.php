@@ -89,6 +89,7 @@ final class profile_fields_test extends advanced_testcase {
             'datatype' => 'text',
         ]);
 
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', (string) $allowedid, 'tool_mergeusers');
 
         $this->assertSame([$allowedid => 'Name of frog'], profile_fields::allowed());
@@ -102,7 +103,28 @@ final class profile_fields_test extends advanced_testcase {
      * @group tool_mergeusers_search_users
      */
     public function test_allowed_ignores_deleted_field_id(): void {
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', '999999', 'tool_mergeusers');
+
+        $this->assertSame([], profile_fields::allowed());
+    }
+
+    /**
+     * Test that allowed() is empty while the master switch
+     * (searchbyprofilefieldsenabled) is off, even if fields are already
+     * selected in searchbyprofilefields - the toggle always wins.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_allowed_empty_when_disabled_even_if_fields_configured(): void {
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+
+        set_config('searchbyprofilefieldsenabled', 0, 'tool_mergeusers');
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
 
         $this->assertSame([], profile_fields::allowed());
     }

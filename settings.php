@@ -155,6 +155,12 @@ if ($ADMIN->fulltree) {
 
     $profilefieldoptions = tool_mergeusers_build_profilefields_options();
     if (!empty($profilefieldoptions->options)) {
+        $generalsettings->add(new admin_setting_configcheckbox(
+            'tool_mergeusers/searchbyprofilefieldsenabled',
+            get_string('searchbyprofilefieldsenabled', 'tool_mergeusers'),
+            get_string('searchbyprofilefieldsenabled_desc', 'tool_mergeusers'),
+            0
+        ));
         $generalsettings->add(new admin_setting_configmultiselect(
             'tool_mergeusers/searchbyprofilefields',
             get_string('searchbyprofilefields', 'tool_mergeusers'),

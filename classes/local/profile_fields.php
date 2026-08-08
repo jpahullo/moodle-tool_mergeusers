@@ -54,11 +54,17 @@ final class profile_fields {
     /**
      * Lists the custom user profile fields the site administrator has allowed for
      * searching users to merge, via the tool_mergeusers/searchbyprofilefields setting.
+     * Always empty unless tool_mergeusers/searchbyprofilefieldsenabled is also on -
+     * the single master switch every caller of this method implicitly respects.
      * Silently ignores any configured field id that no longer exists.
      *
      * @return array<int,string> fieldid => display name.
      */
     public static function allowed(): array {
+        if (empty(get_config('tool_mergeusers', 'searchbyprofilefieldsenabled'))) {
+            return [];
+        }
+
         $allowedids = get_config('tool_mergeusers', 'searchbyprofilefields');
         if (empty($allowedids)) {
             return [];

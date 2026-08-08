@@ -3,6 +3,15 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026080800
+
+1. improvement: #402: profile-field search is now gated by its own master
+   switch, `tool_mergeusers/searchbyprofilefieldsenabled` (off by default),
+   separate from the field allow-list itself. This avoids overloading the
+   allow-list's emptiness with dual meaning ("nothing selected yet" vs.
+   "deliberately disabled"): the multiselect stays a plain list of fields,
+   and the toggle alone decides whether it is consulted at all.
+
 ## 2026080704
 
 1. improvement: #402: allow searching for a user to merge by a custom user

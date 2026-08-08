@@ -55,6 +55,7 @@ final class searchbyprofilefields_test extends advanced_testcase {
             'shortname' => 'frogname', 'name' => 'Name of frog',
             'datatype' => 'text',
         ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
 
         // Add userone profile data.
@@ -153,6 +154,7 @@ final class searchbyprofilefields_test extends advanced_testcase {
             'shortname' => 'frogname', 'name' => 'Name of frog',
             'datatype' => 'text',
         ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
 
         $user = $this->getDataGenerator()->create_user();
@@ -217,6 +219,7 @@ final class searchbyprofilefields_test extends advanced_testcase {
             'shortname' => 'frogname', 'name' => 'Name of frog',
             'datatype' => 'text',
         ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
 
         $user = $this->getDataGenerator()->create_user();
@@ -250,6 +253,7 @@ final class searchbyprofilefields_test extends advanced_testcase {
             'shortname' => 'frogname', 'name' => 'Name of frog',
             'datatype' => 'text',
         ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
 
         foreach ([$this->getDataGenerator()->create_user(), $this->getDataGenerator()->create_user()] as $user) {
