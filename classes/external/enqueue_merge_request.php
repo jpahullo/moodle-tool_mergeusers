@@ -60,12 +60,14 @@ class enqueue_merge_request extends external_api {
         return new external_function_parameters([
             'fromuserfield' => new external_value(
                 PARAM_ALPHANUMEXT,
-                'Field identifying the user to remove: username, idnumber, id, or a profile field id',
+                'Field identifying the user to remove: username, idnumber, id, or ' .
+                'profile_field_<shortname> for an allow-listed custom profile field',
             ),
             'fromuservalue' => new external_value(PARAM_RAW, 'Value identifying the user to remove'),
             'touserfield' => new external_value(
                 PARAM_ALPHANUMEXT,
-                'Field identifying the user to keep: username, idnumber, id, or a profile field id',
+                'Field identifying the user to keep: username, idnumber, id, or ' .
+                'profile_field_<shortname> for an allow-listed custom profile field',
             ),
             'touservalue' => new external_value(PARAM_RAW, 'Value identifying the user to keep'),
         ]);
@@ -169,7 +171,11 @@ class enqueue_merge_request extends external_api {
     }
 
     /**
-     * Restricts $field to the same set merge_user_form.php offers for identifying a user.
+     * Restricts $field to the same set merge_user_form.php offers for identifying a user:
+     * username/idnumber/id, or "profile_field_<shortname>" for an allow-listed custom
+     * profile field - never the field's internal database id, which is an
+     * environment-specific implementation detail external callers cannot be expected
+     * to know (see profile_fields::FIELD_PREFIX).
      *
      * @param string $field
      */
@@ -178,7 +184,7 @@ class enqueue_merge_request extends external_api {
         if (in_array($field, $simplefields, true)) {
             return;
         }
-        if (is_numeric($field) && array_key_exists((int) $field, profile_fields::allowed())) {
+        if (profile_fields::resolve_allowed($field) !== null) {
             return;
         }
         throw new invalid_parameter_exception(get_string('wsinvalidfield', 'tool_mergeusers', $field));

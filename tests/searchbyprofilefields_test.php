@@ -26,6 +26,7 @@
 namespace tool_mergeusers;
 
 use advanced_testcase;
+use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\user_merger;
 use tool_mergeusers\local\user_searcher;
 
@@ -66,7 +67,7 @@ final class searchbyprofilefields_test extends advanced_testcase {
         $DB->insert_record('user_info_data', $uidone);
 
         $mus = new user_searcher();
-        $searchusers = $mus->search_users('frogvalueone', (string) $fieldid);
+        $searchusers = $mus->search_users('frogvalueone', profile_fields::FIELD_PREFIX . 'frogname');
         $this->assertCount(1, $searchusers);
 
         // Create another user with its own profile data.
@@ -76,11 +77,11 @@ final class searchbyprofilefields_test extends advanced_testcase {
         $uidtwo->fieldid = $fieldid;
         $uidtwo->data = 'frogvaluetwo';
         $DB->insert_record('user_info_data', $uidtwo);
-        $searchusers = $mus->search_users('frogvaluetwo', (string) $fieldid);
+        $searchusers = $mus->search_users('frogvaluetwo', profile_fields::FIELD_PREFIX . 'frogname');
         $this->assertCount(1, $searchusers);
 
         // A broader term matches both users.
-        $searchusers = $mus->search_users('frogvalue', (string) $fieldid);
+        $searchusers = $mus->search_users('frogvalue', profile_fields::FIELD_PREFIX . 'frogname');
         $this->assertCount(2, $searchusers);
 
         $this->assertEquals(0, $userone->suspended);
@@ -116,8 +117,8 @@ final class searchbyprofilefields_test extends advanced_testcase {
         $this->assertEquals([$course2->id, $course3->id], array_keys($courses));
 
         // Search users by profile field and merge usertwo into userone.
-        $userkeep = $mus->search_users('frogvalueone', (string) $fieldid)[$userone->id];
-        $userremove = $mus->search_users('frogvaluetwo', (string) $fieldid)[$usertwo->id];
+        $userkeep = $mus->search_users('frogvalueone', profile_fields::FIELD_PREFIX . 'frogname')[$userone->id];
+        $userremove = $mus->search_users('frogvaluetwo', profile_fields::FIELD_PREFIX . 'frogname')[$usertwo->id];
         $mut = new user_merger();
         $mut->merge($userkeep->id, $userremove->id);
 
@@ -165,7 +166,7 @@ final class searchbyprofilefields_test extends advanced_testcase {
         $DB->insert_record('user_info_data', $uid);
 
         $mus = new user_searcher();
-        [$founduser, $message] = $mus->verify_user('frogvalueone', (string) $fieldid);
+        [$founduser, $message] = $mus->verify_user('frogvalueone', profile_fields::FIELD_PREFIX . 'frogname');
 
         $this->assertSame('', $message);
         $this->assertNotNull($founduser);
@@ -197,7 +198,7 @@ final class searchbyprofilefields_test extends advanced_testcase {
         $DB->insert_record('user_info_data', $uid);
 
         $mus = new user_searcher();
-        [$founduser, $message] = $mus->verify_user('frogvalueone', (string) $fieldid);
+        [$founduser, $message] = $mus->verify_user('frogvalueone', profile_fields::FIELD_PREFIX . 'frogname');
 
         $this->assertNull($founduser);
         $this->assertNotSame('', $message);
@@ -231,7 +232,7 @@ final class searchbyprofilefields_test extends advanced_testcase {
 
         $mus = new user_searcher();
         // Only a partial match of the stored "frogvalueone" value.
-        [$founduser, $message] = $mus->verify_user('frogvalue', (string) $fieldid);
+        [$founduser, $message] = $mus->verify_user('frogvalue', profile_fields::FIELD_PREFIX . 'frogname');
 
         $this->assertNull($founduser);
         $this->assertNotSame('', $message);
@@ -265,10 +266,59 @@ final class searchbyprofilefields_test extends advanced_testcase {
         }
 
         $mus = new user_searcher();
-        [$founduser, $message, $ambiguous] = $mus->verify_user('sharedvalue', (string) $fieldid);
+        [$founduser, $message, $ambiguous] = $mus->verify_user('sharedvalue', profile_fields::FIELD_PREFIX . 'frogname');
 
         $this->assertNull($founduser);
         $this->assertNotSame('', $message);
         $this->assertTrue($ambiguous);
+    }
+
+    /**
+     * A "profile_field_<shortname>" reference naming a shortname that does not exist
+     * at all is rejected the same way as one that exists but is not allow-listed.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_verify_user_rejects_unknown_profile_field_shortname(): void {
+        $this->resetAfterTest(true);
+
+        $mus = new user_searcher();
+        [$founduser, $message] = $mus->verify_user('whatever', profile_fields::FIELD_PREFIX . 'doesnotexist');
+
+        $this->assertNull($founduser);
+        $this->assertNotSame('', $message);
+    }
+
+    /**
+     * The field's raw internal database id (the pre-#218 convention) is no longer
+     * recognised as a profile field reference - only "profile_field_<shortname>" is.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_verify_user_no_longer_accepts_raw_profile_field_id(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+
+        $user = $this->getDataGenerator()->create_user();
+        $uid = new \stdClass();
+        $uid->userid = $user->id;
+        $uid->fieldid = $fieldid;
+        $uid->data = 'frogvalueone';
+        $DB->insert_record('user_info_data', $uid);
+
+        $mus = new user_searcher();
+        [$founduser, $message] = $mus->verify_user('frogvalueone', (string) $fieldid);
+
+        $this->assertNull($founduser);
+        $this->assertNotSame('', $message);
     }
 }

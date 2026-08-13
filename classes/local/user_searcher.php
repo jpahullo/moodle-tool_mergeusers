@@ -111,13 +111,13 @@ final class user_searcher {
                 break;
             // Search on all fields by default.
             default:
-                $allowedfields = array_keys(profile_fields::allowed());
+                $fieldid = profile_fields::resolve_allowed($searchfield);
 
-                if (is_numeric($searchfield) && in_array((int) $searchfield, $allowedfields, true)) {
+                if ($fieldid !== null) {
                     // Search on a specific custom user profile field, allow-listed at settings.
                     $where = 'id IN (SELECT userid FROM {user_info_data} WHERE fieldid = :fieldid AND ' .
                              $DB->sql_like('data', ':data', false, false) . ')';
-                    $params = ['fieldid' => (int) $searchfield, 'data' => '%' . $input . '%'];
+                    $params = ['fieldid' => $fieldid, 'data' => '%' . $input . '%'];
                 } else {
                     $where = '(' .
                              $DB->sql_cast_to_char('id') . ' = :userid OR ' .
@@ -141,6 +141,7 @@ final class user_searcher {
                     // The "all fields" search also looks inside any custom user profile field
                     // allow-listed at settings, via a subquery - never a JOIN, so no risk of
                     // duplicate {user} rows.
+                    $allowedfields = profile_fields::allowed_ids();
                     if (!empty($allowedfields)) {
                         [$insql, $inparams] = $DB->get_in_or_equal($allowedfields, SQL_PARAMS_NAMED, 'apf');
                         $where .= ' OR id IN (SELECT userid FROM {user_info_data} WHERE fieldid ' . $insql .
@@ -191,15 +192,15 @@ final class user_searcher {
         // Check for existing user matching the specified criteria.
         $message = '';
         $ambiguous = false;
-        if (is_numeric($field)) {
-            // The field is a custom user profile field id. Reject it outright if it
-            // is not allow-listed, rather than falling back to any other search
-            // strategy; and require an *exact* match on a single user - unlike
-            // search_users(), which does partial (LIKE) matching and could
-            // otherwise silently resolve to the wrong one of several users sharing
-            // an overlapping profile-field value.
-            $fieldid = (int) $field;
-            if (!array_key_exists($fieldid, profile_fields::allowed())) {
+        if (str_starts_with($field, profile_fields::FIELD_PREFIX)) {
+            // The field is a "profile_field_<shortname>" reference. Reject it outright
+            // if it does not resolve to an allow-listed custom profile field, rather
+            // than falling back to any other search strategy; and require an *exact*
+            // match on a single user - unlike search_users(), which does partial (LIKE)
+            // matching and could otherwise silently resolve to the wrong one of several
+            // users sharing an overlapping profile-field value.
+            $fieldid = profile_fields::resolve_allowed($field);
+            if ($fieldid === null) {
                 $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
                 $user = null;
             } else {

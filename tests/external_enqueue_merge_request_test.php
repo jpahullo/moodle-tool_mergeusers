@@ -21,6 +21,7 @@ use invalid_parameter_exception;
 use required_capability_exception;
 use tool_mergeusers\external\enqueue_merge_request;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\status;
 
 /**
@@ -88,7 +89,8 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
     }
 
     /**
-     * An allow-listed custom profile field id is also a valid identifying field.
+     * An allow-listed custom profile field, identified by "profile_field_<shortname>"
+     * rather than its internal database id, is a valid identifying field.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_external
@@ -106,9 +108,43 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
         $DB->insert_record('user_info_data', (object) ['userid' => $fromuser->id, 'fieldid' => $fieldid, 'data' => 'S1']);
         $touser = $this->getDataGenerator()->create_user();
 
-        $result = $this->call((string) $fieldid, 'S1', 'id', (string) $touser->id);
+        $result = $this->call(profile_fields::FIELD_PREFIX . 'staffid', 'S1', 'id', (string) $touser->id);
 
         $this->assertGreaterThan(0, $result['logid']);
+    }
+
+    /**
+     * The profile field's raw internal database id is never accepted, only
+     * "profile_field_<shortname>" - the id is an environment-specific implementation
+     * detail an external caller cannot be expected to know.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_external
+     */
+    public function test_rejects_raw_profile_field_id(): void {
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'staffid', 'name' => 'Staff id', 'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+        $touser = $this->getDataGenerator()->create_user();
+
+        $this->expectException(invalid_parameter_exception::class);
+        $this->call((string) $fieldid, 'S1', 'id', (string) $touser->id);
+    }
+
+    /**
+     * A "profile_field_<shortname>" reference naming a shortname that does not exist
+     * at all is rejected too, not just one that exists but is not allow-listed.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_external
+     */
+    public function test_rejects_unknown_profile_field_shortname(): void {
+        $touser = $this->getDataGenerator()->create_user();
+
+        $this->expectException(invalid_parameter_exception::class);
+        $this->call(profile_fields::FIELD_PREFIX . 'doesnotexist', 'S1', 'id', (string) $touser->id);
     }
 
     /**
@@ -127,21 +163,21 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
     }
 
     /**
-     * A profile field id not on the allow-list is rejected.
+     * A profile field not on the allow-list is rejected.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_external
      */
     public function test_rejects_non_allowlisted_profile_field(): void {
-        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+        $this->getDataGenerator()->create_custom_profile_field([
             'shortname' => 'notallowed', 'name' => 'Not allowed', 'datatype' => 'text',
-        ])->id;
+        ]);
         // Deliberately not added to tool_mergeusers/searchbyprofilefields.
         $this->getDataGenerator()->create_user();
         $touser = $this->getDataGenerator()->create_user();
 
         $this->expectException(invalid_parameter_exception::class);
-        $this->call((string) $fieldid, 'whatever', 'id', (string) $touser->id);
+        $this->call(profile_fields::FIELD_PREFIX . 'notallowed', 'whatever', 'id', (string) $touser->id);
     }
 
     /**
