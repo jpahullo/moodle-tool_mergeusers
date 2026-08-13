@@ -249,6 +249,27 @@ if ($ADMIN->fulltree) {
         ));
     }
 
+    // Rename-on-missing-target: description names the fields it currently affects, since
+    // whether email counts depends on the site's own authloginviaemail setting.
+    global $CFG;
+    $renamewhenmissingtargetdesc = get_string('renamewhenmissingtarget_desc_username', 'tool_mergeusers');
+    if (!empty($CFG->authloginviaemail)) {
+        $renamewhenmissingtargetdesc .= ' ' . get_string('renamewhenmissingtarget_desc_email', 'tool_mergeusers');
+    }
+    $generalsettings->add(new toggle_setting(
+        'tool_mergeusers/renamewhenmissingtarget',
+        get_string('renamewhenmissingtarget', 'tool_mergeusers'),
+        $renamewhenmissingtargetdesc,
+        1
+    ));
+
+    $generalsettings->add(new toggle_setting(
+        'tool_mergeusers/wsallowduplicatepending',
+        get_string('wsallowduplicatepending', 'tool_mergeusers'),
+        get_string('wsallowduplicatepending_desc', 'tool_mergeusers'),
+        1
+    ));
+
     $fields = tool_mergeusers_inform_about_pending_user_profile_fields();
     if ($fields->exists) {
         $generalsettings->add(new admin_setting_description(

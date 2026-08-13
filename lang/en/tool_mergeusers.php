@@ -29,6 +29,7 @@
 
 $string['adhocconcurrencywarning'] = 'Adhoc merge concurrency limit overridden';
 $string['adhocconcurrencywarning_desc'] = 'By default this plugin only allows one "{$a}" task to run at a time, which guarantees merges are always applied in the order they were requested (important for chained merges, e.g. merging A into B, then B into C). Your config.php overrides this via $CFG->task_concurrency_limit for this task to a different value, which can let merges run out of order. Only keep this override if you specifically understand and accept that risk.';
+$string['ambiguoususer'] = 'More than one user matches field "{$a->field}" = "{$a->value}"';
 $string['choose_users'] = 'Choose users to merge';
 $string['clear_selection'] = 'Clear current user selection';
 $string['cligathering:description'] = "Introduce pairs of user's id to merge the first one into the\nsecond one. The first user id (fromid) will 'lose' all its data to be 'migrated'\ninto the second one (toid). The user 'toid' will include data from both users.";
@@ -145,6 +146,9 @@ $string['qa_chosen_action'] = 'Active option for quiz attempts: {$a}.';
 $string['qa_grades'] = 'Grades recalculated for quizzes: {$a}.';
 $string['quizattemptsaction'] = 'How to resolve quiz attempts';
 $string['quizattemptsaction_desc'] = 'When merging quiz attempts there may exist three cases: <ol><li>Only the old user has quiz attempts. All attempts will appear as if they were made by the new user.</li><li>Only the new user has quiz attempts. All is correct and nothing is done.</li><li>Both users have attempts for the same quiz. <strong>You have to choose what to do in this case of conflict.</strong>. You are required to choose one of the following actions: <ul> <li><strong>{$a->renumber}</strong>. Attempts from the old user are merged with the ones of the new user and renumbered by the time they were started.</li><li><strong>{$a->delete_fromid}</strong>. Attempts from the old user are removed. Attempts from the new user are kept, since this option considers them as the most important.</li><li><strong>{$a->delete_toid}</strong>. Attempts from the new user are removed. Attempts from the old user are kept, since this option considers them as the most important.</li><li><strong>{$a->remain}</strong>. Attempts are not merged nor deleted, remaining related to the user who made them. This is the most secure action, but merging users from user A to user B or B to A may produce different quiz grades.</li></ul> </li></ol>';
+$string['renamewhenmissingtarget'] = 'Rename identifier when the user to keep does not exist yet';
+$string['renamewhenmissingtarget_desc_email'] = 'Logging in with an email address is enabled on this site, so this also applies when searching by email address.';
+$string['renamewhenmissingtarget_desc_username'] = 'When a merge is requested by a login identifier and the user to keep does not exist yet but the user to remove does, the user to remove\'s username is renamed to the value searched for the user to keep, instead of failing. Currently applies when searching by username.';
 $string['results'] = 'Merge results and log';
 $string['review_users'] = 'Confirm users to merge';
 $string['saveselection_submit'] = 'Save selection';
@@ -209,3 +213,6 @@ $string['userreviewtable_legend'] = '<b>Review users to merge</b>';
 $string['userselecttable_legend'] = '<b>Select users to merge</b>';
 $string['viewlog'] = 'Merge users logs';
 $string['wronglogid'] = 'The log you are asking for does not exist.';
+$string['wsallowduplicatepending'] = 'Allow queuing duplicate merge requests via web service';
+$string['wsallowduplicatepending_desc'] = 'When a web service caller requests a merge for a user that already has a pending or in-progress merge request, allow queuing another one anyway - full trust in the caller, same as an administrator repeating the action from the web interface (which today does not restrict this either). When disabled, the existing request is returned instead of queuing a new one - useful when trusting the caller less.';
+$string['wsinvalidfield'] = 'Field "{$a}" is not allowed to identify a user for this web service';

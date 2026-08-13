@@ -35,7 +35,9 @@ namespace tool_mergeusers\local;
 
 use coding_exception;
 use dml_exception;
+use dml_multiple_records_exception;
 use Exception;
+use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -168,12 +170,13 @@ final class user_searcher {
      *   [
      *       0 => Either NULL or the user object.  Will be NULL if not valid user or without actual selection,
      *       1 => Message for invalid user to display/log. Empty string for no actual selection.
+     *       2 => true when NULL means "more than one user matched" rather than "no user matched".
      *   ]
      *
      * @param ?string $value The identifying information about the user. Null when no actual selection was done.
      * @param string $field The column name to verify against. (Should not be direct user input)
      *
-     * @return array two positions with the results of the verification.
+     * @return array three positions with the results of the verification.
      * @throws coding_exception
      * @throws dml_exception
      */
@@ -182,11 +185,12 @@ final class user_searcher {
 
         // Inform there is no actual selection this time.
         if (is_null($value)) {
-            return [null, ''];
+            return [null, '', false];
         }
 
         // Check for existing user matching the specified criteria.
         $message = '';
+        $ambiguous = false;
         if (is_numeric($field)) {
             // The field is a custom user profile field id. Reject it outright if it
             // is not allow-listed, rather than falling back to any other search
@@ -206,6 +210,10 @@ final class user_searcher {
                         ['fieldid' => $fieldid, 'data' => $value],
                         MUST_EXIST,
                     );
+                } catch (dml_multiple_records_exception $e) {
+                    $message = get_string('ambiguoususer', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
+                    $user = null;
+                    $ambiguous = true;
                 } catch (Exception $e) {
                     $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
                     $user = null;
@@ -214,12 +222,57 @@ final class user_searcher {
         } else {
             try {
                 $user = $DB->get_record('user', [$field => $value, 'deleted' => 0], '*', MUST_EXIST);
+            } catch (dml_multiple_records_exception $e) {
+                $message = get_string('ambiguoususer', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
+                $user = null;
+                $ambiguous = true;
             } catch (Exception $e) {
                 $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
                 $user = null;
             }
         }
 
-        return [$user, $message];
+        return [$user, $message, $ambiguous];
+    }
+
+    /**
+     * Whether $field is a real Moodle login identifier: username always, or email only
+     * when $CFG->authloginviaemail is enabled (core falls back to matching a unique email
+     * to a username at login time only then - see authenticate_user_login()).
+     *
+     * @param string $field
+     * @return bool
+     */
+    public function is_login_identifier_field(string $field): bool {
+        global $CFG;
+
+        return $field === 'username' || ($field === 'email' && !empty($CFG->authloginviaemail));
+    }
+
+    /**
+     * Renames $user's $field to $value, when both the tool_mergeusers/renamewhenmissingtarget
+     * setting is enabled and $field is a real login identifier (see is_login_identifier_field()).
+     * Intended for when a merge's "to" user does not exist yet, but the "from" user does: instead
+     * of a full merge, the "from" user's own login identifier is updated to the "to" value.
+     *
+     * @param stdClass $user the user to rename (a full {user} record, at least id).
+     * @param string $field
+     * @param string $value
+     * @return bool true when the rename was performed.
+     */
+    public function rename_if_eligible(stdClass $user, string $field, string $value): bool {
+        global $CFG;
+
+        if (empty(get_config('tool_mergeusers', 'renamewhenmissingtarget'))) {
+            return false;
+        }
+        if (!$this->is_login_identifier_field($field)) {
+            return false;
+        }
+
+        require_once($CFG->dirroot . '/user/lib.php');
+        user_update_user((object) ['id' => $user->id, $field => $value], false);
+
+        return true;
     }
 }

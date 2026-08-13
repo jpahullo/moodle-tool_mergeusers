@@ -265,9 +265,10 @@ final class searchbyprofilefields_test extends advanced_testcase {
         }
 
         $mus = new user_searcher();
-        [$founduser, $message] = $mus->verify_user('sharedvalue', (string) $fieldid);
+        [$founduser, $message, $ambiguous] = $mus->verify_user('sharedvalue', (string) $fieldid);
 
         $this->assertNull($founduser);
         $this->assertNotSame('', $message);
+        $this->assertTrue($ambiguous);
     }
 }
