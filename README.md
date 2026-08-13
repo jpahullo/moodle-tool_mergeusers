@@ -345,6 +345,90 @@ there is not a consistent state inside the Moodle database, nor also
 third-party plugins.
 
 
+# Web services
+
+This plugin exposes two web service functions, so an external system can
+queue and monitor merges without going through the web UI or a CLI script
+on the server itself.
+
+## `tool_mergeusers_enqueue_merge_request`
+
+Queues a merge, the same way the web UI does when
+`tool_mergeusers/enableadhocmerge` is on (see
+["Merging asynchronously via adhoc task"](#merging-asynchronously-via-adhoc-task)
+above): a pending log entry plus a `merge_users_task` adhoc task, processed
+the next time cron runs. Requires the `tool/mergeusers:mergeusers`
+capability.
+
+Parameters: `fromuserfield`, `fromuservalue`, `touserfield`, `touservalue`.
+The two `*field` parameters identify a user unambiguously and accept only:
+
+- `username`, `idnumber` or `id`.
+- `profile_field_<shortname>`, for a custom user profile field allow-listed
+  via `tool_mergeusers/searchbyprofilefields` (e.g. `profile_field_staffid`
+  for a field whose shortname is `staffid`) - **never** the field's internal
+  database id, which is specific to this Moodle instance and can change
+  across a restore or reinstall.
+
+If the "to" user does not exist yet (and is not ambiguous - more than one
+match is always rejected), the "from" user is renamed instead of merged,
+when `tool_mergeusers/renamewhenmissingtarget` is enabled and the field is a
+real Moodle login identifier (`username` always, `email` only when
+`$CFG->authloginviaemail` is on) - see issue
+[#250](https://github.com/jpahullo/moodle-tool_mergeusers/issues/250). The
+response's `renamed` field tells you which of the two happened.
+
+By default, a repeated request for the same "from" user while a previous
+one is still pending/in progress queues another entry, matching how the web
+form itself behaves. Set `tool_mergeusers/wsallowduplicatepending` to "No"
+to instead return the existing pending entry unchanged.
+
+## `tool_mergeusers_get_merge_request_status`
+
+Polls the status of one or more merges, the same log data `log.php` shows
+on the web. Requires the `tool/mergeusers:viewlog` capability.
+
+Pass `logid` (the id returned by the enqueue function) to fetch exactly
+that entry, or omit it to list/filter instead, with optional `fromuserid`,
+`touserid` and `status` (`pending`, `inprogress`, `success` or `error`)
+filters, and `limitfrom`/`limitnum` for pagination. `limitnum` is always
+capped to `tool_mergeusers/logpagesize`; omit it (or pass `0`) to use that
+setting's value as-is.
+
+## Setting up access
+
+1. Enable the web services subsystem: *Site administration > Advanced
+   features > Enable web services*.
+2. Enable a protocol, e.g. REST: *Site administration > Server > Web
+   services > Manage protocols*.
+3. Create a custom external service bundling both functions: *Site
+   administration > Server > Web services > External services > Add*, then
+   add `tool_mergeusers_enqueue_merge_request` and
+   `tool_mergeusers_get_merge_request_status` to it. Neither function is
+   pre-bundled into any built-in service, precisely so you control which
+   external systems get access to which of the two.
+4. Make sure the user who will hold the token has `tool/mergeusers:mergeusers`
+   and/or `tool/mergeusers:viewlog`, at system context, depending on which
+   of the two functions they need.
+5. Generate a token for that user, tied to the custom service created in
+   step 3: *Site administration > Server > Web services > Manage tokens >
+   Add*. This has to be done by hand, per user/service pair - there is no
+   way to automate token creation from within the plugin itself.
+
+Example REST call, once you have a token:
+
+```
+POST /webservice/rest/server.php
+  wstoken=<token>
+  wsfunction=tool_mergeusers_enqueue_merge_request
+  moodlewsrestformat=json
+  fromuserfield=username
+  fromuservalue=olduser
+  touserfield=username
+  touservalue=keepuser
+```
+
+
 # Correct way of testing this plugin
 
 First of all, check plugin settings for the description of the setting 
