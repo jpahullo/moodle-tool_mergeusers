@@ -11,15 +11,22 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    `username`/`idnumber`/`id`/allow-listed profile fields, same restriction as the web
    form) and poll its status by log id or by a paginated/filtered list, reusing the
    existing ad-hoc task queue and `tool_mergeusers` log table rather than a new queue
-   table. Per #250, when the "to" user genuinely does not exist (never on an ambiguous
-   match), the "from" user's `username` - or `email` when `$CFG->authloginviaemail` is
-   on - is renamed instead of failing, gated by a new `renamewhenmissingtarget` setting
-   (default on) written to be reusable from the web/CLI merge paths too, not only this
-   web service. A new `wsallowduplicatepending` setting (default on, matching the web
-   form's existing unrestricted behaviour) controls whether a repeated request for the
-   same "from" user queues a duplicate or returns the existing pending entry.
+   table. A custom profile field is identified as `profile_field_<shortname>` - the
+   same convention Moodle core itself uses (`core_user_create_users`, `tool_uploaduser`)
+   - never by its internal database id, which is an environment-specific detail an
+   external caller cannot be expected to know; `classes/local/profile_fields.php` now
+   resolves this consistently for the web form too, not just the web services. Per
+   #250, when the "to" user genuinely does not exist (never on an ambiguous match), the
+   "from" user's `username` - or `email` when `$CFG->authloginviaemail` is on - is
+   renamed instead of failing, gated by a new `renamewhenmissingtarget` setting (default
+   on) written to be reusable from the web/CLI merge paths too, not only this web
+   service. A new `wsallowduplicatepending` setting (default on, matching the web form's
+   existing unrestricted behaviour) controls whether a repeated request for the same
+   "from" user queues a duplicate or returns the existing pending entry.
    `user_searcher::verify_user()` now distinguishes an ambiguous match from a missing
-   one, instead of collapsing both into the same error.
+   one, instead of collapsing both into the same error. A legacy log with a NULL
+   `status` (pre-dating that column) is now normalised to "error" in the status web
+   service's response instead of failing return-value validation.
 
    Thanks to @nvallinoto for their contributions.
 
