@@ -3,6 +3,26 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026081303
+
+1. feature: #218/#250: two new web services, `tool_mergeusers_enqueue_merge_request`
+   (`tool/mergeusers:mergeusers`) and `tool_mergeusers_get_merge_request_status`
+   (`tool/mergeusers:viewlog`), let external systems queue a merge (identified by
+   `username`/`idnumber`/`id`/allow-listed profile fields, same restriction as the web
+   form) and poll its status by log id or by a paginated/filtered list, reusing the
+   existing ad-hoc task queue and `tool_mergeusers` log table rather than a new queue
+   table. Per #250, when the "to" user genuinely does not exist (never on an ambiguous
+   match), the "from" user's `username` - or `email` when `$CFG->authloginviaemail` is
+   on - is renamed instead of failing, gated by a new `renamewhenmissingtarget` setting
+   (default on) written to be reusable from the web/CLI merge paths too, not only this
+   web service. A new `wsallowduplicatepending` setting (default on, matching the web
+   form's existing unrestricted behaviour) controls whether a repeated request for the
+   same "from" user queues a duplicate or returns the existing pending entry.
+   `user_searcher::verify_user()` now distinguishes an ambiguous match from a missing
+   one, instead of collapsing both into the same error.
+
+   Thanks to @nvallinoto for their contributions.
+
 ## 2026081302
 
 1. feature: #395: `lesson_attempts`/`lesson_branch`/`lesson_grades`/`lesson_timer` are now
