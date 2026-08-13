@@ -229,6 +229,26 @@ final class external_get_merge_request_status_test extends \advanced_testcase {
     }
 
     /**
+     * A legacy log with a NULL status (pre-dating the status column) is normalised to
+     * "error" instead of being returned as-is, which would fail the PARAM_ALPHA return
+     * value validation.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_external
+     */
+    public function test_legacy_null_status_is_normalised(): void {
+        global $DB;
+
+        $logid = $this->create_log(0, 1);
+        $DB->set_field('tool_mergeusers', 'status', null, ['id' => $logid]);
+
+        $result = $this->call(logid: $logid);
+
+        $this->assertCount(1, $result['logs']);
+        $this->assertSame(status::ERROR->value, $result['logs'][0]['status']);
+    }
+
+    /**
      * A caller without tool/mergeusers:viewlog is rejected.
      *
      * @group tool_mergeusers

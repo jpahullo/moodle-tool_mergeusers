@@ -32,6 +32,7 @@ use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\status;
 
 /**
  * Either a single merge log by id, or a filtered/paginated list - same data
@@ -129,7 +130,7 @@ class get_merge_request_status extends external_api {
                 'touserid' => (int) $log->touserid,
                 'fromuserid' => (int) $log->fromuserid,
                 'mergedbyuserid' => (int) $log->mergedbyuserid,
-                'status' => $log->status,
+                'status' => status::safe_from($log->status)->value,
                 'timecreated' => (int) $log->timecreated,
                 'timemodified' => (int) $log->timemodified,
                 'log' => $log->log,
