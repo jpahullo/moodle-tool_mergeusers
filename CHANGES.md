@@ -32,7 +32,16 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    of the renamed user preserves its identity from before the rename, not after. The
    merge-or-rename decision, and its logging, is now a shared domain method
    (`classes/local/merge_orchestrator.php`), so a future web/CLI integration can reuse
-   it instead of duplicating `tool_mergeusers_enqueue_merge_request`'s own logic.
+   it instead of duplicating `tool_mergeusers_enqueue_merge_request`'s own logic. A
+   rename requested with asynchronous processing (always the case for the web service)
+   is now queued as a `merge_users_task`, the same as a real merge, instead of being
+   written in place immediately: `merge_users_task` caps its own concurrency to 1 and
+   always runs the oldest queued task next, which is what guarantees an earlier-queued
+   merge affecting the same user finishes before a later rename request runs - writing
+   the rename in place, outside that queue, had no such ordering guarantee at all, and
+   could race a merge still being processed for the very same user. Queued renames now
+   also send the same completion notification a real merge does, to the user who
+   requested it.
 
    Thanks to @nvallinoto for their contributions.
 
