@@ -14,6 +14,14 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    token alone must never be enough, so an administrator still has to
    explicitly authorise each user within the service.
 
+2. fix: #218: `tool_mergeusers_enqueue_merge_request` always queues the
+   request as an adhoc task, so its immediate response can never actually
+   be a completed rename or merge - `renamed` was always `false` and told
+   the caller nothing. Removed that field from the response; `status`
+   (`pending`/`inprogress` immediately, `renamed`/`success`/`error` once
+   the task has run) already carries the real outcome once polled via
+   `tool_mergeusers_get_merge_request_status`.
+
 ## 2026081401
 
 1. feature: #218: every merge/rename request now records where it originated -

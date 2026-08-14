@@ -84,7 +84,7 @@ class enqueue_merge_request extends external_api {
      * @param string $fromuservalue value identifying the user to remove.
      * @param string $touserfield field identifying the user to keep.
      * @param string $touservalue value identifying the user to keep.
-     * @return array{logid: int, status: string, renamed: bool, fromuser: array, touser: array}
+     * @return array{logid: int, status: string, fromuser: array, touser: array}
      */
     public static function execute(
         string $fromuserfield,
@@ -138,7 +138,6 @@ class enqueue_merge_request extends external_api {
         return [
             'logid' => $result['logid'],
             'status' => $result['status'],
-            'renamed' => $result['renamed'],
             'fromuser' => $result['fromuser'],
             'touser' => $result['touser'],
         ];
@@ -152,8 +151,11 @@ class enqueue_merge_request extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'logid' => new external_value(PARAM_INT, 'Id of the merge log entry'),
-            'status' => new external_value(PARAM_ALPHA, 'pending, inprogress, or renamed'),
-            'renamed' => new external_value(PARAM_BOOL, 'true when a rename was performed instead of queuing a merge'),
+            'status' => new external_value(
+                PARAM_ALPHA,
+                'pending, or inprogress - the request is always queued; poll ' .
+                'tool_mergeusers_get_merge_request_status with logid for the real outcome',
+            ),
             'fromuser' => new external_single_structure(
                 [
                     'id' => new external_value(PARAM_INT, 'user.id of the user to remove'),
@@ -209,9 +211,8 @@ class enqueue_merge_request extends external_api {
      * @param string $tofield field identifying the user to keep, for the "not found
      * yet" detail only - the existing log's own stored target, if any, always wins.
      * @param string $tovalue value identifying the user to keep, same caveat as $tofield.
-     * @return array{logid: int, status: string, renamed: bool, fromuser: array,
-     * touser: array}|null the existing request, already formatted, or null when there
-     * is none.
+     * @return array{logid: int, status: string, fromuser: array, touser: array}|null the
+     * existing request, already formatted, or null when there is none.
      */
     private static function find_existing_pending_for(
         string $fromfield,
@@ -235,7 +236,6 @@ class enqueue_merge_request extends external_api {
             return [
                 'logid' => (int) $log->id,
                 'status' => $log->status,
-                'renamed' => false,
                 'fromuser' => merge_orchestrator::describe_user($fromuser),
                 'touser' => $log->to
                     ? merge_orchestrator::describe_user($log->to) + ['exists' => true, 'note' => '']

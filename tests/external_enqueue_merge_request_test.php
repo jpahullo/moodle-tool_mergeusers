@@ -72,7 +72,6 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
 
         $this->assertGreaterThan(0, $result['logid']);
         $this->assertSame(status::PENDING->value, $result['status']);
-        $this->assertFalse($result['renamed']);
         $this->assertNotFalse((new logger())->get(['id' => $result['logid']]));
     }
 
@@ -294,7 +293,6 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
 
         $this->assertGreaterThan(0, $result['logid']);
         $this->assertSame('pending', $result['status']);
-        $this->assertFalse($result['renamed']);
         $this->assertSame('olduser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
 
         $stored = (new logger())->detail_from($result['logid']);

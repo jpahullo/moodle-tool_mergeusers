@@ -376,7 +376,10 @@ when `tool_mergeusers/renamewhenmissingtarget` is enabled and the field is a
 real Moodle login identifier (`username` always, `email` only when
 `$CFG->authloginviaemail` is on) - see issue
 [#250](https://github.com/jpahullo/moodle-tool_mergeusers/issues/250). The
-response's `renamed` field tells you which of the two happened.
+request is always queued for the adhoc task to process, though, so the
+immediate response only ever reports `status` as `pending` or `inprogress`
+- poll `tool_mergeusers_get_merge_request_status` with the returned `logid`
+to find out whether it ended up renamed or merged.
 
 By default, a repeated request for the same "from" user while a previous
 one is still pending/in progress queues another entry, matching how the web
@@ -390,10 +393,10 @@ on the web. Requires the `tool/mergeusers:viewlog` capability.
 
 Pass `logid` (the id returned by the enqueue function) to fetch exactly
 that entry, or omit it to list/filter instead, with optional `fromuserid`,
-`touserid` and `status` (`pending`, `inprogress`, `success` or `error`)
-filters, and `limitfrom`/`limitnum` for pagination. `limitnum` is always
-capped to `tool_mergeusers/logpagesize`; omit it (or pass `0`) to use that
-setting's value as-is.
+`touserid` and `status` (`pending`, `inprogress`, `renamed`, `success` or
+`error`) filters, and `limitfrom`/`limitnum` for pagination. `limitnum` is
+always capped to `tool_mergeusers/logpagesize`; omit it (or pass `0`) to
+use that setting's value as-is.
 
 ## Setting up access
 
