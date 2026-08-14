@@ -176,6 +176,68 @@ final class merge_orchestrator_test extends advanced_testcase {
     }
 
     /**
+     * Test that a rename is queued, not written in place, when $async is true - the
+     * username must stay untouched until the task actually runs. This is the fix for a
+     * real ordering hazard: a rename performed in place could race an earlier-queued
+     * merge task still acting on the very same "from" user.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_request_queues_rename_instead_of_writing_in_place_when_async_true(): void {
+        global $DB, $USER;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        $result = (new merge_orchestrator())->request('username', 'olduser', 'username', 'newuser', $USER->id, true);
+
+        $this->assertTrue($result['ok']);
+        $this->assertFalse($result['renamed']);
+        $this->assertSame(status::PENDING->value, $result['status']);
+        $this->assertGreaterThan(0, $result['logid']);
+        $this->assertSame('olduser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
+        $this->assertSame(
+            1,
+            $DB->count_records('task_adhoc', ['classname' => '\\' . \tool_mergeusers\task\merge_users_task::class]),
+        );
+
+        $stored = (new logger())->detail_from($result['logid']);
+        $this->assertSame(status::PENDING->value, $stored->status);
+        $this->assertSame('olduser', $stored->log->user_snapshots->from_user->username);
+    }
+
+    /**
+     * Test that perform_rename() - the method the queued adhoc task calls - completes
+     * the rename and finalizes the log the same way the synchronous path does.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_perform_rename_completes_a_previously_queued_rename(): void {
+        global $DB, $USER;
+
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+        $logid = (new logger())->create_pending_log(
+            0,
+            $fromuser->id,
+            $USER->id,
+            ['field' => 'username', 'value' => 'newuser'],
+        );
+
+        $result = (new merge_orchestrator())->perform_rename($fromuser->id, 'username', 'newuser', $logid);
+
+        $this->assertTrue($result['ok']);
+        $this->assertTrue($result['renamed']);
+        $this->assertSame(status::RENAMED->value, $result['status']);
+        $this->assertSame('newuser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
+
+        $stored = (new logger())->detail_from($logid);
+        $this->assertSame(status::RENAMED->value, $stored->status);
+        $this->assertSame('olduser', $stored->log->user_snapshots->from_user->username);
+    }
+
+    /**
      * Test that a missing target user with the rename setting disabled is rejected,
      * and never leaves a log entry behind - only an actually-attempted rename does.
      *

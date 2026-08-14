@@ -173,4 +173,108 @@ final class notification_test extends advanced_testcase {
         // Validate recipient is the user who initiated the merge.
         $this->assertEquals($adminuserid, $message->useridto);
     }
+
+    /**
+     * Test that a "renamed" notification is sent to the requester - never a "touser",
+     * since a rename has none - when a queued rename completes successfully.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_renamed_notification_sent_by_adhoc_task(): void {
+        global $USER;
+
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        $logger = new logger();
+        $logid = $logger->create_pending_log(
+            0,
+            $fromuser->id,
+            $adminuserid,
+            ['field' => 'username', 'value' => 'newuser'],
+        );
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'renamefield' => 'username',
+            'renamevalue' => 'newuser',
+            'logid' => $logid,
+        ]);
+        $task->set_userid($adminuserid);
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $message = reset($messages);
+        $this->assertEquals('[Merge Users] Rename completed successfully', $message->subject);
+        $this->assertEquals('tool_mergeusers', $message->component);
+        $this->assertStringContainsString('rename of user', $message->fullmessage);
+        $this->assertStringContainsString('completed successfully', $message->fullmessagehtml);
+        $this->assertStringContainsString((string) $logid, $message->fullmessage);
+        $this->assertEquals($adminuserid, $message->useridto);
+    }
+
+    /**
+     * Test that a rename that ends up ineligible (e.g. the setting was disabled after
+     * queuing) sends the rename-specific error notification, not the merge one.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_rename_error_notification_sent_by_adhoc_task(): void {
+        global $USER;
+
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        $logger = new logger();
+        $logid = $logger->create_pending_log(
+            0,
+            $fromuser->id,
+            $adminuserid,
+            ['field' => 'username', 'value' => 'newuser'],
+        );
+
+        // Disable the setting after queuing, forcing perform_rename() to reject it.
+        set_config('renamewhenmissingtarget', 0, 'tool_mergeusers');
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'renamefield' => 'username',
+            'renamevalue' => 'newuser',
+            'logid' => $logid,
+        ]);
+        $task->set_userid($adminuserid);
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $message = reset($messages);
+        $this->assertEquals('[Merge Users] Rename completed with errors', $message->subject);
+        $this->assertStringContainsString('completed with errors', $message->fullmessagehtml);
+        $this->assertEquals($adminuserid, $message->useridto);
+    }
 }

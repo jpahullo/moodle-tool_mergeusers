@@ -23,6 +23,7 @@ use tool_mergeusers\external\enqueue_merge_request;
 use tool_mergeusers\local\logger;
 use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\status;
+use tool_mergeusers\task\merge_users_task;
 
 /**
  * Tests for the tool_mergeusers_enqueue_merge_request web service.
@@ -249,14 +250,16 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
     }
 
     /**
-     * #250: a missing "to" user renames the "from" user's username instead of failing,
-     * leaving its own log entry as evidence - just like any other merge request - with
-     * the original (pre-rename) username preserved in the log's snapshot.
+     * #250: a missing "to" user queues a rename of the "from" user's username instead
+     * of failing - the web service always requests async processing, so the rename is
+     * never written in place here: it is only queued, exactly like a real merge would
+     * be, so a chained request affecting the same user is guaranteed to run after this
+     * one, not race it. See merge_orchestrator::rename_or_error()'s docblock.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_external
      */
-    public function test_renames_when_target_missing_and_setting_enabled(): void {
+    public function test_queues_rename_when_target_missing_and_setting_enabled(): void {
         global $DB;
 
         set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
@@ -265,13 +268,14 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
         $result = $this->call('username', 'olduser', 'username', 'newuser');
 
         $this->assertGreaterThan(0, $result['logid']);
-        $this->assertSame('renamed', $result['status']);
-        $this->assertTrue($result['renamed']);
-        $this->assertSame('newuser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
+        $this->assertSame('pending', $result['status']);
+        $this->assertFalse($result['renamed']);
+        $this->assertSame('olduser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
 
         $stored = (new logger())->detail_from($result['logid']);
-        $this->assertSame('renamed', $stored->status);
+        $this->assertSame('pending', $stored->status);
         $this->assertSame('olduser', $stored->log->user_snapshots->from_user->username);
+        $this->assertSame(1, $DB->count_records('task_adhoc', ['classname' => '\\' . merge_users_task::class]));
     }
 
     /**
