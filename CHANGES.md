@@ -13,6 +13,11 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    neither was ever actually affected by it, but the previous wording did
    not say so plainly enough.
 
+2. fix: #250: `renamewhenmissingtarget` now defaults to disabled, not
+   enabled - preserving the plugin's pre-#250 behaviour (a merge fails
+   outright when either user does not exist) unless an administrator
+   explicitly opts in to renaming the user to remove instead.
+
 ## 2026081402
 
 1. feature: #218: the plugin now ships its own `$services` entry in

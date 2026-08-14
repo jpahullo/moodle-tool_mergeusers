@@ -260,7 +260,7 @@ if ($ADMIN->fulltree) {
         'tool_mergeusers/renamewhenmissingtarget',
         get_string('renamewhenmissingtarget', 'tool_mergeusers'),
         $renamewhenmissingtargetdesc,
-        1
+        0
     ));
 
     $generalsettings->add(new toggle_setting(

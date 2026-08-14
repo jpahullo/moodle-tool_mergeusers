@@ -188,6 +188,7 @@ final class notification_test extends advanced_testcase {
         $this->setAdminUser();
         $adminuserid = $USER->id;
 
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
         $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
 
         $logger = new logger();
@@ -295,6 +296,8 @@ final class notification_test extends advanced_testcase {
         $adminuserid = $USER->id;
         $logger = new logger();
 
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+
         // A merge outcome.
         $touser = $this->getDataGenerator()->create_user();
         $mergefromuser = $this->getDataGenerator()->create_user();
@@ -361,6 +364,7 @@ final class notification_test extends advanced_testcase {
      * @covers \tool_mergeusers\task\merge_users_task
      */
     public function test_no_error_when_no_requesting_user_is_known(): void {
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
         $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
         $logger = new logger();
         $logid = $logger->create_pending_log(0, $fromuser->id, 0, ['field' => 'username', 'value' => 'newuser']);

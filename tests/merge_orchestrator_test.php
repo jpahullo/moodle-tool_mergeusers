@@ -220,6 +220,7 @@ final class merge_orchestrator_test extends advanced_testcase {
     public function test_perform_rename_completes_a_previously_queued_rename(): void {
         global $DB, $USER;
 
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
         $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
         $logid = (new logger())->create_pending_log(
             0,
