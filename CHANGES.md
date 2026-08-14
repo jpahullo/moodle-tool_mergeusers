@@ -3,7 +3,7 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
-## 2026081400
+## 2026081401
 
 1. feature: #218: every merge/rename request now records where it originated -
    `web` (the web UI), `cli` (the CLI gathering path) or `ws` (the new web
@@ -11,8 +11,12 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    `classes/local/origin.php` enum instead of scattered literal strings. Set once
    when the log entry is first created (`logger::log()`/`create_pending_log()`),
    and never changed afterwards by `update_log_status()` or
-   `retarget_pending_log()`. Existing rows are `NULL` - there is no way to
-   reconstruct their origin after the fact.
+   `retarget_pending_log()`. Existing rows are backfilled instead of left `NULL`:
+   only `web` or `cli` were ever possible before this column existed, and a
+   legacy row's own `mergedbyuserid` already tells them apart - real (greater
+   than zero) only for a web request, which always goes through `require_login()`
+   first; `NULL` or `0` for a CLI one, since a bare CLI script never logs anyone
+   in.
 
 ## 2026081303
 
