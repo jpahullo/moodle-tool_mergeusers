@@ -3,6 +3,16 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026081403
+
+1. fix: #218: the `enableadhocmerge` setting is renamed (display name) to
+   "Enable adhoc task for web merges", and its description is now explicit
+   about scope: it only ever affects merges started from the web
+   interface. CLI/gathering merges always run synchronously and web
+   service merges always run asynchronously, regardless of this setting -
+   neither was ever actually affected by it, but the previous wording did
+   not say so plainly enough.
+
 ## 2026081402
 
 1. feature: #218: the plugin now ships its own `$services` entry in
