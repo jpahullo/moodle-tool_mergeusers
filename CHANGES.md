@@ -24,6 +24,12 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    too, from the moment it is created. The merge/rename decision itself
    was never affected by this - only the log's own snapshot was stale.
 
+4. fix: #218: origin is now shown as plain text on both `log.php` and
+   `view.php`, not a rounded badge - the same way Moodle's own core logs
+   report shows its columns. A badge draws attention as if origin were a
+   changing state worth flagging, when it is a fixed fact about the
+   request; plain text reads better at a glance and is more accessible.
+
 ## 2026081403
 
 1. fix: #218: the `enableadhocmerge` setting is renamed (display name) to

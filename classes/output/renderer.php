@@ -878,20 +878,22 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Renders an origin badge - falls back to "unknown" for a NULL/invalid value,
-     * same as render_status() does for status, since origin::safe_from() itself has
-     * no non-null fallback to offer (see its own docblock).
+     * Renders an origin as plain text, the same way Moodle's own core logs report
+     * shows its columns - not a rounded badge, which is harder to read at a glance
+     * and adds nothing here since origin is not a state that changes over time.
+     * Falls back to "unknown" for a NULL/invalid value, same as render_status()
+     * does for status, since origin::safe_from() itself has no non-null fallback to
+     * offer (see its own docblock).
      *
      * @param string|null $origin
-     * @return string HTML badge
+     * @return string plain text label.
      */
     public function render_origin(?string $origin): string {
         $originenum = origin::safe_from($origin);
-        $originstring = ($originenum !== null)
+
+        return ($originenum !== null)
             ? get_string('origin:' . $originenum->value, 'tool_mergeusers')
             : get_string('origin:unknown', 'tool_mergeusers');
-
-        return html_writer::tag('span', $originstring, ['class' => 'badge badge-secondary']);
     }
 
     /**
