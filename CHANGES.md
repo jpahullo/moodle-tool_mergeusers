@@ -3,6 +3,14 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026081404
+
+1. fix: #218: `log.php`'s detail page did not show the request's origin
+   (web/cli/ws) nor who requested it, even though both were already
+   stored on every log - the report should be self-contained, not
+   require cross-checking the listing page. Both are now shown alongside
+   the user info table.
+
 ## 2026081403
 
 1. fix: #218: the `enableadhocmerge` setting is renamed (display name) to

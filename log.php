@@ -56,5 +56,16 @@ if (empty($log)) {
 // Fetch current user data (dynamic).
 $from = logger::live_user_or_deleted_placeholder($log->fromuserid);
 $to = logger::live_user_or_deleted_placeholder($log->touserid);
+$mergedby = ($log->mergedbyuserid > 0) ? logger::live_user_or_deleted_placeholder($log->mergedbyuserid) : null;
 
-echo $renderer->results_page($to, $from, $log->status, $log->log, $log->id, $log->timecreated, $log->timemodified);
+echo $renderer->results_page(
+    $to,
+    $from,
+    $log->status,
+    $log->log,
+    $log->id,
+    $log->timecreated,
+    $log->timemodified,
+    $log->origin,
+    $mergedby,
+);

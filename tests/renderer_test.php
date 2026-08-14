@@ -28,6 +28,7 @@ namespace tool_mergeusers;
 use advanced_testcase;
 use moodle_url;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\origin;
 use tool_mergeusers\output\merge_user_form;
 use tool_mergeusers\output\renderer;
 use tool_mergeusers\output\user_select_table;
@@ -191,6 +192,93 @@ final class renderer_test extends advanced_testcase {
         $this->assertStringContainsString('/user/profile.php?id=' . $touser->id, $output);
         $this->assertStringContainsString('/user/profile.php?id=' . $fromuser->id, $output);
         $this->assertStringContainsString(userdate($stored->log->user_snapshots->timemodified), $output);
+    }
+
+    /**
+     * Test that results_page() shows the origin and the requester when both are
+     * given - the detail page must be self-contained, not depend on cross-checking
+     * the logs listing to know where a request came from or who made it.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_origin_and_mergedby_when_provided(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+        $requester = $this->getDataGenerator()->create_user();
+
+        $logger = new logger();
+        $logid = $logger->log($touser->id, $fromuser->id, true, ['Some action.']);
+        $stored = $logger->detail_from($logid);
+
+        $output = $this->get_renderer()->results_page(
+            $touser,
+            $fromuser,
+            $stored->status,
+            $stored->log,
+            $logid,
+            $stored->timecreated,
+            $stored->timemodified,
+            origin::WS->value,
+            $requester,
+        );
+
+        $this->assertStringContainsString(get_string('origin:ws', 'tool_mergeusers'), $output);
+        $this->assertStringContainsString($requester->username, $output);
+    }
+
+    /**
+     * Test that no origin/requester line is rendered at all when the caller does
+     * not have an origin to pass - keeps log.php's own callers (and every existing
+     * caller of this method) from having to always supply one.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_hides_origin_block_when_origin_not_given(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $output = $this->get_renderer()->results_page($touser, $fromuser, 'success', ['Some action.'], 1);
+
+        $this->assertStringNotContainsString(get_string('originonlog', 'tool_mergeusers'), $output);
+    }
+
+    /**
+     * Test that a genuinely unrecorded requester (e.g. a bare CLI script that never
+     * logs anyone in) shows the same "not recorded" text the logs listing already
+     * uses, rather than crashing or showing a blank/misleading value.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_results_page_shows_norecordedby_when_mergedby_null(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $output = $this->get_renderer()->results_page(
+            $touser,
+            $fromuser,
+            'success',
+            ['Some action.'],
+            1,
+            null,
+            null,
+            origin::CLI->value,
+            null,
+        );
+
+        $this->assertStringContainsString(get_string('origin:cli', 'tool_mergeusers'), $output);
+        $this->assertStringContainsString(get_string('nomergedby', 'tool_mergeusers'), $output);
     }
 
     /**
