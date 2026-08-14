@@ -5,49 +5,44 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
 ## 2026081303
 
-1. feature: #218/#250: two new web services, `tool_mergeusers_enqueue_merge_request`
-   (`tool/mergeusers:mergeusers`) and `tool_mergeusers_get_merge_request_status`
-   (`tool/mergeusers:viewlog`), let external systems queue a merge (identified by
-   `username`/`idnumber`/`id`/allow-listed profile fields, same restriction as the web
-   form) and poll its status by log id or by a paginated/filtered list, reusing the
-   existing ad-hoc task queue and `tool_mergeusers` log table rather than a new queue
-   table. A custom profile field is identified as `profile_field_<shortname>` - the
-   same convention Moodle core itself uses (`core_user_create_users`, `tool_uploaduser`)
-   - never by its internal database id, which is an environment-specific detail an
-   external caller cannot be expected to know; `classes/local/profile_fields.php` now
-   resolves this consistently for the web form too, not just the web services. Per
-   #250, when the "to" user genuinely does not exist (never on an ambiguous match), the
-   "from" user's `username` - or `email` when `$CFG->authloginviaemail` is on - is
-   renamed instead of failing, gated by a new `renamewhenmissingtarget` setting (default
-   on) written to be reusable from the web/CLI merge paths too, not only this web
-   service. A new `wsallowduplicatepending` setting (default on, matching the web form's
-   existing unrestricted behaviour) controls whether a repeated request for the same
-   "from" user queues a duplicate or returns the existing pending entry.
-   `user_searcher::verify_user()` now distinguishes an ambiguous match from a missing
-   one, instead of collapsing both into the same error. A legacy log with a NULL
-   `status` (pre-dating that column) is now normalised to "error" in the status web
-   service's response instead of failing return-value validation. A #250 rename is now
-   always logged with its own log id, like any other merge request, with a new
-   `renamed` status distinguishing it from a full merge's `success`; the log's snapshot
-   of the renamed user preserves its identity from before the rename, not after. The
-   merge-or-rename decision, and its logging, is now a shared domain method
-   (`classes/local/merge_orchestrator.php`), so a future web/CLI integration can reuse
-   it instead of duplicating `tool_mergeusers_enqueue_merge_request`'s own logic. An
-   asynchronous request (always the case for the web service) no longer resolves or
-   decides anything about the "to" side up front: it only queues a `merge_users_task`
-   carrying the raw field/value, and always returns a `pending` status - whether it
-   ends up a real merge, a #250 rename, or an error is only ever decided once that
-   task actually executes, evaluated fresh against live data and the then-current
-   settings. This matters for more than not blocking the request: deciding early and
-   only deferring the write (an earlier revision of this fix) could still commit to the
-   wrong outcome - e.g. a target user created after the request was queued but before
-   it ran, or `tool_mergeusers/renamewhenmissingtarget` toggled off in the meantime -
-   and separately had no ordering guarantee against another already-queued task still
-   acting on the very same "from" user, since `merge_users_task` caps its own
-   concurrency to 1 and always runs the oldest queued task next; a decision made and
-   written outside that queue bypasses that guarantee entirely. Queued requests now
-   also send the same completion notification a real merge does, to the user who
-   requested it, whichever outcome they end up with.
+1. feature: #218/#250: two new web services let external systems queue a user merge
+   and poll its status.
+
+   `tool_mergeusers_enqueue_merge_request` (`tool/mergeusers:mergeusers`) identifies
+   both users by `username`/`idnumber`/`id`, or `profile_field_<shortname>` for an
+   allow-listed custom profile field (the same convention Moodle core itself uses in
+   `core_user_create_users`/`tool_uploaduser`) - never by a field's internal database
+   id, which is an environment-specific detail an external caller cannot be expected to
+   know. An obviously invalid request (either user not found or ambiguous, or a "to"
+   user that is missing and could not possibly be renamed to right now) is rejected
+   immediately; anything else is queued as a `merge_users_task`, reusing the existing
+   ad-hoc task infrastructure rather than a new queue table. What a queued request
+   actually turns out to be - a real merge, a #250 rename of the "from" user's
+   `username`/`email` when the "to" user genuinely does not exist, or an error - is
+   only ever decided once that task actually executes, evaluated fresh against live
+   data and the current `tool_mergeusers/renamewhenmissingtarget` setting: neither the
+   target's existence nor that setting can be trusted to still hold by execution time,
+   and `merge_users_task`'s own concurrency-1, oldest-first queue is what guarantees an
+   earlier request for the same user finishes first. The response - for a queued
+   request or an immediate rejection - includes the resolved `fromuser`/`touser` detail
+   (id/username/fullname/email), the same confirmation the web form's own review step
+   shows; when the "to" user does not exist yet, an explanatory note replaces its
+   detail. A `tool_mergeusers/wsallowduplicatepending` setting (default on, matching the
+   web form's existing unrestricted behaviour) controls whether a repeated request for
+   the same "from" user queues a duplicate or returns the existing pending one. Queued
+   web service requests never send a completion notification - the caller is expected
+   to poll `tool_mergeusers_get_merge_request_status` instead.
+
+   `tool_mergeusers_get_merge_request_status` (`tool/mergeusers:viewlog`) fetches one
+   log by id, or a filtered/paginated list, reusing `classes/local/logger.php` as-is.
+
+   Supporting changes: `user_searcher::verify_user()` now distinguishes an ambiguous
+   match from a missing one, instead of collapsing both into the same error; a new
+   `renamed` status distinguishes a completed #250 rename from a full merge's
+   `success`, and a legacy log with a NULL `status` (pre-dating that column) is
+   normalised to `error` rather than failing the status service's return-value
+   validation; the merge/rename decision and its logging live in a new shared domain
+   class, `classes/local/merge_orchestrator.php`.
 
    Thanks to @nvallinoto for their contributions.
 
