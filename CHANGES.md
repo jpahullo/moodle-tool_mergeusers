@@ -15,6 +15,15 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    show `origin` either, even though it was already selected by
    `logger::search()` - added an "Origin" column and CSV field for it.
 
+3. fix: #218: a request queued via the web service for two users that
+   both already existed still had its persisted log claim the "to" user
+   was not found, until the queued task actually ran - `queue_deferred()`
+   always stored `touserid = 0` regardless of whether the "to" user had
+   already been resolved, discarding it. The web service's own response
+   already reported the real user correctly; the persisted log now does
+   too, from the moment it is created. The merge/rename decision itself
+   was never affected by this - only the log's own snapshot was stale.
+
 ## 2026081403
 
 1. fix: #218: the `enableadhocmerge` setting is renamed (display name) to

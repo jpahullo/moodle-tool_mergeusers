@@ -76,6 +76,31 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
     }
 
     /**
+     * Test that when both users already exist, the log's own persisted snapshot
+     * reflects the real, already-resolved "to" user from the moment it is created -
+     * not a "not found" placeholder, even though the actual merge/rename decision is
+     * still deferred to task execution time. Regression test: queue_deferred() used
+     * to always write touserid=0, so the stored snapshot claimed the "to" user did
+     * not exist even when it demonstrably did (and the WS response itself had
+     * already confirmed it), which was misleading on log.php/get_merge_request_status
+     * for as long as the queued task had not run yet.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_external
+     */
+    public function test_queued_request_for_existing_users_stores_real_touser_snapshot(): void {
+        $fromuser = $this->getDataGenerator()->create_user();
+        $touser = $this->getDataGenerator()->create_user();
+
+        $result = $this->call('username', $fromuser->username, 'username', $touser->username);
+
+        $stored = (new logger())->detail_from($result['logid']);
+        $this->assertFalse($stored->log->user_snapshots->to_user->notfound);
+        $this->assertSame((int) $touser->id, $stored->log->user_snapshots->to_user->id);
+        $this->assertSame($touser->username, $stored->log->user_snapshots->to_user->username);
+    }
+
+    /**
      * Test that a request queued via this web service is recorded with a WS origin,
      * never the WEB default - this is the whole reason merge_orchestrator::request()
      * requires an explicit origin with no implicit default here.

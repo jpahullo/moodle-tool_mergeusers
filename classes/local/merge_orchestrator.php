@@ -183,13 +183,17 @@ final class merge_orchestrator {
 
     /**
      * Queues a merge_users_task carrying the raw "to" field/value, deliberately
-     * unresolved - resolve_and_act() evaluates them once the task actually runs. Even
-     * when $touser is already known here, it is not passed to the task: the whole
-     * point is that nothing about the "to" side is decided until actual execution.
+     * unresolved - resolve_and_act() evaluates them fresh once the task actually
+     * runs, regardless of what is captured here: nothing about how the "to" side is
+     * handled at execution time depends on $touser, and it is never queued on the
+     * task itself. $touser, when already resolved here, IS used for the log's own
+     * initial snapshot - so the report (and the WS response's confirmation) is
+     * accurate from the moment the log is created, rather than showing a "not
+     * found" placeholder for a user that is known to exist - and for this method's
+     * own return value.
      *
      * @param stdClass $fromuser the already-resolved user to remove.
-     * @param stdClass|null $touser the already-resolved user to keep, if found now -
-     * only used to build this result's confirmation detail, never queued.
+     * @param stdClass|null $touser the already-resolved user to keep, if found now.
      * @param string $tofield field identifying the user to keep.
      * @param string $tovalue value identifying the user to keep.
      * @param int $requestedbyuserid user.id of the user requesting the merge/rename.
@@ -208,10 +212,10 @@ final class merge_orchestrator {
         origin $origin,
     ): array {
         $logid = $this->logger->create_pending_log(
-            0,
+            $touser?->id ?? 0,
             $fromuser->id,
             $requestedbyuserid,
-            ['field' => $tofield, 'value' => $tovalue],
+            tohint: $touser === null ? ['field' => $tofield, 'value' => $tovalue] : null,
             origin: $origin,
         );
         if (!$logid) {
@@ -247,9 +251,10 @@ final class merge_orchestrator {
     /**
      * Evaluates a previously queued, deferred request - see queue_deferred() - against
      * live state, exactly once, at actual execution time: resolves the "to" side fresh
-     * and either merges into it (retargeting the log first, since it was captured as
-     * "not found" when queued), renames the "from" user in place, or marks the
-     * already-existing log as an error. Called only by merge_users_task::execute().
+     * and either merges into it (retargeting the log first, in case its own snapshot is
+     * stale or was captured as "not found" when queued), renames the "from" user in
+     * place, or marks the already-existing log as an error. Called only by
+     * merge_users_task::execute().
      *
      * @param int $fromuserid the user to remove, already resolved when queued.
      * @param string $tofield field identifying the user to keep.
@@ -286,8 +291,9 @@ final class merge_orchestrator {
             return self::error($message, $logid);
         }
 
-        // A real target now exists: refresh the log's snapshot (captured as "not
-        // found" when this was queued) before merging into it.
+        // A real target now exists: refresh the log's snapshot before merging into
+        // it, in case it is stale (e.g. captured as "not found" when queued, or the
+        // target resolved differently since).
         $this->logger->retarget_pending_log($logid, $touser->id);
         $this->logger->update_log_status($logid, status::INPROGRESS->value, []);
 
