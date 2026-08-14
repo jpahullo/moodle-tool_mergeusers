@@ -117,6 +117,7 @@ final class renderer_test extends advanced_testcase {
             'inprogress' => ['inprogress', null],
             'success' => ['success', 'logok'],
             'error' => ['error', 'logko'],
+            'renamed' => ['renamed', 'logrenamed'],
         ];
     }
 

@@ -249,7 +249,9 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
     }
 
     /**
-     * #250: a missing "to" user renames the "from" user's username instead of failing.
+     * #250: a missing "to" user renames the "from" user's username instead of failing,
+     * leaving its own log entry as evidence - just like any other merge request - with
+     * the original (pre-rename) username preserved in the log's snapshot.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_external
@@ -262,10 +264,14 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
 
         $result = $this->call('username', 'olduser', 'username', 'newuser');
 
-        $this->assertSame(0, $result['logid']);
+        $this->assertGreaterThan(0, $result['logid']);
         $this->assertSame('renamed', $result['status']);
         $this->assertTrue($result['renamed']);
         $this->assertSame('newuser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
+
+        $stored = (new logger())->detail_from($result['logid']);
+        $this->assertSame('renamed', $stored->status);
+        $this->assertSame('olduser', $stored->log->user_snapshots->from_user->username);
     }
 
     /**
@@ -276,10 +282,16 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
      */
     public function test_does_not_rename_when_setting_disabled(): void {
         set_config('renamewhenmissingtarget', 0, 'tool_mergeusers');
-        $this->getDataGenerator()->create_user(['username' => 'olduser']);
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
 
-        $this->expectException(invalid_parameter_exception::class);
-        $this->call('username', 'olduser', 'username', 'newuser');
+        try {
+            $this->call('username', 'olduser', 'username', 'newuser');
+            $this->fail('Expected invalid_parameter_exception was not thrown.');
+        } catch (invalid_parameter_exception $e) {
+            $this->assertNotEmpty($e->getMessage());
+        }
+
+        $this->assertEmpty((new logger())->get(['fromuserid' => $fromuser->id]));
     }
 
     /**

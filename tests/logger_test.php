@@ -302,6 +302,34 @@ final class logger_test extends advanced_testcase {
     }
 
     /**
+     * Test that create_pending_log() forwards optional hints the same way log() does,
+     * and stays backward compatible when they are omitted - needed for a rename
+     * request (issue #250), where there is no real "to" user to snapshot, only what
+     * was searched for.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_create_pending_log_forwards_optional_hints_and_stays_compatible_without_them(): void {
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $mut = new logger();
+        $logid = $mut->create_pending_log(
+            0,
+            $fromuser->id,
+            0,
+            ['field' => logger::SEARCHED_FIELD_USERNAME, 'value' => 'newusername'],
+        );
+        $stored = $mut->detail_from($logid);
+        $this->assertSame('newusername', $stored->log->user_snapshots->to_user->username);
+        $this->assertSame($fromuser->username, $stored->log->user_snapshots->from_user->username);
+
+        $legacylogid = $mut->create_pending_log(0, $fromuser->id, 0);
+        $legacystored = $mut->detail_from($legacylogid);
+        $this->assertNull($legacystored->log->user_snapshots->to_user->username);
+    }
+
+    /**
      * Test that live_user_or_deleted_placeholder() returns the real {user} record
      * when it still exists.
      *
