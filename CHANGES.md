@@ -26,7 +26,13 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    `user_searcher::verify_user()` now distinguishes an ambiguous match from a missing
    one, instead of collapsing both into the same error. A legacy log with a NULL
    `status` (pre-dating that column) is now normalised to "error" in the status web
-   service's response instead of failing return-value validation.
+   service's response instead of failing return-value validation. A #250 rename is now
+   always logged with its own log id, like any other merge request, with a new
+   `renamed` status distinguishing it from a full merge's `success`; the log's snapshot
+   of the renamed user preserves its identity from before the rename, not after. The
+   merge-or-rename decision, and its logging, is now a shared domain method
+   (`classes/local/merge_orchestrator.php`), so a future web/CLI integration can reuse
+   it instead of duplicating `tool_mergeusers_enqueue_merge_request`'s own logic.
 
    Thanks to @nvallinoto for their contributions.
 
