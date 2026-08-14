@@ -22,6 +22,7 @@ use required_capability_exception;
 use tool_mergeusers\external\enqueue_merge_request;
 use tool_mergeusers\local\logger;
 use tool_mergeusers\local\merge_orchestrator;
+use tool_mergeusers\local\origin;
 use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\status;
 use tool_mergeusers\task\merge_users_task;
@@ -91,7 +92,7 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
 
         $result = $this->call('username', $fromuser->username, 'username', $touser->username);
 
-        $this->assertSame('ws', $DB->get_field('tool_mergeusers', 'origin', ['id' => $result['logid']]));
+        $this->assertSame(origin::WS->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $result['logid']]));
     }
 
     /**

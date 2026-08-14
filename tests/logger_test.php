@@ -377,8 +377,7 @@ final class logger_test extends advanced_testcase {
 
         $logid = (new logger())->log($touser->id, $fromuser->id, true, ['ok']);
 
-        global $DB;
-        $this->assertSame(origin::WEB->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+        $this->assert_origin($logid, origin::WEB);
     }
 
     /**
@@ -394,8 +393,7 @@ final class logger_test extends advanced_testcase {
 
         $logid = (new logger())->log($touser->id, $fromuser->id, true, ['ok'], origin: origin::CLI);
 
-        global $DB;
-        $this->assertSame(origin::CLI->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+        $this->assert_origin($logid, origin::CLI);
     }
 
     /**
@@ -410,8 +408,7 @@ final class logger_test extends advanced_testcase {
 
         $logid = (new logger())->create_pending_log($touser->id, $fromuser->id, 2);
 
-        global $DB;
-        $this->assertSame(origin::WEB->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+        $this->assert_origin($logid, origin::WEB);
     }
 
     /**
@@ -426,8 +423,7 @@ final class logger_test extends advanced_testcase {
 
         $logid = (new logger())->create_pending_log($touser->id, $fromuser->id, 2, origin: origin::WS);
 
-        global $DB;
-        $this->assertSame(origin::WS->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+        $this->assert_origin($logid, origin::WS);
     }
 
     /**
@@ -445,8 +441,7 @@ final class logger_test extends advanced_testcase {
 
         $logger->update_log_status($logid, 'success', ['done']);
 
-        global $DB;
-        $this->assertSame(origin::CLI->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+        $this->assert_origin($logid, origin::CLI);
     }
 
     /**
@@ -469,7 +464,17 @@ final class logger_test extends advanced_testcase {
 
         $logger->retarget_pending_log($logid, $touser->id);
 
+        $this->assert_origin($logid, origin::WS);
+    }
+
+    /**
+     * Asserts $logid's stored origin column matches $expected.
+     *
+     * @param int $logid
+     * @param origin $expected
+     */
+    private function assert_origin(int $logid, origin $expected): void {
         global $DB;
-        $this->assertSame(origin::WS->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+        $this->assertSame($expected->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
     }
 }
