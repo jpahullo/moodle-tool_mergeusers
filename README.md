@@ -415,18 +415,60 @@ setting's value as-is.
    Add*. This has to be done by hand, per user/service pair - there is no
    way to automate token creation from within the plugin itself.
 
-Example REST call, once you have a token:
+## Local debugging with curl
 
+Handy for trying a request by hand, once you have a token as described
+above (tied to a service that includes both functions). The examples
+below identify both the "from" and "to" user by `username`, the common
+case - the same shape works for `idnumber`, `id`, or a
+`profile_field_<shortname>`, on either side independently.
+
+Set these once per shell session:
+
+```sh
+MOODLE_URL="https://your.moodle.site"
+WSTOKEN="<your token>"
 ```
-POST /webservice/rest/server.php
-  wstoken=<token>
-  wsfunction=tool_mergeusers_enqueue_merge_request
-  moodlewsrestformat=json
-  fromuserfield=username
-  fromuservalue=olduser
-  touserfield=username
-  touservalue=keepuser
+
+Queue a merge request:
+
+```sh
+curl -s "$MOODLE_URL/webservice/rest/server.php" \
+  --data-urlencode "wstoken=$WSTOKEN" \
+  --data-urlencode "wsfunction=tool_mergeusers_enqueue_merge_request" \
+  --data-urlencode "moodlewsrestformat=json" \
+  --data-urlencode "fromuserfield=username" \
+  --data-urlencode "fromuservalue=olduser" \
+  --data-urlencode "touserfield=username" \
+  --data-urlencode "touservalue=keepuser"
 ```
+
+The response includes a `logid`, plus `fromuser`/`touser` detail
+(id/username/fullname/email) confirming the users it actually found -
+useful on its own to sanity-check a request before relying on it. Poll
+that `logid` for the outcome once cron has had a chance to run:
+
+```sh
+curl -s "$MOODLE_URL/webservice/rest/server.php" \
+  --data-urlencode "wstoken=$WSTOKEN" \
+  --data-urlencode "wsfunction=tool_mergeusers_get_merge_request_status" \
+  --data-urlencode "moodlewsrestformat=json" \
+  --data-urlencode "logid=123"
+```
+
+Or omit `logid` (or pass `0`) to list/filter the most recent requests
+instead - e.g. every request still pending:
+
+```sh
+curl -s "$MOODLE_URL/webservice/rest/server.php" \
+  --data-urlencode "wstoken=$WSTOKEN" \
+  --data-urlencode "wsfunction=tool_mergeusers_get_merge_request_status" \
+  --data-urlencode "moodlewsrestformat=json" \
+  --data-urlencode "status=pending"
+```
+
+Pipe any of these through `jq .` (or `python3 -m json.tool`) if you want
+the JSON pretty-printed.
 
 
 # Correct way of testing this plugin
