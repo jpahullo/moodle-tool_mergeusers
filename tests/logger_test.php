@@ -27,6 +27,7 @@ namespace tool_mergeusers;
 
 use advanced_testcase;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\origin;
 
 /**
  * Tests for tool_mergeusers\local\logger.
@@ -360,5 +361,115 @@ final class logger_test extends advanced_testcase {
         $this->assertSame(999999, $result->id);
         $this->assertSame(get_string('deleted'), $result->username);
         $this->assertSame(1, $result->deleted);
+    }
+
+    /**
+     * Test that log() defaults to a WEB origin when none is given, matching every
+     * caller that predates the origin parameter.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_log_defaults_to_web_origin(): void {
+        $this->setAdminUser();
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $logid = (new logger())->log($touser->id, $fromuser->id, true, ['ok']);
+
+        global $DB;
+        $this->assertSame(origin::WEB->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+    }
+
+    /**
+     * Test that log() stores an explicitly given origin.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_log_stores_explicit_origin(): void {
+        $this->setAdminUser();
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $logid = (new logger())->log($touser->id, $fromuser->id, true, ['ok'], origin: origin::CLI);
+
+        global $DB;
+        $this->assertSame(origin::CLI->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+    }
+
+    /**
+     * Test that create_pending_log() defaults to a WEB origin when none is given.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_create_pending_log_defaults_to_web_origin(): void {
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $logid = (new logger())->create_pending_log($touser->id, $fromuser->id, 2);
+
+        global $DB;
+        $this->assertSame(origin::WEB->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+    }
+
+    /**
+     * Test that create_pending_log() stores an explicitly given origin.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_create_pending_log_stores_explicit_origin(): void {
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $logid = (new logger())->create_pending_log($touser->id, $fromuser->id, 2, origin: origin::WS);
+
+        global $DB;
+        $this->assertSame(origin::WS->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+    }
+
+    /**
+     * Test that update_log_status() never changes an already-recorded origin - it is
+     * set once at creation and must stay that way for the life of the log entry.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_update_log_status_never_changes_origin(): void {
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+        $logger = new logger();
+        $logid = $logger->create_pending_log($touser->id, $fromuser->id, 2, origin: origin::CLI);
+
+        $logger->update_log_status($logid, 'success', ['done']);
+
+        global $DB;
+        $this->assertSame(origin::CLI->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
+    }
+
+    /**
+     * Test that retarget_pending_log() never changes an already-recorded origin either.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_logger
+     */
+    public function test_retarget_pending_log_never_changes_origin(): void {
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+        $logger = new logger();
+        $logid = $logger->create_pending_log(
+            0,
+            $fromuser->id,
+            2,
+            ['field' => 'id', 'value' => (string) $touser->id],
+            origin: origin::WS,
+        );
+
+        $logger->retarget_pending_log($logid, $touser->id);
+
+        global $DB;
+        $this->assertSame(origin::WS->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
     }
 }

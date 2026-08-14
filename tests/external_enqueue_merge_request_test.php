@@ -76,6 +76,25 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
     }
 
     /**
+     * Test that a request queued via this web service is recorded with a WS origin,
+     * never the WEB default - this is the whole reason merge_orchestrator::request()
+     * requires an explicit origin with no implicit default here.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_external
+     */
+    public function test_queued_request_records_ws_origin(): void {
+        global $DB;
+
+        $fromuser = $this->getDataGenerator()->create_user();
+        $touser = $this->getDataGenerator()->create_user();
+
+        $result = $this->call('username', $fromuser->username, 'username', $touser->username);
+
+        $this->assertSame('ws', $DB->get_field('tool_mergeusers', 'origin', ['id' => $result['logid']]));
+    }
+
+    /**
      * idnumber and id are also valid identifying fields.
      *
      * @group tool_mergeusers
