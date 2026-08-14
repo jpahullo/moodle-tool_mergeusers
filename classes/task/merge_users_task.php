@@ -194,7 +194,7 @@ final class merge_users_task extends adhoc_task {
      * and only then decided as a real merge, a #250 rename, or an error - never
      * trusting whatever the situation looked like when this was first queued.
      *
-     * @param \stdClass $data custom task data: fromid, tofield, tovalue.
+     * @param \stdClass $data custom task data: fromid, tofield, tovalue, notify.
      * @param int $logid an existing pending log entry.
      */
     private function execute_deferred(\stdClass $data, int $logid): void {
@@ -203,6 +203,11 @@ final class merge_users_task extends adhoc_task {
         $fromid = isset($data->fromid) ? (int) $data->fromid : 0;
         $tofield = isset($data->tofield) ? (string) $data->tofield : '';
         $tovalue = isset($data->tovalue) ? (string) $data->tovalue : '';
+        // Absent (any caller predating this) defaults to true, matching the original,
+        // always-notify behaviour. A web service request explicitly queues this false:
+        // its caller is expected to poll for the result, not read a notification sent
+        // to whatever user its token happens to be bound to.
+        $notify = !isset($data->notify) || (bool) $data->notify;
 
         if (empty($fromid) || $tofield === '') {
             mtrace('tool_mergeusers: merge_users_task missing deferred request data, skipping execution.');
@@ -213,6 +218,18 @@ final class merge_users_task extends adhoc_task {
         $orchestrator = new \tool_mergeusers\local\merge_orchestrator();
         $result = $orchestrator->resolve_and_act($fromid, $tofield, $tovalue, $logid);
 
+        if (!$result['ok']) {
+            mtrace('tool_mergeusers: deferred request for user ' . $fromid . ' failed - ' . $result['message']);
+        } else if ($result['renamed']) {
+            mtrace("tool_mergeusers: renamed user $fromid.");
+        } else {
+            mtrace("tool_mergeusers: merged user $fromid into {$result['touserid']}.");
+        }
+
+        if (!$notify) {
+            return;
+        }
+
         // Refetch: the username/email may have just changed (a rename), or this may be
         // the first time we ever look this user up under this task at all (a merge).
         $fromuser = $DB->get_record('user', ['id' => $fromid]);
@@ -221,14 +238,12 @@ final class merge_users_task extends adhoc_task {
         }
 
         if (!$result['ok']) {
-            mtrace('tool_mergeusers: deferred request for user ' . $fromid . ' failed - ' . $result['message']);
             $this->send_notification(null, $fromuser, status::ERROR, $logid);
 
             return;
         }
 
         if ($result['renamed']) {
-            mtrace("tool_mergeusers: renamed user $fromid.");
             $this->send_notification(null, $fromuser, status::RENAMED, $logid);
 
             return;
@@ -240,7 +255,6 @@ final class merge_users_task extends adhoc_task {
         }
 
         $outcome = status::tryFrom($result['status']) ?? status::ERROR;
-        mtrace("tool_mergeusers: merged user $fromid into {$result['touserid']}.");
         $this->send_notification($touser, $fromuser, $outcome, $logid);
     }
 
