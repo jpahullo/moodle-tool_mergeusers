@@ -199,6 +199,23 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080700, 'tool', 'mergeusers');
     }
 
+    if ($oldversion < 2026081400) {
+        // Define field origin to be added to tool_mergeusers: where the request
+        // originated (web/cli/ws). Set once at creation, never updated afterwards.
+        // NULL for every existing row - there is no way to reconstruct it after the
+        // fact for logs that predate this column.
+        $table = new xmldb_table('tool_mergeusers');
+        $field = new xmldb_field('origin', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'status');
+
+        // Conditionally launch add field origin.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2026081400, 'tool', 'mergeusers');
+    }
+
     return true;
 }
 

@@ -33,6 +33,7 @@ use core_external\external_value;
 use invalid_parameter_exception;
 use tool_mergeusers\local\logger;
 use tool_mergeusers\local\merge_orchestrator;
+use tool_mergeusers\local\origin;
 use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\status;
 use tool_mergeusers\local\user_searcher;
@@ -127,6 +128,7 @@ class enqueue_merge_request extends external_api {
             (int) $USER->id,
             true, // A web service call must never block waiting on a synchronous merge.
             false, // Never notify: the caller is expected to poll for the result instead.
+            origin::WS,
         );
 
         if (!$result['ok']) {

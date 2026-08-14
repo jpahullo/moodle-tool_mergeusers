@@ -112,6 +112,11 @@ final class merge_orchestrator {
      * @param bool $notify whether a queued request's eventual completion should notify
      * the requester - false for a web service call, whose caller is expected to poll
      * tool_mergeusers_get_merge_request_status instead, not to read a notification.
+     * @param origin $origin where this request originated - stored once on the log
+     * entry created for it (or the existing one returned unchanged, for a duplicate
+     * request), never changed afterwards. Defaults to WEB, matching logger's own
+     * default; a caller that is not really web-originated must always pass this
+     * explicitly instead of relying on the default.
      * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
      * fromuser?: array, touser?: array} fromuser/touser are only present when ok=true -
      * confirmation of who was identified, the same information the web form's own
@@ -127,6 +132,7 @@ final class merge_orchestrator {
         int $requestedbyuserid,
         ?bool $async = null,
         bool $notify = true,
+        origin $origin = origin::WEB,
     ): array {
         [$fromuser, $frommessage, $fromambiguous] = $this->searcher->verify_user($fromvalue, $fromfield);
 
@@ -151,14 +157,14 @@ final class merge_orchestrator {
         $async ??= (bool) get_config('tool_mergeusers', 'enableadhocmerge');
 
         if ($async) {
-            return $this->queue_deferred($fromuser, $touser, $tofield, $tovalue, $requestedbyuserid, $notify);
+            return $this->queue_deferred($fromuser, $touser, $tofield, $tovalue, $requestedbyuserid, $notify, $origin);
         }
 
         if ($touser === null) {
-            return $this->rename_or_error($fromuser, $tofield, $tovalue, $requestedbyuserid);
+            return $this->rename_or_error($fromuser, $tofield, $tovalue, $requestedbyuserid, $origin);
         }
 
-        return $this->run_merge($touser, $fromuser, $requestedbyuserid);
+        return $this->run_merge($touser, $fromuser, $requestedbyuserid, $origin);
     }
 
     /**
@@ -188,6 +194,7 @@ final class merge_orchestrator {
      * @param string $tovalue value identifying the user to keep.
      * @param int $requestedbyuserid user.id of the user requesting the merge/rename.
      * @param bool $notify whether the queued task should notify the requester once done.
+     * @param origin $origin where this request originated.
      * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
      * fromuser: array, touser: array}
      */
@@ -198,12 +205,14 @@ final class merge_orchestrator {
         string $tovalue,
         int $requestedbyuserid,
         bool $notify,
+        origin $origin,
     ): array {
         $logid = $this->logger->create_pending_log(
             0,
             $fromuser->id,
             $requestedbyuserid,
             ['field' => $tofield, 'value' => $tovalue],
+            origin: $origin,
         );
         if (!$logid) {
             return self::error(get_string('error_log_creation_failed', 'tool_mergeusers'));
@@ -306,6 +315,7 @@ final class merge_orchestrator {
      * @param string $tofield field that was searched for the (non-existent) "to" user.
      * @param string $tovalue value that was searched for the (non-existent) "to" user.
      * @param int $requestedbyuserid user.id of the user requesting the rename.
+     * @param origin $origin where this request originated.
      * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
      * fromuser?: array, touser?: array}
      */
@@ -314,12 +324,14 @@ final class merge_orchestrator {
         string $tofield,
         string $tovalue,
         int $requestedbyuserid,
+        origin $origin,
     ): array {
         $logid = $this->logger->create_pending_log(
             0,
             $fromuser->id,
             $requestedbyuserid,
             ['field' => $tofield, 'value' => $tovalue],
+            origin: $origin,
         );
         if (!$logid) {
             return self::error(get_string('error_log_creation_failed', 'tool_mergeusers'));
@@ -381,11 +393,12 @@ final class merge_orchestrator {
      * @param stdClass $touser the user kept.
      * @param stdClass $fromuser the user removed.
      * @param int $requestedbyuserid user.id of the user requesting the merge.
+     * @param origin $origin where this request originated.
      * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
      * fromuser: array, touser: array}
      */
-    private function run_merge(stdClass $touser, stdClass $fromuser, int $requestedbyuserid): array {
-        $logid = $this->logger->create_pending_log($touser->id, $fromuser->id, $requestedbyuserid);
+    private function run_merge(stdClass $touser, stdClass $fromuser, int $requestedbyuserid, origin $origin): array {
+        $logid = $this->logger->create_pending_log($touser->id, $fromuser->id, $requestedbyuserid, origin: $origin);
         if (!$logid) {
             return self::error(get_string('error_log_creation_failed', 'tool_mergeusers'));
         }

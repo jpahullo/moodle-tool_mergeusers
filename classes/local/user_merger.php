@@ -205,6 +205,9 @@ final class user_merger {
      * @param array|null $tohint optional ['field' => ..., 'value' => ...] describing what a gathering searched for
      * when $toid could not be resolved (id <= 0). Ignored otherwise, and when $logid is given.
      * @param array|null $fromhint same as $tohint, for $fromid.
+     * @param origin $origin where this request originated - only used when $logid is null (a fresh log is
+     * being created here); ignored when $logid is given, since the log's origin was already set once, for
+     * good, when it was first created. Defaults to WEB, matching every caller predating this parameter.
      * @return array An array(bool, array, int) having the following cases: if array(true, log, id)
      * users' merging was successful and log contains all actions done; if array(false, errors, id)
      * means users' merging was aborted and errors contain the list of errors.
@@ -219,6 +222,7 @@ final class user_merger {
         ?int $logid = null,
         ?array $tohint = null,
         ?array $fromhint = null,
+        origin $origin = origin::WEB,
     ): array {
         [$success, $logs] = $this->merge_users($toid, $fromid);
 
@@ -234,7 +238,7 @@ final class user_merger {
             $this->logger->update_log_status($logid, $status, $logs);
         } else {
             // Create new log.
-            $logid = $this->logger->log($toid, $fromid, $success, $logs, $status, $tohint, $fromhint);
+            $logid = $this->logger->log($toid, $fromid, $success, $logs, $status, $tohint, $fromhint, origin: $origin);
         }
 
         $event = $eventname::create([

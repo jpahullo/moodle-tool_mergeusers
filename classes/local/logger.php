@@ -79,6 +79,8 @@ final class logger {
      * @param array|null $fromhint same as $tohint, for $fromuserid.
      * @param int|null $suspendedplaceholderpicture the user.picture value set on $fromuserid when its own picture
      * was overwritten with the generic "suspended" placeholder image, or null when that did not happen.
+     * @param origin $origin where this request originated - set once here, never changed afterwards by
+     * update_log_status() or any other method. Defaults to WEB, matching every caller predating this parameter.
      * @return bool|int false when could not insert the record; the log id when success.
      * @throws moodle_exception when log record cannot be inserted.
      */
@@ -91,6 +93,7 @@ final class logger {
         ?array $tohint = null,
         ?array $fromhint = null,
         ?int $suspendedplaceholderpicture = null,
+        origin $origin = origin::WEB,
     ): bool|int {
         global $DB, $USER;
 
@@ -110,6 +113,7 @@ final class logger {
         $record->timemodified = $currenttime;
         $record->mergedbyuserid = $USER->id;
         $record->log = json_encode($logdata);
+        $record->origin = $origin->value;
 
         if ($status === null) {
             $record->status = status::from_success($success)->value;
@@ -145,6 +149,9 @@ final class logger {
      * @param array|null $tohint optional ['field' => ..., 'value' => ...] describing what was searched for
      * $touserid when it could not be resolved (id <= 0). Ignored otherwise.
      * @param array|null $fromhint same as $tohint, for $fromuserid.
+     * @param origin $origin where this request originated - set once here, never changed afterwards by
+     * update_log_status()/retarget_pending_log() or any other method. Defaults to WEB, matching every
+     * caller predating this parameter.
      *
      * @return bool|int false when could not insert the record; the log id when success.
      */
@@ -154,6 +161,7 @@ final class logger {
         int $mergedbyuserid,
         ?array $tohint = null,
         ?array $fromhint = null,
+        origin $origin = origin::WEB,
     ): bool|int {
         global $DB;
 
@@ -174,6 +182,7 @@ final class logger {
         $record->mergedbyuserid = $mergedbyuserid;
         $record->log = json_encode($logdata);
         $record->status = status::PENDING->value;
+        $record->origin = $origin->value;
 
         try {
             return $DB->insert_record('tool_mergeusers', $record, true);
@@ -329,7 +338,7 @@ final class logger {
             'tool_mergeusers',
             $filter,
             $sort,
-            'id, touserid, fromuserid, mergedbyuserid, timecreated, timemodified, status, log',
+            'id, touserid, fromuserid, mergedbyuserid, timecreated, timemodified, status, origin, log',
             $limitfrom,
             $limitnum,
         );
@@ -368,7 +377,7 @@ final class logger {
 
         [$where, $params] = $this->build_search_where($searchterm);
         $sql = "SELECT tm.id, tm.touserid, tm.fromuserid, tm.mergedbyuserid, tm.timecreated, tm.timemodified,
-                       tm.status, tm.log
+                       tm.status, tm.origin, tm.log
                   FROM {tool_mergeusers} tm
              LEFT JOIN {user} tou ON tou.id = tm.touserid
              LEFT JOIN {user} fru ON fru.id = tm.fromuserid

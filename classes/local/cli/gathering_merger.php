@@ -34,6 +34,7 @@ use coding_exception;
 use dml_exception;
 use moodle_exception;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\origin;
 use tool_mergeusers\local\user_merger;
 
 
@@ -77,7 +78,14 @@ final class gathering_merger {
             $tohint = self::extract_hint($action, 'to');
             $fromhint = self::extract_hint($action, 'from');
 
-            [$success, $log, $id] = $this->usermerger->merge($action->toid, $action->fromid, null, $tohint, $fromhint);
+            [$success, $log, $id] = $this->usermerger->merge(
+                $action->toid,
+                $action->fromid,
+                null,
+                $tohint,
+                $fromhint,
+                origin::CLI,
+            );
 
             // Only shows results on cli script.
             if (defined("CLI_SCRIPT")) {
