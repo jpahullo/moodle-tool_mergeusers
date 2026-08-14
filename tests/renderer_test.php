@@ -421,6 +421,32 @@ final class renderer_test extends advanced_testcase {
     }
 
     /**
+     * Test that logs_page() shows an origin column, with the origin of each log's
+     * own request - the log listing must let an admin tell web/cli/ws requests
+     * apart at a glance, without opening each log's detail page.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_renderer
+     */
+    public function test_logs_page_shows_origin_column(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $logger = new logger();
+        $logger->log($touser->id, $fromuser->id, true, ['Some action.'], null, null, null, null, origin::CLI);
+
+        $logs = $logger->get();
+        $baseurl = new moodle_url('/admin/tool/mergeusers/view.php');
+        $output = $this->get_renderer()->logs_page($logs, count($logs), 0, 20, $baseurl);
+
+        $this->assertStringContainsString(get_string('originonlog', 'tool_mergeusers'), $output);
+        $this->assertStringContainsString(get_string('origin:cli', 'tool_mergeusers'), $output);
+    }
+
+    /**
      * Test that logs_page() shows the same "not found" message as the results page
      * for a row whose fromuserid/touserid is <= 0, instead of the generic "deleted"
      * text that a merely-since-deleted real user id would show.

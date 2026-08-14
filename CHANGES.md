@@ -11,6 +11,10 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    require cross-checking the listing page. Both are now shown alongside
    the user info table.
 
+2. fix: #218: the log listing (`view.php`) and its CSV export did not
+   show `origin` either, even though it was already selected by
+   `logger::search()` - added an "Origin" column and CSV field for it.
+
 ## 2026081403
 
 1. fix: #218: the `enableadhocmerge` setting is renamed (display name) to

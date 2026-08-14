@@ -61,6 +61,7 @@ if ($export) {
         'mergedbyuserid',
         'mergedby',
         'status',
+        'origin',
         'timecreated',
         'timemodified',
     ];
@@ -75,6 +76,7 @@ if ($export) {
             $log->mergedbyuserid,
             ($log->mergedby) ? fullname($log->mergedby) : null,
             $log->status,
+            $log->origin,
             ($log->timecreated) ? userdate($log->timecreated) : '',
             userdate($log->timemodified),
         ];

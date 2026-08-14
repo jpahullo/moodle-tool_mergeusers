@@ -691,13 +691,14 @@ class renderer extends plugin_renderer_base {
             $output .= $this->render(new \core\output\paging_bar($totalcount, $page, $perpage, $baseurl));
 
             $table = new html_table();
-            $table->align = ['center', 'center', 'center', 'center', 'center', 'center'];
+            $table->align = ['center', 'center', 'center', 'center', 'center', 'center', 'center'];
             $table->head = [
                 get_string('olduseridonlog', 'tool_mergeusers'),
                 get_string('newuseridonlog', 'tool_mergeusers'),
                 get_string('mergedbyuseridonlog', 'tool_mergeusers'),
                 get_string('date'),
                 get_string('status'),
+                get_string('originonlog', 'tool_mergeusers'),
                 '',
             ];
 
@@ -724,6 +725,7 @@ class renderer extends plugin_renderer_base {
                         : get_string('nomergedby', 'tool_mergeusers'),
                     userdate($displaytime, get_string('strftimedaydatetime', 'langconfig')),
                     $statusdisplay,
+                    $this->render_origin($log->origin),
                     html_writer::link(
                         new moodle_url(
                             '/' . $CFG->admin . '/tool/mergeusers/log.php',
