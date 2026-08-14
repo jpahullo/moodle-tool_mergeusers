@@ -477,7 +477,10 @@ curl -s "$MOODLE_URL/webservice/rest/server.php" \
 ```
 
 Pipe any of these through `jq .` (or `python3 -m json.tool`) if you want
-the JSON pretty-printed.
+the JSON pretty-printed. For `tool_mergeusers_get_merge_request_status`,
+each entry's `log` field is itself JSON, escaped as a string - pipe
+through `jq '.logs[].log |= fromjson'` instead to have `jq` parse it too,
+in place, rather than leaving it as an unreadable escaped blob.
 
 
 # Correct way of testing this plugin
