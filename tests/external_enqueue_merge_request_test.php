@@ -21,6 +21,7 @@ use invalid_parameter_exception;
 use required_capability_exception;
 use tool_mergeusers\external\enqueue_merge_request;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\merge_orchestrator;
 use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\status;
 use tool_mergeusers\task\merge_users_task;
@@ -212,7 +213,10 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
 
     /**
      * An ambiguous "to" user must never trigger the #250 rename path, even with the
-     * setting enabled - only a genuinely missing "to" user is eligible.
+     * setting enabled - only a genuinely missing "to" user is eligible. The web
+     * service always defers evaluating the "to" side to task execution time (see
+     * merge_orchestrator's own docblock), so this is only discoverable once the queued
+     * task actually runs - the enqueue call itself always just returns "pending".
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_external
@@ -226,18 +230,21 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
             $this->getDataGenerator()->create_user(['idnumber' => 'DUP']);
         }
 
-        try {
-            $this->call('username', 'olduser', 'idnumber', 'DUP');
-            $this->fail('Expected invalid_parameter_exception was not thrown.');
-        } catch (invalid_parameter_exception $e) {
-            $this->assertNotEmpty($e->getMessage());
-        }
+        $result = $this->call('username', 'olduser', 'idnumber', 'DUP');
+        $this->assertSame('pending', $result['status']);
 
+        // Simulate the queued task actually running.
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'idnumber', 'DUP', $result['logid']);
+
+        $this->assertFalse($final['ok']);
         $this->assertSame('olduser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
+        $stored = (new logger())->detail_from($result['logid']);
+        $this->assertSame('error', $stored->status);
     }
 
     /**
-     * Merging a user into itself is rejected.
+     * Merging a user into itself is rejected - only discoverable once the queued task
+     * actually runs, since the "to" side is never resolved before that.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_external
@@ -245,8 +252,14 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
     public function test_rejects_same_user(): void {
         $user = $this->getDataGenerator()->create_user();
 
-        $this->expectException(invalid_parameter_exception::class);
-        $this->call('id', (string) $user->id, 'id', (string) $user->id);
+        $result = $this->call('id', (string) $user->id, 'id', (string) $user->id);
+        $this->assertSame('pending', $result['status']);
+
+        $final = (new merge_orchestrator())->resolve_and_act($user->id, 'id', (string) $user->id, $result['logid']);
+
+        $this->assertFalse($final['ok']);
+        $stored = (new logger())->detail_from($result['logid']);
+        $this->assertSame('error', $stored->status);
     }
 
     /**
@@ -279,38 +292,50 @@ final class external_enqueue_merge_request_test extends \advanced_testcase {
     }
 
     /**
-     * With the setting disabled, a missing "to" user is rejected, never renamed.
+     * With the setting disabled, a missing "to" user is rejected, never renamed - even
+     * if it was enabled when the request was first queued: the setting is only ever
+     * consulted once the queued task actually runs, never before.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_external
      */
     public function test_does_not_rename_when_setting_disabled(): void {
-        set_config('renamewhenmissingtarget', 0, 'tool_mergeusers');
+        global $DB;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
         $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
 
-        try {
-            $this->call('username', 'olduser', 'username', 'newuser');
-            $this->fail('Expected invalid_parameter_exception was not thrown.');
-        } catch (invalid_parameter_exception $e) {
-            $this->assertNotEmpty($e->getMessage());
-        }
+        $result = $this->call('username', 'olduser', 'username', 'newuser');
+        $this->assertSame('pending', $result['status']);
 
-        $this->assertEmpty((new logger())->get(['fromuserid' => $fromuser->id]));
+        // The administrator disables the setting before the queued task ever runs.
+        set_config('renamewhenmissingtarget', 0, 'tool_mergeusers');
+
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'username', 'newuser', $result['logid']);
+
+        $this->assertFalse($final['ok']);
+        $this->assertSame('olduser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
     }
 
     /**
      * idnumber is never a login identifier, so it must never trigger a rename, even with
-     * the setting enabled.
+     * the setting enabled - only discoverable once the queued task actually runs.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_external
      */
     public function test_does_not_rename_via_idnumber_even_when_setting_enabled(): void {
         set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
-        $this->getDataGenerator()->create_user(['idnumber' => 'OLD1']);
+        $fromuser = $this->getDataGenerator()->create_user(['idnumber' => 'OLD1']);
 
-        $this->expectException(invalid_parameter_exception::class);
-        $this->call('idnumber', 'OLD1', 'idnumber', 'NEW1');
+        $result = $this->call('idnumber', 'OLD1', 'idnumber', 'NEW1');
+        $this->assertSame('pending', $result['status']);
+
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'idnumber', 'NEW1', $result['logid']);
+
+        $this->assertFalse($final['ok']);
+        $stored = (new logger())->detail_from($result['logid']);
+        $this->assertSame('error', $stored->status);
     }
 
     /**

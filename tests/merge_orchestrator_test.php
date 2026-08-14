@@ -176,15 +176,18 @@ final class merge_orchestrator_test extends advanced_testcase {
     }
 
     /**
-     * Test that a rename is queued, not written in place, when $async is true - the
-     * username must stay untouched until the task actually runs. This is the fix for a
-     * real ordering hazard: a rename performed in place could race an earlier-queued
-     * merge task still acting on the very same "from" user.
+     * Test that a request whose "to" user does not exist yet at request time - and
+     * would look like a #250 rename if evaluated right now - is still just queued like
+     * any other request when $async is true, with nothing written or decided in place:
+     * the username must stay untouched, and no rename/merge decision made, until the
+     * task actually runs and evaluates it fresh (see resolve_and_act()). This is what
+     * fixes a real ordering hazard: deciding and writing in place here could race an
+     * earlier-queued task still acting on the very same "from" user.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_orchestrator
      */
-    public function test_request_queues_rename_instead_of_writing_in_place_when_async_true(): void {
+    public function test_request_queues_deferred_instead_of_deciding_in_place_when_async_true(): void {
         global $DB, $USER;
 
         set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
@@ -310,5 +313,163 @@ final class merge_orchestrator_test extends advanced_testcase {
 
         $this->assertFalse($result['ok']);
         $this->assertNotEmpty($result['message']);
+    }
+
+    /**
+     * The central scenario resolve_and_act() exists for: a deferred request looked
+     * like it would become a #250 rename when queued (the target username did not
+     * exist yet), but a real user with that exact username shows up before the queued
+     * task ever runs. Evaluated fresh, it must merge into that real user instead of
+     * blindly renaming - deciding "rename" up front and only deferring the write would
+     * get this wrong.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_resolve_and_act_merges_for_real_if_target_user_exists_by_execution_time(): void {
+        global $DB, $USER;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        // At request time, "newuser" does not exist yet - this looks like a rename.
+        $queued = (new merge_orchestrator())->request('username', 'olduser', 'username', 'newuser', $USER->id, true);
+        $this->assertSame(status::PENDING->value, $queued['status']);
+
+        // A real user with that exact username shows up before the task ever runs.
+        $touser = $this->getDataGenerator()->create_user(['username' => 'newuser']);
+
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'username', 'newuser', $queued['logid']);
+
+        $this->assertTrue($final['ok']);
+        $this->assertFalse($final['renamed']);
+        $this->assertSame(status::SUCCESS->value, $final['status']);
+        $this->assertSame((int) $touser->id, $final['touserid']);
+        // No rename happened - the "from" user's own username is untouched.
+        $this->assertSame('olduser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
+        // The merge itself did happen: the removed user ends up suspended.
+        $this->assertSame(1, (int) $DB->get_field('user', 'suspended', ['id' => $fromuser->id]));
+
+        $stored = (new logger())->detail_from($queued['logid']);
+        $this->assertSame((int) $touser->id, (int) $stored->touserid);
+        $this->assertTrue($stored->log->user_snapshots->to_user->recoverable);
+    }
+
+    /**
+     * The other direction of the same principle: the tool_mergeusers/
+     * renamewhenmissingtarget setting can be toggled off by an administrator between
+     * queuing and execution. Evaluated fresh, the rename must fail then, not succeed
+     * based on a setting value that no longer holds.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_resolve_and_act_fails_if_rename_setting_disabled_by_execution_time(): void {
+        global $DB, $USER;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        $queued = (new merge_orchestrator())->request('username', 'olduser', 'username', 'newuser', $USER->id, true);
+
+        // The administrator disables the setting before the task ever runs.
+        set_config('renamewhenmissingtarget', 0, 'tool_mergeusers');
+
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'username', 'newuser', $queued['logid']);
+
+        $this->assertFalse($final['ok']);
+        $this->assertSame('olduser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
+
+        $stored = (new logger())->detail_from($queued['logid']);
+        $this->assertSame(status::ERROR->value, $stored->status);
+    }
+
+    /**
+     * Test that resolve_and_act() performs the rename when the target is still
+     * genuinely missing and renaming is still eligible by execution time - the common
+     * case, nothing having changed since the request was queued.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_resolve_and_act_renames_when_target_still_missing_and_eligible(): void {
+        global $DB, $USER;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+        $queued = (new merge_orchestrator())->request('username', 'olduser', 'username', 'newuser', $USER->id, true);
+
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'username', 'newuser', $queued['logid']);
+
+        $this->assertTrue($final['ok']);
+        $this->assertTrue($final['renamed']);
+        $this->assertSame(status::RENAMED->value, $final['status']);
+        $this->assertSame('newuser', $DB->get_field('user', 'username', ['id' => $fromuser->id]));
+    }
+
+    /**
+     * Test that resolve_and_act() rejects an ambiguous "to" match, marking the
+     * already-existing log as an error.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_resolve_and_act_rejects_ambiguous_touser(): void {
+        global $USER;
+
+        $fromuser = $this->getDataGenerator()->create_user();
+        foreach ([1, 2] as $i) {
+            $this->getDataGenerator()->create_user(['idnumber' => 'DUP']);
+        }
+        $queued = (new merge_orchestrator())->request('id', (string) $fromuser->id, 'idnumber', 'DUP', $USER->id, true);
+
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'idnumber', 'DUP', $queued['logid']);
+
+        $this->assertFalse($final['ok']);
+        $stored = (new logger())->detail_from($queued['logid']);
+        $this->assertSame(status::ERROR->value, $stored->status);
+    }
+
+    /**
+     * Test that resolve_and_act() rejects a "to" resolving to the same user as "from".
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_resolve_and_act_rejects_same_user(): void {
+        global $USER;
+
+        $user = $this->getDataGenerator()->create_user();
+        $queued = (new merge_orchestrator())->request('id', (string) $user->id, 'id', (string) $user->id, $USER->id, true);
+
+        $final = (new merge_orchestrator())->resolve_and_act($user->id, 'id', (string) $user->id, $queued['logid']);
+
+        $this->assertFalse($final['ok']);
+        $stored = (new logger())->detail_from($queued['logid']);
+        $this->assertSame(status::ERROR->value, $stored->status);
+    }
+
+    /**
+     * Test that resolve_and_act() fails gracefully, without throwing, when the "from"
+     * user no longer exists by execution time (e.g. removed by an earlier merge).
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_resolve_and_act_fails_gracefully_if_fromuser_no_longer_exists(): void {
+        $fromuser = $this->getDataGenerator()->create_user();
+        $logid = (new logger())->create_pending_log(
+            0,
+            $fromuser->id,
+            2,
+            ['field' => 'username', 'value' => 'newuser'],
+        );
+        delete_user($fromuser);
+
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'username', 'newuser', $logid);
+
+        $this->assertFalse($final['ok']);
+        $stored = (new logger())->detail_from($logid);
+        $this->assertSame(status::ERROR->value, $stored->status);
     }
 }

@@ -200,8 +200,8 @@ final class notification_test extends advanced_testcase {
         $task = new merge_users_task();
         $task->set_custom_data([
             'fromid' => $fromuser->id,
-            'renamefield' => 'username',
-            'renamevalue' => 'newuser',
+            'tofield' => 'username',
+            'tovalue' => 'newuser',
             'logid' => $logid,
         ]);
         $task->set_userid($adminuserid);
@@ -255,8 +255,8 @@ final class notification_test extends advanced_testcase {
         $task = new merge_users_task();
         $task->set_custom_data([
             'fromid' => $fromuser->id,
-            'renamefield' => 'username',
-            'renamevalue' => 'newuser',
+            'tofield' => 'username',
+            'tovalue' => 'newuser',
             'logid' => $logid,
         ]);
         $task->set_userid($adminuserid);
