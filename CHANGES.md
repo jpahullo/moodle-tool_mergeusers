@@ -3,6 +3,17 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026081400
+
+1. feature: #218: every merge/rename request now records where it originated -
+   `web` (the web UI), `cli` (the CLI gathering path) or `ws` (the new web
+   services) - in a new `origin` column on `tool_mergeusers`, via the new
+   `classes/local/origin.php` enum instead of scattered literal strings. Set once
+   when the log entry is first created (`logger::log()`/`create_pending_log()`),
+   and never changed afterwards by `update_log_status()` or
+   `retarget_pending_log()`. Existing rows are `NULL` - there is no way to
+   reconstruct their origin after the fact.
+
 ## 2026081303
 
 1. feature: #218/#250: two new web services let external systems queue a user merge
