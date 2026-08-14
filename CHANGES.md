@@ -18,6 +18,11 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    outright when either user does not exist) unless an administrator
    explicitly opts in to renaming the user to remove instead.
 
+3. fix: #218: `wsallowduplicatepending`'s description now names the old
+   user (the user to remove) explicitly as the one checked for a pending
+   or in-progress request, matching the terminology already used
+   elsewhere in the plugin's settings, instead of the vaguer "a user".
+
 ## 2026081402
 
 1. feature: #218: the plugin now ships its own `$services` entry in

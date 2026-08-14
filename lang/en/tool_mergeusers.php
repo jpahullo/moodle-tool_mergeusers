@@ -222,6 +222,6 @@ $string['userselecttable_legend'] = '<b>Select users to merge</b>';
 $string['viewlog'] = 'Merge users logs';
 $string['wronglogid'] = 'The log you are asking for does not exist.';
 $string['wsallowduplicatepending'] = 'Allow queuing duplicate merge requests via web service';
-$string['wsallowduplicatepending_desc'] = 'When a web service caller requests a merge for a user that already has a pending or in-progress merge request, allow queuing another one anyway - full trust in the caller, same as an administrator repeating the action from the web interface (which today does not restrict this either). When disabled, the existing request is returned instead of queuing a new one - useful when trusting the caller less.';
+$string['wsallowduplicatepending_desc'] = 'When a web service caller requests a merge for the old user (the user to remove) who already has a pending or in-progress merge request, allow queuing another one anyway - full trust in the caller, same as an administrator repeating the action from the web interface (which today does not restrict this either). When disabled, the existing request is returned instead of queuing a new one - useful when trusting the caller less.';
 $string['wsinvalidfield'] = 'Field "{$a}" is not allowed to identify a user for this web service';
 $string['wstousernotfoundyet'] = 'This user does not exist yet. If it still does not exist when this request is processed, and renaming is allowed at that point, the identified user to remove will be renamed instead of merged.';
