@@ -32,16 +32,22 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    of the renamed user preserves its identity from before the rename, not after. The
    merge-or-rename decision, and its logging, is now a shared domain method
    (`classes/local/merge_orchestrator.php`), so a future web/CLI integration can reuse
-   it instead of duplicating `tool_mergeusers_enqueue_merge_request`'s own logic. A
-   rename requested with asynchronous processing (always the case for the web service)
-   is now queued as a `merge_users_task`, the same as a real merge, instead of being
-   written in place immediately: `merge_users_task` caps its own concurrency to 1 and
-   always runs the oldest queued task next, which is what guarantees an earlier-queued
-   merge affecting the same user finishes before a later rename request runs - writing
-   the rename in place, outside that queue, had no such ordering guarantee at all, and
-   could race a merge still being processed for the very same user. Queued renames now
+   it instead of duplicating `tool_mergeusers_enqueue_merge_request`'s own logic. An
+   asynchronous request (always the case for the web service) no longer resolves or
+   decides anything about the "to" side up front: it only queues a `merge_users_task`
+   carrying the raw field/value, and always returns a `pending` status - whether it
+   ends up a real merge, a #250 rename, or an error is only ever decided once that
+   task actually executes, evaluated fresh against live data and the then-current
+   settings. This matters for more than not blocking the request: deciding early and
+   only deferring the write (an earlier revision of this fix) could still commit to the
+   wrong outcome - e.g. a target user created after the request was queued but before
+   it ran, or `tool_mergeusers/renamewhenmissingtarget` toggled off in the meantime -
+   and separately had no ordering guarantee against another already-queued task still
+   acting on the very same "from" user, since `merge_users_task` caps its own
+   concurrency to 1 and always runs the oldest queued task next; a decision made and
+   written outside that queue bypasses that guarantee entirely. Queued requests now
    also send the same completion notification a real merge does, to the user who
-   requested it.
+   requested it, whichever outcome they end up with.
 
    Thanks to @nvallinoto for their contributions.
 
