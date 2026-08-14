@@ -26,24 +26,25 @@
 namespace tool_mergeusers\external;
 
 use context_system;
-use core\task\manager;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
 use invalid_parameter_exception;
-use moodle_exception;
 use stdClass;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\merge_orchestrator;
 use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\status;
 use tool_mergeusers\local\user_searcher;
-use tool_mergeusers\task\merge_users_task;
 
 /**
  * Queues a merge request the same way the web UI does (pending log + adhoc task), or -
  * when the user to keep does not exist yet - renames the user to remove instead, if
- * eligible (see user_searcher::rename_if_eligible()).
+ * eligible. The actual merge/rename decision and logging is delegated to
+ * merge_orchestrator; this class only handles web-service-specific concerns: parameter
+ * validation, the capability check, and the tool_mergeusers/wsallowduplicatepending
+ * idempotency setting (a web-service-only trust knob, not shared with web/CLI).
  *
  * @package   tool_mergeusers
  * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
@@ -74,12 +75,15 @@ class enqueue_merge_request extends external_api {
     }
 
     /**
-     * Queues the merge request, or renames in place when eligible.
+     * Queues the merge request, or renames in place when eligible. The merge/rename
+     * decision itself, and its logging, is delegated to merge_orchestrator; this
+     * method only validates the request and applies the wsallowduplicatepending
+     * idempotency check, both web-service-specific concerns.
      *
-     * @param string $fromuserfield
-     * @param string $fromuservalue
-     * @param string $touserfield
-     * @param string $touservalue
+     * @param string $fromuserfield field identifying the user to remove.
+     * @param string $fromuservalue value identifying the user to remove.
+     * @param string $touserfield field identifying the user to keep.
+     * @param string $touservalue value identifying the user to keep.
      * @return array{logid: int, status: string, renamed: bool}
      */
     public static function execute(
@@ -104,57 +108,27 @@ class enqueue_merge_request extends external_api {
         self::validate_field($params['fromuserfield']);
         self::validate_field($params['touserfield']);
 
-        $searcher = new user_searcher();
-        [$fromuser, $frommessage, $fromambiguous] = $searcher->verify_user($params['fromuservalue'], $params['fromuserfield']);
-        [$touser, $tomessage, $toambiguous] = $searcher->verify_user($params['touservalue'], $params['touserfield']);
-
-        if ($fromambiguous) {
-            throw new invalid_parameter_exception($frommessage);
-        }
-        if ($toambiguous) {
-            throw new invalid_parameter_exception($tomessage);
-        }
-        if ($fromuser === null) {
-            throw new invalid_parameter_exception($frommessage);
-        }
-
-        if ($touser === null) {
-            if ($searcher->rename_if_eligible($fromuser, $params['touserfield'], $params['touservalue'])) {
-                return ['logid' => 0, 'status' => 'renamed', 'renamed' => true];
-            }
-            throw new invalid_parameter_exception($tomessage);
-        }
-
-        if ((int) $fromuser->id === (int) $touser->id) {
-            throw new invalid_parameter_exception(get_string('errorsameuser', 'tool_mergeusers'));
-        }
-
-        $logger = new logger();
-
         if (empty(get_config('tool_mergeusers', 'wsallowduplicatepending'))) {
-            $existing = self::find_existing_pending($logger, $fromuser->id);
+            $existing = self::find_existing_pending_for($params['fromuserfield'], $params['fromuservalue']);
             if ($existing !== null) {
                 return ['logid' => (int) $existing->id, 'status' => $existing->status, 'renamed' => false];
             }
         }
 
-        $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id);
-        if (!$logid) {
-            throw new moodle_exception('error_log_creation_failed', 'tool_mergeusers');
+        $result = (new merge_orchestrator())->request(
+            $params['fromuserfield'],
+            $params['fromuservalue'],
+            $params['touserfield'],
+            $params['touservalue'],
+            (int) $USER->id,
+            true, // A web service call must never block waiting on a synchronous merge.
+        );
+
+        if (!$result['ok']) {
+            throw new invalid_parameter_exception($result['message']);
         }
 
-        $task = new merge_users_task();
-        $task->set_custom_data([
-            'toid' => $touser->id,
-            'fromid' => $fromuser->id,
-            'logid' => $logid,
-        ]);
-        if (!empty($USER->id)) {
-            $task->set_userid($USER->id);
-        }
-        manager::queue_adhoc_task($task);
-
-        return ['logid' => $logid, 'status' => status::PENDING->value, 'renamed' => false];
+        return ['logid' => $result['logid'], 'status' => $result['status'], 'renamed' => $result['renamed']];
     }
 
     /**
@@ -164,8 +138,8 @@ class enqueue_merge_request extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'logid' => new external_value(PARAM_INT, 'Id of the merge log entry (0 when a rename was performed instead)'),
-            'status' => new external_value(PARAM_ALPHA, 'pending, inprogress, or "renamed"'),
+            'logid' => new external_value(PARAM_INT, 'Id of the merge log entry'),
+            'status' => new external_value(PARAM_ALPHA, 'pending, inprogress, or renamed'),
             'renamed' => new external_value(PARAM_BOOL, 'true when a rename was performed instead of queuing a merge'),
         ]);
     }
@@ -177,7 +151,7 @@ class enqueue_merge_request extends external_api {
      * environment-specific implementation detail external callers cannot be expected
      * to know (see profile_fields::FIELD_PREFIX).
      *
-     * @param string $field
+     * @param string $field the raw field value submitted by the caller, to validate.
      */
     private static function validate_field(string $field): void {
         $simplefields = ['username', 'idnumber', 'id'];
@@ -191,15 +165,24 @@ class enqueue_merge_request extends external_api {
     }
 
     /**
-     * Finds an existing pending/inprogress log for $fromuserid, if any.
+     * Finds an existing pending/inprogress log for the user identified by
+     * $fromfield/$fromvalue, if any. Used only by the wsallowduplicatepending
+     * idempotency check; a $fromfield/$fromvalue that does not resolve to a real user
+     * is not treated as an error here - request()'s own resolution reports that.
      *
-     * @param logger $logger
-     * @param int $fromuserid
-     * @return stdClass|null
+     * @param string $fromfield field identifying the user to remove.
+     * @param string $fromvalue value identifying the user to remove.
+     * @return stdClass|null the existing log record, or null when there is none.
      */
-    private static function find_existing_pending(logger $logger, int $fromuserid): ?stdClass {
+    private static function find_existing_pending_for(string $fromfield, string $fromvalue): ?stdClass {
+        [$fromuser] = (new user_searcher())->verify_user($fromvalue, $fromfield);
+        if ($fromuser === null) {
+            return null;
+        }
+
+        $logger = new logger();
         foreach ([status::PENDING->value, status::INPROGRESS->value] as $checkstatus) {
-            $existing = $logger->get(['fromuserid' => $fromuserid, 'status' => $checkstatus], 0, 1);
+            $existing = $logger->get(['fromuserid' => $fromuser->id, 'status' => $checkstatus], 0, 1);
             if ($existing) {
                 return reset($existing);
             }

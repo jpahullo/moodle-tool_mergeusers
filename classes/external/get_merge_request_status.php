@@ -54,7 +54,12 @@ class get_merge_request_status extends external_api {
             'logid' => new external_value(PARAM_INT, 'Specific log id to fetch; 0 to list/filter instead', VALUE_DEFAULT, 0),
             'fromuserid' => new external_value(PARAM_INT, 'Filter: id of the user removed', VALUE_DEFAULT, 0),
             'touserid' => new external_value(PARAM_INT, 'Filter: id of the user kept', VALUE_DEFAULT, 0),
-            'status' => new external_value(PARAM_ALPHA, 'Filter: pending, inprogress, success, error', VALUE_DEFAULT, ''),
+            'status' => new external_value(
+                PARAM_ALPHA,
+                'Filter: pending, inprogress, success, error, renamed',
+                VALUE_DEFAULT,
+                '',
+            ),
             'limitfrom' => new external_value(PARAM_INT, 'Pagination offset', VALUE_DEFAULT, 0),
             'limitnum' => new external_value(
                 PARAM_INT,
@@ -68,12 +73,12 @@ class get_merge_request_status extends external_api {
     /**
      * Fetches one log by id, or a filtered/paginated list.
      *
-     * @param int $logid
-     * @param int $fromuserid
-     * @param int $touserid
-     * @param string $status
-     * @param int $limitfrom
-     * @param int $limitnum
+     * @param int $logid specific log id to fetch; 0 to list/filter instead.
+     * @param int $fromuserid filter: id of the user removed.
+     * @param int $touserid filter: id of the user kept.
+     * @param string $status filter: pending, inprogress, success, error, renamed.
+     * @param int $limitfrom pagination offset.
+     * @param int $limitnum maximum rows to return, capped by tool_mergeusers/logpagesize.
      * @return array{logs: array}
      */
     public static function execute(
@@ -153,7 +158,7 @@ class get_merge_request_status extends external_api {
                     'touserid' => new external_value(PARAM_INT, 'User kept'),
                     'fromuserid' => new external_value(PARAM_INT, 'User removed'),
                     'mergedbyuserid' => new external_value(PARAM_INT, 'User who initiated the merge'),
-                    'status' => new external_value(PARAM_ALPHA, 'pending, inprogress, success, error'),
+                    'status' => new external_value(PARAM_ALPHA, 'pending, inprogress, success, error, renamed'),
                     'timecreated' => new external_value(PARAM_INT, 'Unix timestamp'),
                     'timemodified' => new external_value(PARAM_INT, 'Unix timestamp'),
                     'log' => new external_value(PARAM_RAW, 'JSON-encoded log detail (user snapshots and actions performed)'),
