@@ -72,10 +72,9 @@ final class merge_orchestrator {
      * @param string $tofield field identifying the user to keep.
      * @param string $tovalue value identifying the user to keep.
      * @param int $requestedbyuserid user.id of the user requesting the merge/rename.
-     * @param bool|null $async when true, queues a merge_users_task instead of merging
-     * synchronously; when false, always merges synchronously; when null (the default),
-     * follows the tool_mergeusers/enableadhocmerge setting. A rename is always
-     * synchronous - there is no meaningful asynchronous form of it.
+     * @param bool|null $async when true, queues a merge_users_task instead of acting
+     * synchronously (a merge or a rename alike); when false, always acts synchronously;
+     * when null (the default), follows the tool_mergeusers/enableadhocmerge setting.
      * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool}
      * ok is false only for a validation failure (not found/ambiguous/same user), never
      * for a merge that ran but failed - that outcome is conveyed by status=error instead.
@@ -102,7 +101,7 @@ final class merge_orchestrator {
         }
 
         if ($touser === null) {
-            return $this->rename_or_error($fromuser, $tofield, $tovalue, $requestedbyuserid, $tomessage);
+            return $this->rename_or_error($fromuser, $tofield, $tovalue, $requestedbyuserid, $tomessage, $async);
         }
 
         if ((int) $fromuser->id === (int) $touser->id) {
@@ -115,16 +114,25 @@ final class merge_orchestrator {
     /**
      * Renames $fromuser's $tofield to $tovalue instead of merging, when eligible (see
      * user_searcher::rename_if_eligible()); otherwise returns $notfoundmessage as the
-     * error. Persists a log entry once eligibility is confirmed, capturing $fromuser's
-     * identity BEFORE the rename - via the same pending-log-then-update-status
-     * lifecycle a real merge uses - so the log keeps evidence of what changed, rather
-     * than a snapshot of the already-renamed value.
+     * error. Once eligibility is confirmed, persists a pending log entry capturing
+     * $fromuser's identity BEFORE the rename - the same lifecycle a real merge uses -
+     * then either performs the rename immediately, or - when $async resolves true -
+     * queues it as a merge_users_task instead of writing it in place.
+     *
+     * Queuing matters for more than just "not blocking the request": $fromuser here
+     * may be the SAME user another already-queued merge_users_task still has to finish
+     * acting on (e.g. "merge A into B", then "merge B into C" where C does not exist
+     * yet, becoming "rename B"). merge_users_task caps its own concurrency to 1 and
+     * always picks the oldest queued task next, which is what guarantees the earlier
+     * task finishes before this rename runs - a rename performed here in place, outside
+     * that queue, would have no such ordering guarantee at all.
      *
      * @param stdClass $fromuser the user to rename (a full {user} record, at least id).
-     * @param string $tofield
-     * @param string $tovalue
-     * @param int $requestedbyuserid
+     * @param string $tofield field that was searched for the (non-existent) "to" user.
+     * @param string $tovalue value that was searched for the (non-existent) "to" user.
+     * @param int $requestedbyuserid user.id of the user requesting the rename.
      * @param string $notfoundmessage error to return when not eligible for renaming.
+     * @param bool|null $async null follows the tool_mergeusers/enableadhocmerge setting.
      * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool}
      */
     private function rename_or_error(
@@ -133,6 +141,7 @@ final class merge_orchestrator {
         string $tovalue,
         int $requestedbyuserid,
         string $notfoundmessage,
+        ?bool $async,
     ): array {
         if (
             !$this->searcher->is_login_identifier_field($tofield)
@@ -151,25 +160,62 @@ final class merge_orchestrator {
             return self::error(get_string('error_log_creation_failed', 'tool_mergeusers'));
         }
 
+        $async ??= (bool) get_config('tool_mergeusers', 'enableadhocmerge');
+
+        if ($async) {
+            $task = new merge_users_task();
+            $task->set_custom_data([
+                'fromid' => $fromuser->id,
+                'renamefield' => $tofield,
+                'renamevalue' => $tovalue,
+                'logid' => $logid,
+            ]);
+            if (!empty($requestedbyuserid)) {
+                $task->set_userid($requestedbyuserid);
+            }
+            manager::queue_adhoc_task($task);
+
+            return ['ok' => true, 'message' => '', 'logid' => $logid, 'status' => status::PENDING->value, 'renamed' => false];
+        }
+
+        return $this->perform_rename($fromuser->id, $tofield, $tovalue, $logid);
+    }
+
+    /**
+     * Performs the actual rename write and finalizes its (already pending) log entry -
+     * shared by rename_or_error()'s synchronous path and merge_users_task::execute()
+     * for the asynchronous one, so both go through the exact same logic.
+     *
+     * @param int $fromuserid the user to rename.
+     * @param string $field the field to update (username or email).
+     * @param string $value the new value for that field.
+     * @param int $logid an existing pending log entry, as created by rename_or_error().
+     * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool}
+     */
+    public function perform_rename(int $fromuserid, string $field, string $value, int $logid): array {
+        global $DB;
+
         try {
-            $renamed = $this->searcher->rename_if_eligible($fromuser, $tofield, $tovalue);
+            $fromuser = $DB->get_record('user', ['id' => $fromuserid, 'deleted' => 0], '*', MUST_EXIST);
+            $renamed = $this->searcher->rename_if_eligible($fromuser, $field, $value);
         } catch (Throwable $e) {
             $this->logger->update_log_status($logid, status::ERROR->value, ['Exception: ' . $e->getMessage()]);
             return self::error($e->getMessage());
         }
 
         if (!$renamed) {
-            // Eligibility can only have changed between the check above and here if the
-            // setting was toggled concurrently - keep the already-created log as evidence.
-            $this->logger->update_log_status($logid, status::ERROR->value, [$notfoundmessage]);
-            return self::error($notfoundmessage);
+            // Eligibility (or the user itself) can only have changed between queuing and
+            // here if something changed concurrently - keep the log as evidence either way.
+            $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
+            $this->logger->update_log_status($logid, status::ERROR->value, [$message]);
+            return self::error($message);
         }
 
-        $fieldlabel = $tofield === 'email' ? get_string('email') : get_string('username');
+        $fieldlabel = $field === 'email' ? get_string('email') : get_string('username');
         $action = get_string(
             'renamelogaction',
             'tool_mergeusers',
-            (object) ['fieldlabel' => $fieldlabel, 'value' => $tovalue],
+            (object) ['fieldlabel' => $fieldlabel, 'value' => $value],
         );
         $this->logger->update_log_status($logid, status::RENAMED->value, [$action]);
 
@@ -179,9 +225,9 @@ final class merge_orchestrator {
     /**
      * Queues a merge_users_task, or runs the merge synchronously, depending on $async.
      *
-     * @param int $touserid
-     * @param int $fromuserid
-     * @param int $requestedbyuserid
+     * @param int $touserid the user kept.
+     * @param int $fromuserid the user removed.
+     * @param int $requestedbyuserid user.id of the user requesting the merge.
      * @param bool|null $async null follows the tool_mergeusers/enableadhocmerge setting.
      * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool}
      */
@@ -219,7 +265,7 @@ final class merge_orchestrator {
     /**
      * Builds an error result.
      *
-     * @param string $message
+     * @param string $message the error message to report.
      * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool}
      */
     private static function error(string $message): array {

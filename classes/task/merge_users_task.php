@@ -84,24 +84,47 @@ final class merge_users_task extends adhoc_task {
     }
 
     /**
-     * Executes the merge.
+     * Executes either a real merge, or a #250 rename instead of merge - determined by
+     * the shape of the custom data (a "renamefield" key means rename; "toid" means a
+     * real merge). Both share this same task class, and therefore the same
+     * concurrency=1 FIFO queue: a rename request queued after a merge that also
+     * involves the same "from" user is guaranteed to run only once that earlier merge
+     * has fully finished, which is the whole reason a rename is queued here at all
+     * instead of being written in place at request time.
      */
     public function execute(): void {
-        global $DB;
-
         $data = $this->get_custom_data();
-        $toid = isset($data->toid) ? (int) $data->toid : 0;
-        $fromid = isset($data->fromid) ? (int) $data->fromid : 0;
         $logid = isset($data->logid) ? (int) $data->logid : 0;
 
-        if (empty($toid) || empty($fromid)) {
-            mtrace('tool_mergeusers: merge_users_task missing user identifiers, skipping execution.');
+        if (empty($logid)) {
+            mtrace('tool_mergeusers: merge_users_task missing log id, skipping execution.');
 
             return;
         }
 
-        if (empty($logid)) {
-            mtrace('tool_mergeusers: merge_users_task missing log id, skipping execution.');
+        if (isset($data->renamefield)) {
+            $this->execute_rename($data, $logid);
+
+            return;
+        }
+
+        $this->execute_merge($data, $logid);
+    }
+
+    /**
+     * Executes a real merge.
+     *
+     * @param \stdClass $data custom task data: toid, fromid.
+     * @param int $logid an existing pending log entry.
+     */
+    private function execute_merge(\stdClass $data, int $logid): void {
+        global $DB;
+
+        $toid = isset($data->toid) ? (int) $data->toid : 0;
+        $fromid = isset($data->fromid) ? (int) $data->fromid : 0;
+
+        if (empty($toid) || empty($fromid)) {
+            mtrace('tool_mergeusers: merge_users_task missing user identifiers, skipping execution.');
 
             return;
         }
@@ -125,18 +148,18 @@ final class merge_users_task extends adhoc_task {
 
             if ($success) {
                 mtrace("tool_mergeusers: merged user $fromid into $toid.");
-                $this->send_notification($touser, $fromuser, true, $logid);
+                $this->send_notification($touser, $fromuser, status::SUCCESS, $logid);
 
                 return;
             }
 
             mtrace("tool_mergeusers: merge $fromid -> $toid completed with errors. Review merge logs for details.");
-            $this->send_notification($touser, $fromuser, false, $logid);
+            $this->send_notification($touser, $fromuser, status::ERROR, $logid);
         } catch (Throwable $e) {
             mtrace('tool_mergeusers: merge_users_task failed - ' . $e->getMessage());
 
             // Update log with error status.
-            $logger->update_log_status($logid, 'error', ['Exception: ' . $e->getMessage()]);
+            $logger->update_log_status($logid, status::ERROR->value, ['Exception: ' . $e->getMessage()]);
 
             // Trigger failure event.
             $event = user_merged_failure::create([
@@ -157,7 +180,7 @@ final class merge_users_task extends adhoc_task {
             $fromuser = $DB->get_record('user', ['id' => $fromid]);
 
             if ($touser && $fromuser) {
-                $this->send_notification($touser, $fromuser, false, $logid);
+                $this->send_notification($touser, $fromuser, status::ERROR, $logid);
             }
 
             // Do not rethrow - adhoc tasks should always complete to prevent infinite requeueing.
@@ -165,14 +188,56 @@ final class merge_users_task extends adhoc_task {
     }
 
     /**
-     * Send notification to the user who initiated the merge.
+     * Executes a #250 rename instead of merge, via merge_orchestrator::perform_rename()
+     * - the exact same logic a synchronous rename request uses.
      *
-     * @param object $touser   The user to keep.
-     * @param object $fromuser The user to remove.
-     * @param bool $success    Whether the merge was successful.
-     * @param int $logid       The log ID of the merge.
+     * @param \stdClass $data custom task data: fromid, renamefield, renamevalue.
+     * @param int $logid an existing pending log entry.
      */
-    private function send_notification(object $touser, object $fromuser, bool $success, int $logid): void {
+    private function execute_rename(\stdClass $data, int $logid): void {
+        global $DB;
+
+        $fromid = isset($data->fromid) ? (int) $data->fromid : 0;
+        $field = isset($data->renamefield) ? (string) $data->renamefield : '';
+        $value = isset($data->renamevalue) ? (string) $data->renamevalue : '';
+
+        if (empty($fromid) || $field === '') {
+            mtrace('tool_mergeusers: merge_users_task missing rename data, skipping execution.');
+
+            return;
+        }
+
+        $orchestrator = new \tool_mergeusers\local\merge_orchestrator();
+        $result = $orchestrator->perform_rename($fromid, $field, $value, $logid);
+
+        // Refetch: the username/email may have just changed.
+        $fromuser = $DB->get_record('user', ['id' => $fromid]);
+        if (!$fromuser) {
+            return;
+        }
+
+        if ($result['ok']) {
+            mtrace("tool_mergeusers: renamed user $fromid's $field to \"$value\".");
+            $this->send_notification(null, $fromuser, status::RENAMED, $logid);
+
+            return;
+        }
+
+        mtrace('tool_mergeusers: rename of user ' . $fromid . ' failed - ' . $result['message']);
+        $this->send_notification(null, $fromuser, status::ERROR, $logid);
+    }
+
+    /**
+     * Sends a notification to the user who requested the merge/rename - never to
+     * $touser, who did not ask for anything.
+     *
+     * @param object|null $touser the user kept, or null for a rename (there is no
+     * real "to" user in that case).
+     * @param object $fromuser the user removed, or renamed in place.
+     * @param status $outcome SUCCESS/ERROR for a merge, RENAMED/ERROR for a rename.
+     * @param int $logid the log id of the merge/rename.
+     */
+    private function send_notification(?object $touser, object $fromuser, status $outcome, int $logid): void {
         $userid = $this->get_userid();
 
         if (empty($userid)) {
@@ -214,19 +279,24 @@ final class merge_users_task extends adhoc_task {
 
         $messagedata = new \stdClass();
         $messagedata->fromuser = $renderer->show_user($fromuser->id, $fromuser);
-        $messagedata->touser = $renderer->show_user($touser->id, $touser);
         $messagedata->fromuserid = $fromuser->id;
-        $messagedata->touserid = $touser->id;
         $messagedata->logid = $renderer->render_logid($logid);
 
-        // Prepare content for the notifications.
-        if ($success) {
-            $subject = get_string('message:mergeusers_success_subject', 'tool_mergeusers');
-            $bodyhtml = get_string('message:mergeusers_success_body', 'tool_mergeusers', $messagedata);
-        } else {
-            $subject = get_string('message:mergeusers_error_subject', 'tool_mergeusers');
-            $bodyhtml = get_string('message:mergeusers_error_body', 'tool_mergeusers', $messagedata);
+        if ($touser !== null) {
+            $messagedata->touser = $renderer->show_user($touser->id, $touser);
+            $messagedata->touserid = $touser->id;
         }
+
+        // Prepare content for the notifications.
+        [$subjectkey, $bodykey] = match ($outcome) {
+            status::SUCCESS => ['message:mergeusers_success_subject', 'message:mergeusers_success_body'],
+            status::RENAMED => ['message:mergeusers_renamed_subject', 'message:mergeusers_renamed_body'],
+            default => $touser !== null
+                ? ['message:mergeusers_error_subject', 'message:mergeusers_error_body']
+                : ['message:mergeusers_rename_error_subject', 'message:mergeusers_rename_error_body'],
+        };
+        $subject = get_string($subjectkey, 'tool_mergeusers');
+        $bodyhtml = get_string($bodykey, 'tool_mergeusers', $messagedata);
 
         // Convert HTML body to plaintext for email clients that don't support HTML.
         $bodyplain = html_to_text($bodyhtml);
