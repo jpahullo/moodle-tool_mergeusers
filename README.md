@@ -397,23 +397,29 @@ setting's value as-is.
 
 ## Setting up access
 
+The plugin ships its own external service, "Merge users"
+(`tool_mergeusers`), bundling both functions - no need to create a custom
+service by hand. It is enabled by default so it works right after
+installing/upgrading, but deliberately restricted to whichever users an
+administrator explicitly authorises: given how critical and irreversible
+the user-merging process is, a token alone must never be enough to use it.
+
 1. Enable the web services subsystem: *Site administration > Advanced
    features > Enable web services*.
 2. Enable a protocol, e.g. REST: *Site administration > Server > Web
    services > Manage protocols*.
-3. Create a custom external service bundling both functions: *Site
-   administration > Server > Web services > External services > Add*, then
-   add `tool_mergeusers_enqueue_merge_request` and
-   `tool_mergeusers_get_merge_request_status` to it. Neither function is
-   pre-bundled into any built-in service, precisely so you control which
-   external systems get access to which of the two.
-4. Make sure the user who will hold the token has `tool/mergeusers:mergeusers`
+3. Make sure the user who will hold the token has `tool/mergeusers:mergeusers`
    and/or `tool/mergeusers:viewlog`, at system context, depending on which
    of the two functions they need.
-5. Generate a token for that user, tied to the custom service created in
-   step 3: *Site administration > Server > Web services > Manage tokens >
-   Add*. This has to be done by hand, per user/service pair - there is no
-   way to automate token creation from within the plugin itself.
+4. Authorise that user within the "Merge users" service: *Site
+   administration > Server > Web services > External services > Merge
+   users > Authorised users > Add*. Without this step the token will not
+   work, even if the user already has the capabilities above - this is the
+   deliberate extra restriction mentioned above.
+5. Generate a token for that user, tied to the "Merge users" service:
+   *Site administration > Server > Web services > Manage tokens > Add*.
+   This has to be done by hand, per user - there is no way to automate
+   token creation from within the plugin itself.
 
 ## Local debugging with curl
 

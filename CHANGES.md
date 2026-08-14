@@ -3,6 +3,17 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026081402
+
+1. feature: #218: the plugin now ships its own `$services` entry in
+   `db/services.php`, "Merge users" (`tool_mergeusers`), bundling both web
+   service functions - no need to create a custom external service by hand
+   any more. It is enabled by default so it works right after
+   installing/upgrading, but `restrictedusers` is deliberately kept on:
+   given how critical and irreversible the user-merging process is, a
+   token alone must never be enough, so an administrator still has to
+   explicitly authorise each user within the service.
+
 ## 2026081401
 
 1. feature: #218: every merge/rename request now records where it originated -

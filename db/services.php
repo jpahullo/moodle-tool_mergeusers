@@ -43,3 +43,21 @@ $functions = [
         'ajax'         => false,
     ],
 ];
+
+// Enabled by default, so the service is usable right after installing/
+// upgrading the plugin with no separate manual step - but deliberately
+// restricted to whichever users an administrator explicitly authorises
+// (Site administration > Server > Web services > External services >
+// Merge users > Authorised users), given how critical and irreversible
+// the user-merging process is: a token alone must never be enough.
+$services = [
+    'Merge users' => [
+        'functions' => [
+            'tool_mergeusers_enqueue_merge_request',
+            'tool_mergeusers_get_merge_request_status',
+        ],
+        'restrictedusers' => 1,
+        'enabled' => 1,
+        'shortname' => 'tool_mergeusers',
+    ],
+];
