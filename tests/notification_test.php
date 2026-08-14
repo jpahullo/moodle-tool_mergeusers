@@ -19,6 +19,7 @@ namespace tool_mergeusers;
 use advanced_testcase;
 use tool_mergeusers\task\merge_users_task;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\status;
 
 /**
  * Tests for notifications sent by adhoc task with different results.
@@ -345,8 +346,8 @@ final class notification_test extends advanced_testcase {
         $this->assertCount(0, $messages);
         // The requests themselves must still have gone through, only the notification
         // is suppressed.
-        $this->assertSame('success', $logger->detail_from($mergelogid)->status);
-        $this->assertSame('renamed', $logger->detail_from($renamelogid)->status);
+        $this->assertSame(status::SUCCESS->value, $logger->detail_from($mergelogid)->status);
+        $this->assertSame(status::RENAMED->value, $logger->detail_from($renamelogid)->status);
     }
 
     /**
@@ -384,6 +385,6 @@ final class notification_test extends advanced_testcase {
         $sink->close();
 
         $this->assertCount(0, $messages);
-        $this->assertSame('renamed', $logger->detail_from($logid)->status);
+        $this->assertSame(status::RENAMED->value, $logger->detail_from($logid)->status);
     }
 }
