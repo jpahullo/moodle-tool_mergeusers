@@ -138,20 +138,30 @@ final class logger {
     /**
      * Creates a pending log entry for a merge operation.
      *
-     * @param int $touserid       user.id where all data from $fromuserid will be merged into.
+     * @param int $touserid       user.id where all data from $fromuserid will be merged into. 0 when there is
+     * no real "to" user yet (e.g. a rename-instead-of-merge request), together with $tohint.
      * @param int $fromuserid     user.id moving all data into $touserid.
      * @param int $mergedbyuserid user.id of the user initiating the merge.
+     * @param array|null $tohint optional ['field' => ..., 'value' => ...] describing what was searched for
+     * $touserid when it could not be resolved (id <= 0). Ignored otherwise.
+     * @param array|null $fromhint same as $tohint, for $fromuserid.
      *
      * @return bool|int false when could not insert the record; the log id when success.
      */
-    public function create_pending_log(int $touserid, int $fromuserid, int $mergedbyuserid): bool|int {
+    public function create_pending_log(
+        int $touserid,
+        int $fromuserid,
+        int $mergedbyuserid,
+        ?array $tohint = null,
+        ?array $fromhint = null,
+    ): bool|int {
         global $DB;
 
         $currenttime = time();
 
         // Store user snapshots in log data.
         $logdata = [
-            'user_snapshots' => self::capture_user_snapshots($touserid, $fromuserid),
+            'user_snapshots' => self::capture_user_snapshots($touserid, $fromuserid, $tohint, $fromhint),
             'actions' => [],
             'suspendedplaceholderpicture' => null,
         ];

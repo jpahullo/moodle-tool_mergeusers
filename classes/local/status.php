@@ -31,6 +31,7 @@ enum status: string {
     case INPROGRESS = 'inprogress';
     case SUCCESS = 'success';
     case ERROR = 'error';
+    case RENAMED = 'renamed';
 
     /**
      * Returns the status based on the success flag: either SUCCESS or ERROR statuses.

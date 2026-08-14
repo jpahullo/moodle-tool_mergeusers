@@ -307,6 +307,11 @@ class renderer extends plugin_renderer_base {
                     'dbko_no_transactions';
                 $notifytype = $statusenum->value;
                 break;
+            case status::RENAMED:
+                $resulttype = 'renamed';
+                $dbmessage = 'dbrenamed';
+                $notifytype = notification::NOTIFY_SUCCESS;
+                break;
         }
 
         $output = $this->header();
@@ -821,6 +826,7 @@ class renderer extends plugin_renderer_base {
             status::INPROGRESS => notification::NOTIFY_INFO,
             status::SUCCESS => notification::NOTIFY_SUCCESS,
             status::ERROR => notification::NOTIFY_ERROR,
+            status::RENAMED => notification::NOTIFY_SUCCESS,
         };
     }
 
@@ -837,6 +843,7 @@ class renderer extends plugin_renderer_base {
             status::INPROGRESS => 'badge-info',
             status::SUCCESS => 'badge-success',
             status::ERROR => 'badge-danger',
+            status::RENAMED => 'badge-success',
             default => 'badge-secondary',
         };
         $statusstring = get_string('status:' . $statusenum->value, 'tool_mergeusers');
