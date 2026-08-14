@@ -84,13 +84,14 @@ final class merge_users_task extends adhoc_task {
     }
 
     /**
-     * Executes either a real merge, or a #250 rename instead of merge - determined by
-     * the shape of the custom data (a "renamefield" key means rename; "toid" means a
-     * real merge). Both share this same task class, and therefore the same
-     * concurrency=1 FIFO queue: a rename request queued after a merge that also
-     * involves the same "from" user is guaranteed to run only once that earlier merge
-     * has fully finished, which is the whole reason a rename is queued here at all
-     * instead of being written in place at request time.
+     * Executes either a real, already-resolved merge (custom data has "toid" - queued
+     * by index.php, which resolves both sides eagerly through its own multi-step
+     * confirmation UI), or a deferred request whose "to" side is only evaluated now
+     * (custom data has "tofield" - queued by merge_orchestrator::queue_deferred(), see
+     * its own docblock for why evaluation is deferred at all the way to here). Both
+     * shapes share this same task class, and therefore the same concurrency=1 FIFO
+     * queue: a request queued after another one still acting on the very same user is
+     * guaranteed to run only once that earlier one has fully finished.
      */
     public function execute(): void {
         $data = $this->get_custom_data();
@@ -102,8 +103,8 @@ final class merge_users_task extends adhoc_task {
             return;
         }
 
-        if (isset($data->renamefield)) {
-            $this->execute_rename($data, $logid);
+        if (isset($data->tofield)) {
+            $this->execute_deferred($data, $logid);
 
             return;
         }
@@ -188,43 +189,59 @@ final class merge_users_task extends adhoc_task {
     }
 
     /**
-     * Executes a #250 rename instead of merge, via merge_orchestrator::perform_rename()
-     * - the exact same logic a synchronous rename request uses.
+     * Executes a deferred request via merge_orchestrator::resolve_and_act(): the "to"
+     * side is resolved fresh right now, against live state and the current settings,
+     * and only then decided as a real merge, a #250 rename, or an error - never
+     * trusting whatever the situation looked like when this was first queued.
      *
-     * @param \stdClass $data custom task data: fromid, renamefield, renamevalue.
+     * @param \stdClass $data custom task data: fromid, tofield, tovalue.
      * @param int $logid an existing pending log entry.
      */
-    private function execute_rename(\stdClass $data, int $logid): void {
+    private function execute_deferred(\stdClass $data, int $logid): void {
         global $DB;
 
         $fromid = isset($data->fromid) ? (int) $data->fromid : 0;
-        $field = isset($data->renamefield) ? (string) $data->renamefield : '';
-        $value = isset($data->renamevalue) ? (string) $data->renamevalue : '';
+        $tofield = isset($data->tofield) ? (string) $data->tofield : '';
+        $tovalue = isset($data->tovalue) ? (string) $data->tovalue : '';
 
-        if (empty($fromid) || $field === '') {
-            mtrace('tool_mergeusers: merge_users_task missing rename data, skipping execution.');
+        if (empty($fromid) || $tofield === '') {
+            mtrace('tool_mergeusers: merge_users_task missing deferred request data, skipping execution.');
 
             return;
         }
 
         $orchestrator = new \tool_mergeusers\local\merge_orchestrator();
-        $result = $orchestrator->perform_rename($fromid, $field, $value, $logid);
+        $result = $orchestrator->resolve_and_act($fromid, $tofield, $tovalue, $logid);
 
-        // Refetch: the username/email may have just changed.
+        // Refetch: the username/email may have just changed (a rename), or this may be
+        // the first time we ever look this user up under this task at all (a merge).
         $fromuser = $DB->get_record('user', ['id' => $fromid]);
         if (!$fromuser) {
             return;
         }
 
-        if ($result['ok']) {
-            mtrace("tool_mergeusers: renamed user $fromid's $field to \"$value\".");
+        if (!$result['ok']) {
+            mtrace('tool_mergeusers: deferred request for user ' . $fromid . ' failed - ' . $result['message']);
+            $this->send_notification(null, $fromuser, status::ERROR, $logid);
+
+            return;
+        }
+
+        if ($result['renamed']) {
+            mtrace("tool_mergeusers: renamed user $fromid.");
             $this->send_notification(null, $fromuser, status::RENAMED, $logid);
 
             return;
         }
 
-        mtrace('tool_mergeusers: rename of user ' . $fromid . ' failed - ' . $result['message']);
-        $this->send_notification(null, $fromuser, status::ERROR, $logid);
+        $touser = $DB->get_record('user', ['id' => $result['touserid']]);
+        if (!$touser) {
+            return;
+        }
+
+        $outcome = status::tryFrom($result['status']) ?? status::ERROR;
+        mtrace("tool_mergeusers: merged user $fromid into {$result['touserid']}.");
+        $this->send_notification($touser, $fromuser, $outcome, $logid);
     }
 
     /**

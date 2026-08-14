@@ -238,6 +238,47 @@ final class logger {
     }
 
     /**
+     * Updates an already-created log entry's touserid, and recaptures both user
+     * snapshots fresh against the now-known touserid - discarding whatever "not found"
+     * snapshot was captured when the entry was first created with an unresolved "to"
+     * side (see create_pending_log()'s $tohint). Used when a request queued for later,
+     * deferred evaluation (see merge_orchestrator::resolve_and_act()) turns out, once
+     * actually evaluated, to have a real target user after all - so its log correctly
+     * reflects that target instead of the stale "not found" guess made when queued.
+     * Leaves status/actions untouched.
+     *
+     * @param int $logid an existing log entry, as created by create_pending_log().
+     * @param int $touserid the now-resolved real user.id to keep.
+     * @return bool true on success, false otherwise.
+     */
+    public function retarget_pending_log(int $logid, int $touserid): bool {
+        global $DB;
+
+        try {
+            $existinglog = $DB->get_record('tool_mergeusers', ['id' => $logid], '*', MUST_EXIST);
+        } catch (\dml_missing_record_exception $e) {
+            debugging('Cannot retarget non-existent merge log: ' . $logid, DEBUG_DEVELOPER);
+            return false;
+        }
+
+        $existinglogdata = json_decode($existinglog->log, true);
+
+        $logdata = [
+            'user_snapshots' => self::capture_user_snapshots($touserid, $existinglog->fromuserid),
+            'actions' => $existinglogdata['actions'] ?? [],
+            'suspendedplaceholderpicture' => $existinglogdata['suspendedplaceholderpicture'] ?? null,
+        ];
+
+        $record = new stdClass();
+        $record->id = $logid;
+        $record->touserid = $touserid;
+        $record->log = json_encode($logdata);
+        $record->timemodified = time();
+
+        return $DB->update_record('tool_mergeusers', $record);
+    }
+
+    /**
      * Gets the most recent log entry where $userid was the removed user ("fromuserid"), regardless of
      * status, optionally excluding one specific log id.
      *
