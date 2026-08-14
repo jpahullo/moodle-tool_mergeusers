@@ -316,6 +316,117 @@ final class merge_orchestrator_test extends advanced_testcase {
     }
 
     /**
+     * Test that an ambiguous "to" match is rejected immediately, without ever
+     * queuing anything - unlike existence, ambiguity is not expected to resolve
+     * itself between now and task execution, so there is nothing to gain by deferring
+     * it.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_request_rejects_ambiguous_touser_immediately(): void {
+        global $USER;
+
+        $fromuser = $this->getDataGenerator()->create_user();
+        foreach ([1, 2] as $i) {
+            $this->getDataGenerator()->create_user(['idnumber' => 'DUP']);
+        }
+
+        $result = (new merge_orchestrator())->request('id', (string) $fromuser->id, 'idnumber', 'DUP', $USER->id, true);
+
+        $this->assertFalse($result['ok']);
+        $this->assertNotEmpty($result['message']);
+        $this->assertEmpty((new logger())->get(['fromuserid' => $fromuser->id]));
+    }
+
+    /**
+     * Test that a missing "to" user is rejected immediately, without queuing, when the
+     * field could never trigger a #250 rename regardless of the setting - it could not
+     * possibly become anything but an error.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_request_rejects_missing_touser_immediately_for_ineligible_field(): void {
+        global $USER;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['idnumber' => 'OLD1']);
+
+        $result = (new merge_orchestrator())->request('idnumber', 'OLD1', 'idnumber', 'NEW1', $USER->id, true);
+
+        $this->assertFalse($result['ok']);
+        $this->assertEmpty((new logger())->get(['fromuserid' => $fromuser->id]));
+    }
+
+    /**
+     * Test that a missing "to" user is rejected immediately, without queuing, when
+     * renaming is currently disabled altogether - same reasoning as the ineligible
+     * field case: nothing could make this succeed right now.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_request_rejects_missing_touser_immediately_when_setting_disabled(): void {
+        global $USER;
+
+        set_config('renamewhenmissingtarget', 0, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        $result = (new merge_orchestrator())->request('username', 'olduser', 'username', 'newuser', $USER->id, true);
+
+        $this->assertFalse($result['ok']);
+        $this->assertEmpty((new logger())->get(['fromuserid' => $fromuser->id]));
+    }
+
+    /**
+     * Test that a successful queued request's result carries confirmation detail for
+     * both users - the same information the web form's own review step shows - with
+     * the "to" side describing that it does not exist yet and echoing the searched
+     * value back.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_request_describes_both_users_when_queuing_a_missing_touser(): void {
+        global $USER;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        $result = (new merge_orchestrator())->request('username', 'olduser', 'username', 'newuser', $USER->id, true);
+
+        $this->assertSame((int) $fromuser->id, $result['fromuser']['id']);
+        $this->assertSame('olduser', $result['fromuser']['username']);
+        $this->assertSame($fromuser->email, $result['fromuser']['email']);
+        $this->assertSame(0, $result['touser']['id']);
+        $this->assertFalse($result['touser']['exists']);
+        $this->assertSame('newuser', $result['touser']['username']);
+        $this->assertNotEmpty($result['touser']['note']);
+    }
+
+    /**
+     * Test that a successful queued request's result describes a "to" user that
+     * already exists as fully resolved, with exists=true and an empty note.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_request_describes_both_users_when_queuing_a_real_merge(): void {
+        global $USER;
+
+        $fromuser = $this->getDataGenerator()->create_user();
+        $touser = $this->getDataGenerator()->create_user();
+
+        $result = (new merge_orchestrator())->request('id', (string) $fromuser->id, 'id', (string) $touser->id, $USER->id, true);
+
+        $this->assertSame((int) $touser->id, $result['touser']['id']);
+        $this->assertTrue($result['touser']['exists']);
+        $this->assertSame('', $result['touser']['note']);
+        $this->assertSame($touser->username, $result['touser']['username']);
+    }
+
+    /**
      * The central scenario resolve_and_act() exists for: a deferred request looked
      * like it would become a #250 rename when queued (the target username did not
      * exist yet), but a real user with that exact username shows up before the queued
@@ -415,18 +526,19 @@ final class merge_orchestrator_test extends advanced_testcase {
      * @group tool_mergeusers_orchestrator
      */
     public function test_resolve_and_act_rejects_ambiguous_touser(): void {
-        global $USER;
-
         $fromuser = $this->getDataGenerator()->create_user();
+        // Simulate a request queued before the ambiguity existed (request() itself
+        // would reject this eagerly today) - resolve_and_act() must still guard
+        // against it independently, evaluating fresh at execution time.
+        $logid = (new logger())->create_pending_log(0, $fromuser->id, 2, ['field' => 'idnumber', 'value' => 'DUP']);
         foreach ([1, 2] as $i) {
             $this->getDataGenerator()->create_user(['idnumber' => 'DUP']);
         }
-        $queued = (new merge_orchestrator())->request('id', (string) $fromuser->id, 'idnumber', 'DUP', $USER->id, true);
 
-        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'idnumber', 'DUP', $queued['logid']);
+        $final = (new merge_orchestrator())->resolve_and_act($fromuser->id, 'idnumber', 'DUP', $logid);
 
         $this->assertFalse($final['ok']);
-        $stored = (new logger())->detail_from($queued['logid']);
+        $stored = (new logger())->detail_from($logid);
         $this->assertSame(status::ERROR->value, $stored->status);
     }
 
@@ -437,15 +549,16 @@ final class merge_orchestrator_test extends advanced_testcase {
      * @group tool_mergeusers_orchestrator
      */
     public function test_resolve_and_act_rejects_same_user(): void {
-        global $USER;
-
         $user = $this->getDataGenerator()->create_user();
-        $queued = (new merge_orchestrator())->request('id', (string) $user->id, 'id', (string) $user->id, $USER->id, true);
+        // Simulate a request queued before "to" and "from" happened to coincide -
+        // request() itself would reject this eagerly today; resolve_and_act() must
+        // still guard against it independently.
+        $logid = (new logger())->create_pending_log(0, $user->id, 2, ['field' => 'id', 'value' => (string) $user->id]);
 
-        $final = (new merge_orchestrator())->resolve_and_act($user->id, 'id', (string) $user->id, $queued['logid']);
+        $final = (new merge_orchestrator())->resolve_and_act($user->id, 'id', (string) $user->id, $logid);
 
         $this->assertFalse($final['ok']);
-        $stored = (new logger())->detail_from($queued['logid']);
+        $stored = (new logger())->detail_from($logid);
         $this->assertSame(status::ERROR->value, $stored->status);
     }
 

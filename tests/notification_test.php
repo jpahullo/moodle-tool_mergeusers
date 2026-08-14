@@ -277,4 +277,113 @@ final class notification_test extends advanced_testcase {
         $this->assertStringContainsString('completed with errors', $message->fullmessagehtml);
         $this->assertEquals($adminuserid, $message->useridto);
     }
+
+    /**
+     * Test that a deferred request queued with notify=false (as a web service request
+     * always is - its caller is expected to poll, not read a notification sent to
+     * whatever user its token happens to be bound to) sends no notification at all,
+     * whether it ends up a real merge or a #250 rename.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_no_notification_sent_when_notify_is_false(): void {
+        global $USER;
+
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+        $logger = new logger();
+
+        // A merge outcome.
+        $touser = $this->getDataGenerator()->create_user();
+        $mergefromuser = $this->getDataGenerator()->create_user();
+        $mergelogid = $logger->create_pending_log(
+            0,
+            $mergefromuser->id,
+            $adminuserid,
+            ['field' => 'id', 'value' => (string) $touser->id],
+        );
+        $mergetask = new merge_users_task();
+        $mergetask->set_custom_data([
+            'fromid' => $mergefromuser->id,
+            'tofield' => 'id',
+            'tovalue' => (string) $touser->id,
+            'logid' => $mergelogid,
+            'notify' => false,
+        ]);
+        $mergetask->set_userid($adminuserid);
+
+        // A rename outcome.
+        $renamefromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+        $renamelogid = $logger->create_pending_log(
+            0,
+            $renamefromuser->id,
+            $adminuserid,
+            ['field' => 'username', 'value' => 'newuser'],
+        );
+        $renametask = new merge_users_task();
+        $renametask->set_custom_data([
+            'fromid' => $renamefromuser->id,
+            'tofield' => 'username',
+            'tovalue' => 'newuser',
+            'logid' => $renamelogid,
+            'notify' => false,
+        ]);
+        $renametask->set_userid($adminuserid);
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $mergetask->execute();
+            $renametask->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(0, $messages);
+        // The requests themselves must still have gone through, only the notification
+        // is suppressed.
+        $this->assertSame('success', $logger->detail_from($mergelogid)->status);
+        $this->assertSame('renamed', $logger->detail_from($renamelogid)->status);
+    }
+
+    /**
+     * Test that no error/warning happens, and simply nothing gets sent, when a queued
+     * request has no requesting user at all - e.g. a future non-web origin (such as
+     * the CLI gathering, which today does not record one either) that never calls
+     * set_userid(). This is the same safety net that already protects a real merge;
+     * this test locks it in for the deferred (#250-capable) path too.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_no_error_when_no_requesting_user_is_known(): void {
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+        $logger = new logger();
+        $logid = $logger->create_pending_log(0, $fromuser->id, 0, ['field' => 'username', 'value' => 'newuser']);
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'tofield' => 'username',
+            'tovalue' => 'newuser',
+            'logid' => $logid,
+        ]);
+        // Deliberately never calling set_userid().
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(0, $messages);
+        $this->assertSame('renamed', $logger->detail_from($logid)->status);
+    }
 }
