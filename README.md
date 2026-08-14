@@ -482,6 +482,32 @@ each entry's `log` field is itself JSON, escaped as a string - pipe
 through `jq '.logs[].log |= fromjson'` instead to have `jq` parse it too,
 in place, rather than leaving it as an unreadable escaped blob.
 
+To also make every `time*` field (`timecreated`, `timemodified`,
+`timeerased`, wherever nested) human-readable without losing the raw
+timestamp, expand on that same pipeline with `walk`:
+
+```sh
+jq '
+  .logs[].log |= fromjson
+  | walk(
+      if type == "object" then
+        with_entries(
+          if (.key | test("^time")) and (.value | type == "number")
+          then .value |= "\(.) (" + (gmtime | strftime("%Y-%m-%d %H:%M:%S")) + ")"
+          else .
+          end
+        )
+      else .
+      end
+    )
+'
+```
+
+`walk` recurses into the whole tree (including the now-parsed `log`
+field), so it catches `user_snapshots`' own `timemodified`/`timeerased`
+too, not just the top-level fields. Swap `gmtime` for `localtime` if you
+want the machine's local timezone instead of UTC.
+
 
 # Correct way of testing this plugin
 
