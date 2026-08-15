@@ -29,6 +29,15 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    full merge", clearer about what "renamed" is actually being contrasted
    with.
 
+5. fix: #218: a deferred request that failed for a merge-side reason
+   (e.g. its target became ambiguous between queueing and execution)
+   always sent the rename-error notification, never the merge-error one -
+   `execute_deferred()` passed `null` as the touser for every failure,
+   and `send_notification()` picks the template based on whether a touser
+   is given. Now it checks the log's own persisted `touserid` (set once
+   at creation and never touched since) to tell a merge attempt apart
+   from a rename attempt, regardless of why it later failed.
+
 ## 2026081404
 
 1. fix: #218: `log.php`'s detail page did not show the request's origin

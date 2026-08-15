@@ -238,7 +238,17 @@ final class merge_users_task extends adhoc_task {
         }
 
         if (!$result['ok']) {
-            $this->send_notification(null, $fromuser, status::ERROR, $logid);
+            // A deferred failure is not always a rename gone wrong: the target may
+            // have been a real, already-resolved user when this was queued (a merge
+            // attempt) and only failed later (e.g. it became ambiguous by execution
+            // time). The log's own touserid, set once at creation and never touched
+            // since, still reflects that - unlike $result, which carries no touser
+            // for any error path. A real, still-resolvable touser here means this was
+            // a merge attempt, so send_notification() picks the merge-error template
+            // instead of defaulting to the rename one.
+            $originaltouserid = (int) $DB->get_field('tool_mergeusers', 'touserid', ['id' => $logid]);
+            $touser = $originaltouserid > 0 ? $DB->get_record('user', ['id' => $originaltouserid]) : false;
+            $this->send_notification($touser ?: null, $fromuser, status::ERROR, $logid);
 
             return;
         }

@@ -281,6 +281,61 @@ final class notification_test extends advanced_testcase {
     }
 
     /**
+     * Test that a deferred request that was a real merge attempt when queued (a real
+     * "to" user already existed, so touserid was already set on the log) - but that
+     * fails at execution time for a merge-side reason, e.g. the target has since
+     * become ambiguous - sends the merge error notification, not the rename one.
+     * Regression test: execute_deferred() used to always pass null as the touser for
+     * any deferred failure, so send_notification()'s own touser!==null heuristic
+     * could never tell a merge-scenario failure apart from a rename-scenario one.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_merge_error_notification_sent_for_deferred_request_that_was_a_real_merge(): void {
+        global $USER;
+
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+
+        $fromuser = $this->getDataGenerator()->create_user();
+        $touser = $this->getDataGenerator()->create_user(['idnumber' => 'dup-target']);
+
+        // Touserid is real from the start: this was queued as a genuine merge.
+        $logger = new logger();
+        $logid = $logger->create_pending_log($touser->id, $fromuser->id, $adminuserid);
+
+        // A second user with the same idnumber shows up before the task runs, making
+        // the target ambiguous by execution time.
+        $this->getDataGenerator()->create_user(['idnumber' => 'dup-target']);
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'tofield' => 'idnumber',
+            'tovalue' => 'dup-target',
+            'logid' => $logid,
+        ]);
+        $task->set_userid($adminuserid);
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $message = reset($messages);
+        $this->assertEquals('[Merge Users] Merge completed with errors', $message->subject);
+        $this->assertStringContainsString('completed with errors', $message->fullmessagehtml);
+        $this->assertStringContainsString($touser->firstname, $message->fullmessage);
+    }
+
+    /**
      * Test that a deferred request queued with notify=false (as a web service request
      * always is - its caller is expected to poll, not read a notification sent to
      * whatever user its token happens to be bound to) sends no notification at all,
