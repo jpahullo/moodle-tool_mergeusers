@@ -367,7 +367,11 @@ final class merge_orchestrator {
 
         try {
             $fromuser = $DB->get_record('user', ['id' => $fromuserid, 'deleted' => 0], '*', MUST_EXIST);
-            $oldvalue = $fromuser->$field;
+            // Only ever consumed below when $renamed is true, which itself requires
+            // $field to be a real login identifier field (a real {user} column) - the
+            // fallback is never actually shown, just here so an unexpected/legacy
+            // $field can never trigger an undefined-property notice on its own.
+            $oldvalue = $fromuser->$field ?? '';
             $renamed = $this->searcher->rename_if_eligible($fromuser, $field, $value);
         } catch (Throwable $e) {
             $this->logger->update_log_status($logid, status::ERROR->value, ['Exception: ' . $e->getMessage()]);

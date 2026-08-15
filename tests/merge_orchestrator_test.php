@@ -247,6 +247,34 @@ final class merge_orchestrator_test extends advanced_testcase {
     }
 
     /**
+     * Test that perform_rename() never triggers an undefined-property notice when
+     * called (directly, bypassing request()'s own is_login_identifier_field() gate)
+     * with a field that is not a real {user} column - it should just fail gracefully,
+     * the same as any other ineligible field. Regression test: capturing the old
+     * value for the log message used to read $fromuser->$field unconditionally.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_orchestrator
+     */
+    public function test_perform_rename_handles_field_that_is_not_a_real_user_column(): void {
+        global $USER;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user();
+        $logid = (new logger())->create_pending_log(
+            0,
+            $fromuser->id,
+            $USER->id,
+            ['field' => 'profile_field_staffid', 'value' => 'newvalue'],
+        );
+
+        $result = (new merge_orchestrator())->perform_rename($fromuser->id, 'profile_field_staffid', 'newvalue', $logid);
+
+        $this->assertFalse($result['ok']);
+        $this->assertFalse($result['renamed']);
+    }
+
+    /**
      * Test that a missing target user with the rename setting disabled is rejected,
      * and never leaves a log entry behind - only an actually-attempted rename does.
      *

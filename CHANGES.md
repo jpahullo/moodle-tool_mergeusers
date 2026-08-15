@@ -38,6 +38,13 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    at creation and never touched since) to tell a merge attempt apart
    from a rename attempt, regardless of why it later failed.
 
+6. fix: #250: capturing the old value for a #250 rename's log message
+   read `$fromuser->$field` unconditionally - harmless with today's only
+   reachable field values (`username`/`email`, both real `{user}`
+   columns), but `perform_rename()` is a public method with no guarantee
+   a future caller passes an equally-validated field. Reading it via `??`
+   avoids an undefined-property notice either way.
+
 ## 2026081404
 
 1. fix: #218: `log.php`'s detail page did not show the request's origin
