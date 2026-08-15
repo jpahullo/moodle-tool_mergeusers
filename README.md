@@ -437,6 +437,7 @@ Set these once per shell session:
 ```sh
 MOODLE_URL="https://your.moodle.site"
 WSTOKEN="<your token>"
+TZ="Europe/Madrid"
 ```
 
 Queue a merge request:
@@ -487,13 +488,13 @@ To also make every `time*` field (`timecreated`, `timemodified`,
 timestamp, expand on that same pipeline with `walk`:
 
 ```sh
-jq '
+TZ="$TZ" jq '
   .logs[].log |= fromjson
   | walk(
       if type == "object" then
         with_entries(
           if (.key | test("^time")) and (.value | type == "number")
-          then .value |= "\(.) (" + (gmtime | strftime("%Y-%m-%d %H:%M:%S")) + ")"
+          then .value |= "\(.) (" + (localtime | strftime("%Y-%m-%d %H:%M:%S")) + ")"
           else .
           end
         )
@@ -505,8 +506,12 @@ jq '
 
 `walk` recurses into the whole tree (including the now-parsed `log`
 field), so it catches `user_snapshots`' own `timemodified`/`timeerased`
-too, not just the top-level fields. Swap `gmtime` for `localtime` if you
-want the machine's local timezone instead of UTC.
+too, not just the top-level fields. Every timestamp is stored as UTC, but
+Moodle's own web UI always renders dates in the site's configured
+timezone (`userdate()`), not UTC - so this uses `localtime` instead of
+`gmtime`, resolved against the `TZ` variable set above (matching your own
+site's timezone, not whatever machine happens to run this command) so the
+two stay in agreement.
 
 
 # Correct way of testing this plugin
