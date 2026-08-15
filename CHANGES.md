@@ -17,6 +17,13 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    is unambiguous on its own without needing the fieldlabel's language to
    match the API's field naming.
 
+3. fix: #250: `renamewhenmissingtarget`'s description did not say when it
+   actually applies - only a request queued via the web service ever
+   reaches the deferred rename decision; a web-triggered merge (whether
+   immediate or itself queued as its own adhoc task) and a CLI/gathering
+   merge never go through it at all. Made that explicit instead of
+   leaving it to be inferred from the code.
+
 ## 2026081404
 
 1. fix: #218: `log.php`'s detail page did not show the request's origin
