@@ -345,6 +345,175 @@ there is not a consistent state inside the Moodle database, nor also
 third-party plugins.
 
 
+# Web services
+
+This plugin exposes two web service functions, so an external system can
+queue and monitor merges without going through the web UI or a CLI script
+on the server itself.
+
+## `tool_mergeusers_enqueue_merge_request`
+
+Queues a merge, the same way the web UI does when
+`tool_mergeusers/enableadhocmerge` is on (see
+["Merging asynchronously via adhoc task"](#merging-asynchronously-via-adhoc-task)
+above): a pending log entry plus a `merge_users_task` adhoc task, processed
+the next time cron runs. Requires the `tool/mergeusers:mergeusers`
+capability.
+
+Parameters: `fromuserfield`, `fromuservalue`, `touserfield`, `touservalue`.
+The two `*field` parameters identify a user unambiguously and accept only:
+
+- `username`, `idnumber` or `id`.
+- `profile_field_<shortname>`, for a custom user profile field allow-listed
+  via `tool_mergeusers/searchbyprofilefields` (e.g. `profile_field_staffid`
+  for a field whose shortname is `staffid`) - **never** the field's internal
+  database id, which is specific to this Moodle instance and can change
+  across a restore or reinstall.
+
+If the "to" user does not exist yet (and is not ambiguous - more than one
+match is always rejected), the "from" user is renamed instead of merged,
+when `tool_mergeusers/renamewhenmissingtarget` is enabled and the field is a
+real Moodle login identifier (`username` always, `email` only when
+`$CFG->authloginviaemail` is on) - see issue
+[#250](https://github.com/jpahullo/moodle-tool_mergeusers/issues/250). The
+request is always queued for the adhoc task to process, though, so the
+immediate response only ever reports `status` as `pending` or `inprogress`
+- poll `tool_mergeusers_get_merge_request_status` with the returned `logid`
+to find out whether it ended up renamed or merged.
+
+By default, a repeated request for the same "from" user while a previous
+one is still pending/in progress queues another entry, matching how the web
+form itself behaves. Set `tool_mergeusers/wsallowduplicatepending` to "No"
+to instead return the existing pending entry unchanged.
+
+## `tool_mergeusers_get_merge_request_status`
+
+Polls the status of one or more merges, the same log data `log.php` shows
+on the web. Requires the `tool/mergeusers:viewlog` capability.
+
+Pass `logid` (the id returned by the enqueue function) to fetch exactly
+that entry, or omit it to list/filter instead, with optional `fromuserid`,
+`touserid` and `status` (`pending`, `inprogress`, `renamed`, `success` or
+`error`) filters, and `limitfrom`/`limitnum` for pagination. `limitnum` is
+always capped to `tool_mergeusers/logpagesize`; omit it (or pass `0`) to
+use that setting's value as-is.
+
+## Setting up access
+
+The plugin ships its own external service, "Merge users"
+(`tool_mergeusers`), bundling both functions - no need to create a custom
+service by hand. It is enabled by default so it works right after
+installing/upgrading, but deliberately restricted to whichever users an
+administrator explicitly authorises: given how critical and irreversible
+the user-merging process is, a token alone must never be enough to use it.
+
+1. Enable the web services subsystem: *Site administration > Advanced
+   features > Enable web services*.
+2. Enable a protocol, e.g. REST: *Site administration > Server > Web
+   services > Manage protocols*.
+3. Make sure the user who will hold the token has `tool/mergeusers:mergeusers`
+   and/or `tool/mergeusers:viewlog`, at system context, depending on which
+   of the two functions they need.
+4. Authorise that user within the "Merge users" service: *Site
+   administration > Server > Web services > External services > Merge
+   users > Authorised users > Add*. Without this step the token will not
+   work, even if the user already has the capabilities above - this is the
+   deliberate extra restriction mentioned above.
+5. Generate a token for that user, tied to the "Merge users" service:
+   *Site administration > Server > Web services > Manage tokens > Add*.
+   This has to be done by hand, per user - there is no way to automate
+   token creation from within the plugin itself.
+
+## Local debugging with curl
+
+Handy for trying a request by hand, once you have a token as described
+above (tied to a service that includes both functions). The examples
+below identify both the "from" and "to" user by `username`, the common
+case - the same shape works for `idnumber`, `id`, or a
+`profile_field_<shortname>`, on either side independently.
+
+Set these once per shell session:
+
+```sh
+MOODLE_URL="https://your.moodle.site"
+WSTOKEN="<your token>"
+TZ="Europe/Madrid"
+```
+
+Queue a merge request:
+
+```sh
+curl -s "$MOODLE_URL/webservice/rest/server.php" \
+  --data-urlencode "wstoken=$WSTOKEN" \
+  --data-urlencode "wsfunction=tool_mergeusers_enqueue_merge_request" \
+  --data-urlencode "moodlewsrestformat=json" \
+  --data-urlencode "fromuserfield=username" \
+  --data-urlencode "fromuservalue=olduser" \
+  --data-urlencode "touserfield=username" \
+  --data-urlencode "touservalue=keepuser"
+```
+
+The response includes a `logid`, plus `fromuser`/`touser` detail
+(id/username/fullname/email) confirming the users it actually found -
+useful on its own to sanity-check a request before relying on it. Poll
+that `logid` for the outcome once cron has had a chance to run:
+
+```sh
+curl -s "$MOODLE_URL/webservice/rest/server.php" \
+  --data-urlencode "wstoken=$WSTOKEN" \
+  --data-urlencode "wsfunction=tool_mergeusers_get_merge_request_status" \
+  --data-urlencode "moodlewsrestformat=json" \
+  --data-urlencode "logid=123"
+```
+
+Or omit `logid` (or pass `0`) to list/filter the most recent requests
+instead - e.g. every request still pending:
+
+```sh
+curl -s "$MOODLE_URL/webservice/rest/server.php" \
+  --data-urlencode "wstoken=$WSTOKEN" \
+  --data-urlencode "wsfunction=tool_mergeusers_get_merge_request_status" \
+  --data-urlencode "moodlewsrestformat=json" \
+  --data-urlencode "status=pending"
+```
+
+Pipe any of these through `jq .` (or `python3 -m json.tool`) if you want
+the JSON pretty-printed. For `tool_mergeusers_get_merge_request_status`,
+each entry's `log` field is itself JSON, escaped as a string - pipe
+through `jq '.logs[].log |= fromjson'` instead to have `jq` parse it too,
+in place, rather than leaving it as an unreadable escaped blob.
+
+To also make every `time*` field (`timecreated`, `timemodified`,
+`timeerased`, wherever nested) human-readable without losing the raw
+timestamp, expand on that same pipeline with `walk`:
+
+```sh
+TZ="$TZ" jq '
+  .logs[].log |= fromjson
+  | walk(
+      if type == "object" then
+        with_entries(
+          if (.key | test("^time")) and (.value | type == "number")
+          then .value |= "\(.) (" + (localtime | strftime("%Y-%m-%d %H:%M:%S")) + ")"
+          else .
+          end
+        )
+      else .
+      end
+    )
+'
+```
+
+`walk` recurses into the whole tree (including the now-parsed `log`
+field), so it catches `user_snapshots`' own `timemodified`/`timeerased`
+too, not just the top-level fields. Every timestamp is stored as UTC, but
+Moodle's own web UI always renders dates in the site's configured
+timezone (`userdate()`), not UTC - so this uses `localtime` instead of
+`gmtime`, resolved against the `TZ` variable set above (matching your own
+site's timezone, not whatever machine happens to run this command) so the
+two stay in agreement.
+
+
 # Correct way of testing this plugin
 
 First of all, check plugin settings for the description of the setting 

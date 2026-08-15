@@ -321,4 +321,47 @@ final class upgrade_test extends advanced_testcase {
         $this->assertSame($fromuser->username, $result['user_snapshots']['from_user']['username']);
         $this->assertSame(['Old action 1.', 'Old action 2.'], $result['actions']);
     }
+
+    /**
+     * Test that tool_mergeusers_backfill_origin() infers "web" for a row with a real
+     * (positive) mergedbyuserid, and "cli" for one with mergedbyuserid NULL or 0 - the
+     * only two origins that were ever possible before this plugin gained web services,
+     * added alongside the origin column itself. A row that already has an origin is
+     * left untouched.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_upgrade
+     */
+    public function test_backfill_origin_infers_web_or_cli_from_mergedbyuserid(): void {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/admin/tool/mergeusers/db/upgrade.php');
+
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $base = [
+            'touserid' => $touser->id,
+            'fromuserid' => $fromuser->id,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'log' => json_encode(['actions' => []]),
+            'status' => 'success',
+        ];
+
+        $webid = $DB->insert_record('tool_mergeusers', (object) ($base + ['mergedbyuserid' => 2]));
+        $clinullid = $DB->insert_record('tool_mergeusers', (object) ($base + ['mergedbyuserid' => null]));
+        $clizeroid = $DB->insert_record('tool_mergeusers', (object) ($base + ['mergedbyuserid' => 0]));
+        $untouchedid = $DB->insert_record(
+            'tool_mergeusers',
+            (object) ($base + ['mergedbyuserid' => 2, 'origin' => 'ws']),
+        );
+
+        tool_mergeusers_backfill_origin();
+
+        $this->assertSame('web', $DB->get_field('tool_mergeusers', 'origin', ['id' => $webid]));
+        $this->assertSame('cli', $DB->get_field('tool_mergeusers', 'origin', ['id' => $clinullid]));
+        $this->assertSame('cli', $DB->get_field('tool_mergeusers', 'origin', ['id' => $clizeroid]));
+        $this->assertSame('ws', $DB->get_field('tool_mergeusers', 'origin', ['id' => $untouchedid]));
+    }
 }

@@ -45,6 +45,7 @@ use tool_mergeusers\local\database_transactions;
 use tool_mergeusers\local\last_merge;
 use tool_mergeusers\local\logger;
 use tool_mergeusers\local\merge_user_display;
+use tool_mergeusers\local\origin;
 use tool_mergeusers\local\status;
 
 defined('MOODLE_INTERNAL') || die();
@@ -248,6 +249,12 @@ class renderer extends plugin_renderer_base {
      * @param int $logid             id of the record with the whole detail of this merging action.
      * @param int|null $timecreated  timestamp when merge was queued/initiated.
      * @param int|null $timemodified timestamp when merge was executed.
+     * @param string|null $origin    where the request originated (origin::WEB/CLI/WS value), or
+     * null when the caller does not have it - the report is then rendered without this detail,
+     * rather than showing a misleading "unknown".
+     * @param object|null $mergedby  the user who requested this merge/rename, resolved from
+     * mergedbyuserid, or null when either $origin is null (see above) or no requester was
+     * recorded for this log (e.g. a bare CLI script that never logs anyone in).
      * @return string html with the results.
      * @throws \coding_exception
      * @throws \ReflectionException
@@ -259,7 +266,9 @@ class renderer extends plugin_renderer_base {
         array|stdClass $data,
         int $logid,
         ?int $timecreated = null,
-        ?int $timemodified = null
+        ?int $timemodified = null,
+        ?string $origin = null,
+        ?object $mergedby = null,
     ): string {
         if (is_object($data)) {
             $data = json_decode(json_encode($data), true);
@@ -307,6 +316,11 @@ class renderer extends plugin_renderer_base {
                     'dbko_no_transactions';
                 $notifytype = $statusenum->value;
                 break;
+            case status::RENAMED:
+                $resulttype = 'renamed';
+                $dbmessage = 'dbrenamed';
+                $notifytype = notification::NOTIFY_SUCCESS;
+                break;
         }
 
         $output = $this->header();
@@ -324,6 +338,21 @@ class renderer extends plugin_renderer_base {
             merge_user_display::from_snapshot($tosnapshot),
             $snapshotcapturedat,
         );
+
+        if ($origin !== null) {
+            $output .= html_writer::start_tag('div', ['class' => 'title']);
+            $output .= html_writer::tag('strong', get_string('originonlog', 'tool_mergeusers') . ':')
+                . ' ' . $this->render_origin($origin);
+            $output .= html_writer::empty_tag('br');
+            $requesterdisplay = ($mergedby !== null)
+                ? $this->show_user($mergedby->id, $mergedby)
+                : get_string('nomergedby', 'tool_mergeusers');
+            $output .= html_writer::tag('strong', get_string('mergedbyuseridonlog', 'tool_mergeusers') . ':')
+                . ' ' . $requesterdisplay;
+            $output .= html_writer::end_tag('div');
+            $output .= html_writer::empty_tag('br');
+        }
+
         $output .= html_writer::start_tag('div', ['class' => 'title']);
         $output .= get_string('logline', 'tool_mergeusers', $this->render_logid($logid));
 
@@ -662,13 +691,14 @@ class renderer extends plugin_renderer_base {
             $output .= $this->render(new \core\output\paging_bar($totalcount, $page, $perpage, $baseurl));
 
             $table = new html_table();
-            $table->align = ['center', 'center', 'center', 'center', 'center', 'center'];
+            $table->align = ['center', 'center', 'center', 'center', 'center', 'center', 'center'];
             $table->head = [
                 get_string('olduseridonlog', 'tool_mergeusers'),
                 get_string('newuseridonlog', 'tool_mergeusers'),
                 get_string('mergedbyuseridonlog', 'tool_mergeusers'),
                 get_string('date'),
                 get_string('status'),
+                get_string('originonlog', 'tool_mergeusers'),
                 '',
             ];
 
@@ -695,6 +725,7 @@ class renderer extends plugin_renderer_base {
                         : get_string('nomergedby', 'tool_mergeusers'),
                     userdate($displaytime, get_string('strftimedaydatetime', 'langconfig')),
                     $statusdisplay,
+                    $this->render_origin($log->origin),
                     html_writer::link(
                         new moodle_url(
                             '/' . $CFG->admin . '/tool/mergeusers/log.php',
@@ -821,6 +852,7 @@ class renderer extends plugin_renderer_base {
             status::INPROGRESS => notification::NOTIFY_INFO,
             status::SUCCESS => notification::NOTIFY_SUCCESS,
             status::ERROR => notification::NOTIFY_ERROR,
+            status::RENAMED => notification::NOTIFY_SUCCESS,
         };
     }
 
@@ -837,11 +869,31 @@ class renderer extends plugin_renderer_base {
             status::INPROGRESS => 'badge-info',
             status::SUCCESS => 'badge-success',
             status::ERROR => 'badge-danger',
+            status::RENAMED => 'badge-success',
             default => 'badge-secondary',
         };
         $statusstring = get_string('status:' . $statusenum->value, 'tool_mergeusers');
 
         return html_writer::tag('span', $statusstring, ['class' => 'badge ' . $statusbadgeclass]);
+    }
+
+    /**
+     * Renders an origin as plain text, the same way Moodle's own core logs report
+     * shows its columns - not a rounded badge, which is harder to read at a glance
+     * and adds nothing here since origin is not a state that changes over time.
+     * Falls back to "unknown" for a NULL/invalid value, same as render_status()
+     * does for status, since origin::safe_from() itself has no non-null fallback to
+     * offer (see its own docblock).
+     *
+     * @param string|null $origin
+     * @return string plain text label.
+     */
+    public function render_origin(?string $origin): string {
+        $originenum = origin::safe_from($origin);
+
+        return ($originenum !== null)
+            ? get_string('origin:' . $originenum->value, 'tool_mergeusers')
+            : get_string('origin:unknown', 'tool_mergeusers');
     }
 
     /**

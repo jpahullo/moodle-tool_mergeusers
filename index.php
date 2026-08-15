@@ -30,6 +30,7 @@
 
 use core\task\manager;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\origin;
 use tool_mergeusers\local\profile_fields;
 use tool_mergeusers\local\selected_users_to_merge;
 use tool_mergeusers\local\user_merger;
@@ -138,7 +139,7 @@ if (!empty($option)) {
 
                 // Create pending log entry first.
                 $logger = new \tool_mergeusers\local\logger();
-                $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id);
+                $logid = $logger->create_pending_log($touser->id, $fromuser->id, $USER->id, origin: origin::WEB);
 
                 if (!$logid) {
                     $renderer->mu_error(get_string('error_log_creation_failed', 'tool_mergeusers'));
@@ -170,7 +171,7 @@ if (!empty($option)) {
             // Merge the users.
             $log = [];
             $success = true;
-            [$success, $log, $logid] = $usermerger->merge($touser->id, $fromuser->id);
+            [$success, $log, $logid] = $usermerger->merge($touser->id, $fromuser->id, origin: origin::WEB);
 
             // Reset mut session to let the user choose another pair of users to merge.
             $currentuserselection->clear_users_selection();

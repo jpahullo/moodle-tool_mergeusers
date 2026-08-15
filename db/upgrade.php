@@ -199,6 +199,33 @@ function xmldb_tool_mergeusers_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080700, 'tool', 'mergeusers');
     }
 
+    if ($oldversion < 2026081400) {
+        // Define field origin to be added to tool_mergeusers: where the request
+        // originated (web/cli/ws). Set once at creation, never updated afterwards.
+        // NULL for every existing row - there is no way to reconstruct it after the
+        // fact for logs that predate this column.
+        $table = new xmldb_table('tool_mergeusers');
+        $field = new xmldb_field('origin', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'status');
+
+        // Conditionally launch add field origin.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2026081400, 'tool', 'mergeusers');
+    }
+
+    if ($oldversion < 2026081401) {
+        // Backfill origin for rows left NULL by the previous step: it CAN be inferred
+        // for every row that predates the web services this plugin gained alongside
+        // this very column, since only two origins were ever possible until now.
+        tool_mergeusers_backfill_origin();
+
+        // Mergeusers savepoint reached.
+        upgrade_plugin_savepoint(true, 2026081401, 'tool', 'mergeusers');
+    }
+
     return true;
 }
 
@@ -359,4 +386,28 @@ function tool_mergeusers_migrate_legacy_top_level_actions(): void {
         $DB->update_record('tool_mergeusers', $record);
     }
     $rows->close();
+}
+
+/**
+ * Backfills the origin column for every row left NULL by the 2026081400 step that
+ * introduced it. Only "web" or "cli" were ever possible before this plugin gained web
+ * services (added alongside this very column), and a legacy row's own mergedbyuserid
+ * already tells them apart: logger::log()/create_pending_log() always store the
+ * current $USER->id there, which is only ever a real, positive user id when the
+ * request went through the web UI's own require_login() first - a bare CLI script
+ * never logs anyone in, leaving $USER->id at 0 (or the column NULL entirely, for rows
+ * that predate mergedbyuserid itself being tracked at all). Rows that already have an
+ * origin are left untouched.
+ *
+ * @return void
+ */
+function tool_mergeusers_backfill_origin(): void {
+    global $DB;
+
+    $DB->execute("UPDATE {tool_mergeusers} SET origin =
+        CASE
+            WHEN mergedbyuserid > 0 THEN 'web'
+            ELSE 'cli'
+        END
+        WHERE origin IS NULL");
 }

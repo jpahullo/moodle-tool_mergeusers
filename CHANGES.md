@@ -3,6 +3,172 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026081405
+
+1. fix: #218: `tool_mergeusers_get_merge_request_status` did not return
+   `origin` for any log, even though `logger::get()` already selects it -
+   added it to the response, same as the two other places (`log.php`,
+   `view.php`) that already show it.
+
+2. fix: #250: the action logged for a #250 rename only showed the new
+   value, and named the field by its translated label (`Username`/
+   `Email`) instead of its real API name - now it shows both the old and
+   new values, and the real field name (`username`/`email`), so the log
+   is unambiguous on its own without needing the fieldlabel's language to
+   match the API's field naming.
+
+3. fix: #250: `renamewhenmissingtarget`'s description did not say when it
+   actually applies - only a request queued via the web service ever
+   reaches the deferred rename decision; a web-triggered merge (whether
+   immediate or itself queued as its own adhoc task) and a CLI/gathering
+   merge never go through it at all. Made that explicit instead of
+   leaving it to be inferred from the code.
+
+4. fix: #218: `wstousernotfoundyet`'s note ended with "will be renamed
+   instead of merged" - reworded to "will be renamed instead of doing a
+   full merge", clearer about what "renamed" is actually being contrasted
+   with.
+
+5. fix: #218: a deferred request that failed for a merge-side reason
+   (e.g. its target became ambiguous between queueing and execution)
+   always sent the rename-error notification, never the merge-error one -
+   `execute_deferred()` passed `null` as the touser for every failure,
+   and `send_notification()` picks the template based on whether a touser
+   is given. Now it checks the log's own persisted `touserid` (set once
+   at creation and never touched since) to tell a merge attempt apart
+   from a rename attempt, regardless of why it later failed.
+
+6. fix: #250: capturing the old value for a #250 rename's log message
+   read `$fromuser->$field` unconditionally - harmless with today's only
+   reachable field values (`username`/`email`, both real `{user}`
+   columns), but `perform_rename()` is a public method with no guarantee
+   a future caller passes an equally-validated field. Reading it via `??`
+   avoids an undefined-property notice either way.
+
+## 2026081404
+
+1. fix: #218: `log.php`'s detail page did not show the request's origin
+   (web/cli/ws) nor who requested it, even though both were already
+   stored on every log - the report should be self-contained, not
+   require cross-checking the listing page. Both are now shown alongside
+   the user info table.
+
+2. fix: #218: the log listing (`view.php`) and its CSV export did not
+   show `origin` either, even though it was already selected by
+   `logger::search()` - added an "Origin" column and CSV field for it.
+
+3. fix: #218: a request queued via the web service for two users that
+   both already existed still had its persisted log claim the "to" user
+   was not found, until the queued task actually ran - `queue_deferred()`
+   always stored `touserid = 0` regardless of whether the "to" user had
+   already been resolved, discarding it. The web service's own response
+   already reported the real user correctly; the persisted log now does
+   too, from the moment it is created. The merge/rename decision itself
+   was never affected by this - only the log's own snapshot was stale.
+
+4. fix: #218: origin is now shown as plain text on both `log.php` and
+   `view.php`, not a rounded badge - the same way Moodle's own core logs
+   report shows its columns. A badge draws attention as if origin were a
+   changing state worth flagging, when it is a fixed fact about the
+   request; plain text reads better at a glance and is more accessible.
+
+## 2026081403
+
+1. fix: #218: the `enableadhocmerge` setting is renamed (display name) to
+   "Enable adhoc task for web merges", and its description is now explicit
+   about scope: it only ever affects merges started from the web
+   interface. CLI/gathering merges always run synchronously and web
+   service merges always run asynchronously, regardless of this setting -
+   neither was ever actually affected by it, but the previous wording did
+   not say so plainly enough.
+
+2. fix: #250: `renamewhenmissingtarget` now defaults to disabled, not
+   enabled - preserving the plugin's pre-#250 behaviour (a merge fails
+   outright when either user does not exist) unless an administrator
+   explicitly opts in to renaming the user to remove instead.
+
+3. fix: #218: `wsallowduplicatepending`'s description now names the old
+   user (the user to remove) explicitly as the one checked for a pending
+   or in-progress request, matching the terminology already used
+   elsewhere in the plugin's settings, instead of the vaguer "a user".
+
+## 2026081402
+
+1. feature: #218: the plugin now ships its own `$services` entry in
+   `db/services.php`, "Merge users" (`tool_mergeusers`), bundling both web
+   service functions - no need to create a custom external service by hand
+   any more. It is enabled by default so it works right after
+   installing/upgrading, but `restrictedusers` is deliberately kept on:
+   given how critical and irreversible the user-merging process is, a
+   token alone must never be enough, so an administrator still has to
+   explicitly authorise each user within the service.
+
+2. fix: #218: `tool_mergeusers_enqueue_merge_request` always queues the
+   request as an adhoc task, so its immediate response can never actually
+   be a completed rename or merge - `renamed` was always `false` and told
+   the caller nothing. Removed that field from the response; `status`
+   (`pending`/`inprogress` immediately, `renamed`/`success`/`error` once
+   the task has run) already carries the real outcome once polled via
+   `tool_mergeusers_get_merge_request_status`.
+
+## 2026081401
+
+1. feature: #218: every merge/rename request now records where it originated -
+   `web` (the web UI), `cli` (the CLI gathering path) or `ws` (the new web
+   services) - in a new `origin` column on `tool_mergeusers`, via the new
+   `classes/local/origin.php` enum instead of scattered literal strings. Set once
+   when the log entry is first created (`logger::log()`/`create_pending_log()`),
+   and never changed afterwards by `update_log_status()` or
+   `retarget_pending_log()`. Existing rows are backfilled instead of left `NULL`:
+   only `web` or `cli` were ever possible before this column existed, and a
+   legacy row's own `mergedbyuserid` already tells them apart - real (greater
+   than zero) only for a web request, which always goes through `require_login()`
+   first; `NULL` or `0` for a CLI one, since a bare CLI script never logs anyone
+   in.
+
+## 2026081303
+
+1. feature: #218/#250: two new web services let external systems queue a user merge
+   and poll its status.
+
+   `tool_mergeusers_enqueue_merge_request` (`tool/mergeusers:mergeusers`) identifies
+   both users by `username`/`idnumber`/`id`, or `profile_field_<shortname>` for an
+   allow-listed custom profile field (the same convention Moodle core itself uses in
+   `core_user_create_users`/`tool_uploaduser`) - never by a field's internal database
+   id, which is an environment-specific detail an external caller cannot be expected to
+   know. An obviously invalid request (either user not found or ambiguous, or a "to"
+   user that is missing and could not possibly be renamed to right now) is rejected
+   immediately; anything else is queued as a `merge_users_task`, reusing the existing
+   ad-hoc task infrastructure rather than a new queue table. What a queued request
+   actually turns out to be - a real merge, a #250 rename of the "from" user's
+   `username`/`email` when the "to" user genuinely does not exist, or an error - is
+   only ever decided once that task actually executes, evaluated fresh against live
+   data and the current `tool_mergeusers/renamewhenmissingtarget` setting: neither the
+   target's existence nor that setting can be trusted to still hold by execution time,
+   and `merge_users_task`'s own concurrency-1, oldest-first queue is what guarantees an
+   earlier request for the same user finishes first. The response - for a queued
+   request or an immediate rejection - includes the resolved `fromuser`/`touser` detail
+   (id/username/fullname/email), the same confirmation the web form's own review step
+   shows; when the "to" user does not exist yet, an explanatory note replaces its
+   detail. A `tool_mergeusers/wsallowduplicatepending` setting (default on, matching the
+   web form's existing unrestricted behaviour) controls whether a repeated request for
+   the same "from" user queues a duplicate or returns the existing pending one. Queued
+   web service requests never send a completion notification - the caller is expected
+   to poll `tool_mergeusers_get_merge_request_status` instead.
+
+   `tool_mergeusers_get_merge_request_status` (`tool/mergeusers:viewlog`) fetches one
+   log by id, or a filtered/paginated list, reusing `classes/local/logger.php` as-is.
+
+   Supporting changes: `user_searcher::verify_user()` now distinguishes an ambiguous
+   match from a missing one, instead of collapsing both into the same error; a new
+   `renamed` status distinguishes a completed #250 rename from a full merge's
+   `success`, and a legacy log with a NULL `status` (pre-dating that column) is
+   normalised to `error` rather than failing the status service's return-value
+   validation; the merge/rename decision and its logging live in a new shared domain
+   class, `classes/local/merge_orchestrator.php`.
+
+   Thanks to @nvallinoto for their contributions.
+
 ## 2026081302
 
 1. feature: #395: `lesson_attempts`/`lesson_branch`/`lesson_grades`/`lesson_timer` are now

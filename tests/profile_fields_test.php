@@ -74,7 +74,8 @@ final class profile_fields_test extends advanced_testcase {
 
     /**
      * Test that allowed() only returns the fields listed in the
-     * searchbyprofilefields setting, not every field defined on the site.
+     * searchbyprofilefields setting, not every field defined on the site, keyed by
+     * "profile_field_<shortname>" rather than the field's internal database id.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_search_users
@@ -92,7 +93,7 @@ final class profile_fields_test extends advanced_testcase {
         set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
         set_config('searchbyprofilefields', (string) $allowedid, 'tool_mergeusers');
 
-        $this->assertSame([$allowedid => 'Name of frog'], profile_fields::allowed());
+        $this->assertSame([profile_fields::FIELD_PREFIX . 'frogname' => 'Name of frog'], profile_fields::allowed());
     }
 
     /**
@@ -138,33 +139,34 @@ final class profile_fields_test extends advanced_testcase {
      * @group tool_mergeusers_search_users
      */
     public function test_unavailable_field_notice_names_existing_field(): void {
-        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+        $this->getDataGenerator()->create_custom_profile_field([
             'shortname' => 'frogname', 'name' => 'Name of frog',
             'datatype' => 'text',
-        ])->id;
+        ]);
 
-        $notice = profile_fields::unavailable_field_notice((string) $fieldid);
+        $notice = profile_fields::unavailable_field_notice(profile_fields::FIELD_PREFIX . 'frogname');
 
         $this->assertSame(get_string('searchfieldnolongeravailable', 'tool_mergeusers', 'Name of frog'), $notice);
     }
 
     /**
      * Test that unavailable_field_notice() falls back to a generic message when the
-     * field id no longer resolves to any real field (e.g. it was deleted, not just
+     * shortname no longer resolves to any real field (e.g. it was deleted, not just
      * disallowed).
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_search_users
      */
     public function test_unavailable_field_notice_falls_back_when_field_deleted(): void {
-        $notice = profile_fields::unavailable_field_notice('999999');
+        $notice = profile_fields::unavailable_field_notice(profile_fields::FIELD_PREFIX . 'neverexisted');
 
         $this->assertSame(get_string('searchfieldnolongeravailable_generic', 'tool_mergeusers'), $notice);
     }
 
     /**
      * Test that unavailable_field_notice() falls back to the generic message for a
-     * non-numeric raw value too, rather than erroring.
+     * value that is not even shaped like a profile field reference, rather than
+     * erroring.
      *
      * @group tool_mergeusers
      * @group tool_mergeusers_search_users
@@ -173,5 +175,88 @@ final class profile_fields_test extends advanced_testcase {
         $notice = profile_fields::unavailable_field_notice('');
 
         $this->assertSame(get_string('searchfieldnolongeravailable_generic', 'tool_mergeusers'), $notice);
+    }
+
+    /**
+     * Test that resolve_allowed() resolves an allow-listed field's
+     * "profile_field_<shortname>" reference to its internal database id.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_resolve_allowed_resolves_allowlisted_shortname(): void {
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+
+        $this->assertSame($fieldid, profile_fields::resolve_allowed(profile_fields::FIELD_PREFIX . 'frogname'));
+    }
+
+    /**
+     * Test that resolve_allowed() returns null for a field that exists but is not
+     * allow-listed.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_resolve_allowed_rejects_non_allowlisted_shortname(): void {
+        $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ]);
+        // Deliberately not added to tool_mergeusers/searchbyprofilefields.
+
+        $this->assertNull(profile_fields::resolve_allowed(profile_fields::FIELD_PREFIX . 'frogname'));
+    }
+
+    /**
+     * Test that resolve_allowed() returns null for a shortname that does not exist
+     * at all.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_resolve_allowed_rejects_unknown_shortname(): void {
+        $this->assertNull(profile_fields::resolve_allowed(profile_fields::FIELD_PREFIX . 'neverexisted'));
+    }
+
+    /**
+     * Test that resolve_allowed() returns null for a value that is not shaped like a
+     * profile field reference at all - it must never be mistaken for one.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_resolve_allowed_rejects_value_without_prefix(): void {
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+
+        $this->assertNull(profile_fields::resolve_allowed((string) $fieldid));
+        $this->assertNull(profile_fields::resolve_allowed('username'));
+    }
+
+    /**
+     * Test that allowed_ids() returns the raw allow-listed field ids, for the
+     * internal "search across every allowed field at once" SQL use case.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_search_users
+     */
+    public function test_allowed_ids_returns_raw_ids(): void {
+        $fieldid = $this->getDataGenerator()->create_custom_profile_field([
+            'shortname' => 'frogname', 'name' => 'Name of frog',
+            'datatype' => 'text',
+        ])->id;
+        set_config('searchbyprofilefieldsenabled', 1, 'tool_mergeusers');
+        set_config('searchbyprofilefields', (string) $fieldid, 'tool_mergeusers');
+
+        $this->assertSame([$fieldid], profile_fields::allowed_ids());
     }
 }

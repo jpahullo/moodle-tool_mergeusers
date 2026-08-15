@@ -79,6 +79,8 @@ final class logger {
      * @param array|null $fromhint same as $tohint, for $fromuserid.
      * @param int|null $suspendedplaceholderpicture the user.picture value set on $fromuserid when its own picture
      * was overwritten with the generic "suspended" placeholder image, or null when that did not happen.
+     * @param origin $origin where this request originated - set once here, never changed afterwards by
+     * update_log_status() or any other method. Defaults to WEB, matching every caller predating this parameter.
      * @return bool|int false when could not insert the record; the log id when success.
      * @throws moodle_exception when log record cannot be inserted.
      */
@@ -91,6 +93,7 @@ final class logger {
         ?array $tohint = null,
         ?array $fromhint = null,
         ?int $suspendedplaceholderpicture = null,
+        origin $origin = origin::WEB,
     ): bool|int {
         global $DB, $USER;
 
@@ -110,6 +113,7 @@ final class logger {
         $record->timemodified = $currenttime;
         $record->mergedbyuserid = $USER->id;
         $record->log = json_encode($logdata);
+        $record->origin = $origin->value;
 
         if ($status === null) {
             $record->status = status::from_success($success)->value;
@@ -138,20 +142,34 @@ final class logger {
     /**
      * Creates a pending log entry for a merge operation.
      *
-     * @param int $touserid       user.id where all data from $fromuserid will be merged into.
+     * @param int $touserid       user.id where all data from $fromuserid will be merged into. 0 when there is
+     * no real "to" user yet (e.g. a rename-instead-of-merge request), together with $tohint.
      * @param int $fromuserid     user.id moving all data into $touserid.
      * @param int $mergedbyuserid user.id of the user initiating the merge.
+     * @param array|null $tohint optional ['field' => ..., 'value' => ...] describing what was searched for
+     * $touserid when it could not be resolved (id <= 0). Ignored otherwise.
+     * @param array|null $fromhint same as $tohint, for $fromuserid.
+     * @param origin $origin where this request originated - set once here, never changed afterwards by
+     * update_log_status()/retarget_pending_log() or any other method. Defaults to WEB, matching every
+     * caller predating this parameter.
      *
      * @return bool|int false when could not insert the record; the log id when success.
      */
-    public function create_pending_log(int $touserid, int $fromuserid, int $mergedbyuserid): bool|int {
+    public function create_pending_log(
+        int $touserid,
+        int $fromuserid,
+        int $mergedbyuserid,
+        ?array $tohint = null,
+        ?array $fromhint = null,
+        origin $origin = origin::WEB,
+    ): bool|int {
         global $DB;
 
         $currenttime = time();
 
         // Store user snapshots in log data.
         $logdata = [
-            'user_snapshots' => self::capture_user_snapshots($touserid, $fromuserid),
+            'user_snapshots' => self::capture_user_snapshots($touserid, $fromuserid, $tohint, $fromhint),
             'actions' => [],
             'suspendedplaceholderpicture' => null,
         ];
@@ -164,6 +182,7 @@ final class logger {
         $record->mergedbyuserid = $mergedbyuserid;
         $record->log = json_encode($logdata);
         $record->status = status::PENDING->value;
+        $record->origin = $origin->value;
 
         try {
             return $DB->insert_record('tool_mergeusers', $record, true);
@@ -228,6 +247,47 @@ final class logger {
     }
 
     /**
+     * Updates an already-created log entry's touserid, and recaptures both user
+     * snapshots fresh against the now-known touserid - discarding whatever "not found"
+     * snapshot was captured when the entry was first created with an unresolved "to"
+     * side (see create_pending_log()'s $tohint). Used when a request queued for later,
+     * deferred evaluation (see merge_orchestrator::resolve_and_act()) turns out, once
+     * actually evaluated, to have a real target user after all - so its log correctly
+     * reflects that target instead of the stale "not found" guess made when queued.
+     * Leaves status/actions untouched.
+     *
+     * @param int $logid an existing log entry, as created by create_pending_log().
+     * @param int $touserid the now-resolved real user.id to keep.
+     * @return bool true on success, false otherwise.
+     */
+    public function retarget_pending_log(int $logid, int $touserid): bool {
+        global $DB;
+
+        try {
+            $existinglog = $DB->get_record('tool_mergeusers', ['id' => $logid], '*', MUST_EXIST);
+        } catch (\dml_missing_record_exception $e) {
+            debugging('Cannot retarget non-existent merge log: ' . $logid, DEBUG_DEVELOPER);
+            return false;
+        }
+
+        $existinglogdata = json_decode($existinglog->log, true);
+
+        $logdata = [
+            'user_snapshots' => self::capture_user_snapshots($touserid, $existinglog->fromuserid),
+            'actions' => $existinglogdata['actions'] ?? [],
+            'suspendedplaceholderpicture' => $existinglogdata['suspendedplaceholderpicture'] ?? null,
+        ];
+
+        $record = new stdClass();
+        $record->id = $logid;
+        $record->touserid = $touserid;
+        $record->log = json_encode($logdata);
+        $record->timemodified = time();
+
+        return $DB->update_record('tool_mergeusers', $record);
+    }
+
+    /**
      * Gets the most recent log entry where $userid was the removed user ("fromuserid"), regardless of
      * status, optionally excluding one specific log id.
      *
@@ -278,7 +338,7 @@ final class logger {
             'tool_mergeusers',
             $filter,
             $sort,
-            'id, touserid, fromuserid, mergedbyuserid, timecreated, timemodified, status, log',
+            'id, touserid, fromuserid, mergedbyuserid, timecreated, timemodified, status, origin, log',
             $limitfrom,
             $limitnum,
         );
@@ -317,7 +377,7 @@ final class logger {
 
         [$where, $params] = $this->build_search_where($searchterm);
         $sql = "SELECT tm.id, tm.touserid, tm.fromuserid, tm.mergedbyuserid, tm.timecreated, tm.timemodified,
-                       tm.status, tm.log
+                       tm.status, tm.origin, tm.log
                   FROM {tool_mergeusers} tm
              LEFT JOIN {user} tou ON tou.id = tm.touserid
              LEFT JOIN {user} fru ON fru.id = tm.fromuserid

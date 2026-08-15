@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/mergeusers/db" VERSION="20260907" COMMENT="XMLDB file for Moodle admin/tool/mergeusers"
+<XMLDB PATH="admin/tool/mergeusers/db" VERSION="20260908" COMMENT="XMLDB file for Moodle admin/tool/mergeusers"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -14,6 +14,7 @@
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time stamp when the merging action took place."/>
         <FIELD NAME="log" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="List of actions performed if success, or errors on merging failure."/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Status of the merge: pending, inprogress, success, error. NULL for legacy logs."/>
+        <FIELD NAME="origin" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Where the request originated: web, cli, ws. Set once at creation, never changed afterwards. NULL for legacy logs."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

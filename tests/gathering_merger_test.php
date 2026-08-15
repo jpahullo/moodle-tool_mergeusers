@@ -29,6 +29,7 @@ use advanced_testcase;
 use tool_mergeusers\local\cli\gathering_merger;
 use tool_mergeusers\local\cli\merge_request;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\origin;
 use tool_mergeusers\local\user_merger;
 
 defined('MOODLE_INTERNAL') || die();
@@ -76,6 +77,30 @@ final class gathering_merger_test extends advanced_testcase {
         $stored = $logger->detail_from(reset($logs)->id);
 
         $this->assertSame('jsmith123', $stored->log->user_snapshots->from_user->username);
+    }
+
+    /**
+     * Test that a merge performed via the CLI gathering path is recorded with a CLI
+     * origin, not the WEB default - this is the only non-web caller of user_merger's
+     * "create a fresh log" path today.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_cli
+     */
+    public function test_merge_records_cli_origin(): void {
+        $touser = $this->getDataGenerator()->create_user();
+        $fromuser = $this->getDataGenerator()->create_user();
+
+        $action = new merge_request();
+        $action->toid = $touser->id;
+        $action->fromid = $fromuser->id;
+
+        $mut = new gathering_merger(new user_merger());
+        $mut->merge(new in_memory_gathering([$action]));
+
+        global $DB;
+        $logid = $DB->get_field('tool_mergeusers', 'id', ['touserid' => $touser->id, 'fromuserid' => $fromuser->id]);
+        $this->assertSame(origin::CLI->value, $DB->get_field('tool_mergeusers', 'origin', ['id' => $logid]));
     }
 
     /**

@@ -19,6 +19,7 @@ namespace tool_mergeusers;
 use advanced_testcase;
 use tool_mergeusers\task\merge_users_task;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\status;
 
 /**
  * Tests for notifications sent by adhoc task with different results.
@@ -172,5 +173,277 @@ final class notification_test extends advanced_testcase {
 
         // Validate recipient is the user who initiated the merge.
         $this->assertEquals($adminuserid, $message->useridto);
+    }
+
+    /**
+     * Test that a "renamed" notification is sent to the requester - never a "touser",
+     * since a rename has none - when a queued rename completes successfully.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_renamed_notification_sent_by_adhoc_task(): void {
+        global $USER;
+
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        $logger = new logger();
+        $logid = $logger->create_pending_log(
+            0,
+            $fromuser->id,
+            $adminuserid,
+            ['field' => 'username', 'value' => 'newuser'],
+        );
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'tofield' => 'username',
+            'tovalue' => 'newuser',
+            'logid' => $logid,
+        ]);
+        $task->set_userid($adminuserid);
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $message = reset($messages);
+        $this->assertEquals('[Merge Users] Rename completed successfully', $message->subject);
+        $this->assertEquals('tool_mergeusers', $message->component);
+        $this->assertStringContainsString('rename of user', $message->fullmessage);
+        $this->assertStringContainsString('completed successfully', $message->fullmessagehtml);
+        $this->assertStringContainsString((string) $logid, $message->fullmessage);
+        $this->assertEquals($adminuserid, $message->useridto);
+    }
+
+    /**
+     * Test that a rename that ends up ineligible (e.g. the setting was disabled after
+     * queuing) sends the rename-specific error notification, not the merge one.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_rename_error_notification_sent_by_adhoc_task(): void {
+        global $USER;
+
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+
+        $logger = new logger();
+        $logid = $logger->create_pending_log(
+            0,
+            $fromuser->id,
+            $adminuserid,
+            ['field' => 'username', 'value' => 'newuser'],
+        );
+
+        // Disable the setting after queuing, forcing perform_rename() to reject it.
+        set_config('renamewhenmissingtarget', 0, 'tool_mergeusers');
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'tofield' => 'username',
+            'tovalue' => 'newuser',
+            'logid' => $logid,
+        ]);
+        $task->set_userid($adminuserid);
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $message = reset($messages);
+        $this->assertEquals('[Merge Users] Rename completed with errors', $message->subject);
+        $this->assertStringContainsString('completed with errors', $message->fullmessagehtml);
+        $this->assertEquals($adminuserid, $message->useridto);
+    }
+
+    /**
+     * Test that a deferred request that was a real merge attempt when queued (a real
+     * "to" user already existed, so touserid was already set on the log) - but that
+     * fails at execution time for a merge-side reason, e.g. the target has since
+     * become ambiguous - sends the merge error notification, not the rename one.
+     * Regression test: execute_deferred() used to always pass null as the touser for
+     * any deferred failure, so send_notification()'s own touser!==null heuristic
+     * could never tell a merge-scenario failure apart from a rename-scenario one.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_merge_error_notification_sent_for_deferred_request_that_was_a_real_merge(): void {
+        global $USER;
+
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+
+        $fromuser = $this->getDataGenerator()->create_user();
+        $touser = $this->getDataGenerator()->create_user(['idnumber' => 'dup-target']);
+
+        // Touserid is real from the start: this was queued as a genuine merge.
+        $logger = new logger();
+        $logid = $logger->create_pending_log($touser->id, $fromuser->id, $adminuserid);
+
+        // A second user with the same idnumber shows up before the task runs, making
+        // the target ambiguous by execution time.
+        $this->getDataGenerator()->create_user(['idnumber' => 'dup-target']);
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'tofield' => 'idnumber',
+            'tovalue' => 'dup-target',
+            'logid' => $logid,
+        ]);
+        $task->set_userid($adminuserid);
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $message = reset($messages);
+        $this->assertEquals('[Merge Users] Merge completed with errors', $message->subject);
+        $this->assertStringContainsString('completed with errors', $message->fullmessagehtml);
+        $this->assertStringContainsString($touser->firstname, $message->fullmessage);
+    }
+
+    /**
+     * Test that a deferred request queued with notify=false (as a web service request
+     * always is - its caller is expected to poll, not read a notification sent to
+     * whatever user its token happens to be bound to) sends no notification at all,
+     * whether it ends up a real merge or a #250 rename.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_no_notification_sent_when_notify_is_false(): void {
+        global $USER;
+
+        $this->setAdminUser();
+        $adminuserid = $USER->id;
+        $logger = new logger();
+
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+
+        // A merge outcome.
+        $touser = $this->getDataGenerator()->create_user();
+        $mergefromuser = $this->getDataGenerator()->create_user();
+        $mergelogid = $logger->create_pending_log(
+            0,
+            $mergefromuser->id,
+            $adminuserid,
+            ['field' => 'id', 'value' => (string) $touser->id],
+        );
+        $mergetask = new merge_users_task();
+        $mergetask->set_custom_data([
+            'fromid' => $mergefromuser->id,
+            'tofield' => 'id',
+            'tovalue' => (string) $touser->id,
+            'logid' => $mergelogid,
+            'notify' => false,
+        ]);
+        $mergetask->set_userid($adminuserid);
+
+        // A rename outcome.
+        $renamefromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+        $renamelogid = $logger->create_pending_log(
+            0,
+            $renamefromuser->id,
+            $adminuserid,
+            ['field' => 'username', 'value' => 'newuser'],
+        );
+        $renametask = new merge_users_task();
+        $renametask->set_custom_data([
+            'fromid' => $renamefromuser->id,
+            'tofield' => 'username',
+            'tovalue' => 'newuser',
+            'logid' => $renamelogid,
+            'notify' => false,
+        ]);
+        $renametask->set_userid($adminuserid);
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $mergetask->execute();
+            $renametask->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(0, $messages);
+        // The requests themselves must still have gone through, only the notification
+        // is suppressed.
+        $this->assertSame(status::SUCCESS->value, $logger->detail_from($mergelogid)->status);
+        $this->assertSame(status::RENAMED->value, $logger->detail_from($renamelogid)->status);
+    }
+
+    /**
+     * Test that no error/warning happens, and simply nothing gets sent, when a queued
+     * request has no requesting user at all - e.g. a future non-web origin (such as
+     * the CLI gathering, which today does not record one either) that never calls
+     * set_userid(). This is the same safety net that already protects a real merge;
+     * this test locks it in for the deferred (#250-capable) path too.
+     *
+     * @group tool_mergeusers
+     * @covers \tool_mergeusers\task\merge_users_task
+     */
+    public function test_no_error_when_no_requesting_user_is_known(): void {
+        set_config('renamewhenmissingtarget', 1, 'tool_mergeusers');
+        $fromuser = $this->getDataGenerator()->create_user(['username' => 'olduser']);
+        $logger = new logger();
+        $logid = $logger->create_pending_log(0, $fromuser->id, 0, ['field' => 'username', 'value' => 'newuser']);
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'tofield' => 'username',
+            'tovalue' => 'newuser',
+            'logid' => $logid,
+        ]);
+        // Deliberately never calling set_userid().
+
+        $sink = $this->redirectMessages();
+        ob_start();
+        try {
+            $task->execute();
+        } finally {
+            ob_end_clean();
+        }
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(0, $messages);
+        $this->assertSame(status::RENAMED->value, $logger->detail_from($logid)->status);
     }
 }

@@ -227,6 +227,13 @@ than extend the gap.
   gets silently stripped as a comment by any editor-based git flow (merge
   commit messages, interactive rebase, `git commit` without `-m`) - GitHub
   itself also renders it more reliably with the leading space.
+- **Write commit messages as Jordi, not about Jordi.** Never narrate the
+  agent's own process in third person ("per Jordi's request", "as the user
+  asked", "at Jordi's direction") — a commit message is Jordi's own record
+  of why the change was made, in his voice, not a summary of the
+  conversation that produced it. State the reasoning directly instead
+  (why the change is needed, what problem it solves), the same way every
+  other commit in this project's history already does.
 - **Once a commit has been reviewed, address further feedback with a new
   commit, not an amend.** A commit is "reviewed" once a human (Jordi) or an
   automated reviewer (e.g. GitHub Copilot on a PR) has looked at it and left

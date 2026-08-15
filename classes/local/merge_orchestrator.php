@@ -1,0 +1,476 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Domain service to request a merge, or a rename instead of merge (issue #250).
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2026 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace tool_mergeusers\local;
+
+use core\task\manager;
+use stdClass;
+use Throwable;
+use tool_mergeusers\task\merge_users_task;
+
+/**
+ * Resolves both users up front, enough to reject an obviously invalid request right
+ * away, then either acts on the "to" side immediately (synchronous request), or -
+ * whenever the request is asynchronous - defers the actual merge-vs-rename decision
+ * until a merge_users_task actually executes, never locking it in here even when it
+ * looks obvious now. Shared domain logic, independent of whether the caller is a web
+ * service, the web UI, or a CLI script - none of them throw or catch web-service-
+ * specific exception types here; each caller translates the returned result into its
+ * own error handling convention.
+ *
+ * Why defer the final decision instead of committing to it up front: whether the "to"
+ * user exists, and whether renaming is currently allowed, can both change between the
+ * moment a request is queued and the moment it actually runs - another user could be
+ * created or renamed into existence by then, and an administrator could toggle
+ * tool_mergeusers/renamewhenmissingtarget at any time. Deciding early and only
+ * deferring the write (an earlier revision of this file) fixed the specific ordering
+ * hazard below, but could still commit to the wrong outcome. Evaluating everything
+ * fresh, exactly once, at the moment of actual execution is the only way to guarantee
+ * the outcome always reflects live state - so an asynchronous caller must never expect
+ * anything from this class but a "pending" result once the request has been accepted;
+ * the real outcome is only ever discoverable afterwards, from the log. The up-front
+ * resolution described above exists only to reject what is already unambiguously
+ * invalid right now (not found/ambiguous, or a "to" that could never possibly be
+ * renamed to either) - it never decides what a queued, still-possible request will
+ * actually turn out to be.
+ *
+ * This also matters for more than just correctness of a single request: the "from"
+ * user of one request can be the very same user another already-queued
+ * merge_users_task still has to finish acting on (e.g. "merge A into B", then "merge B
+ * into C" where C does not exist, becoming "rename B"). merge_users_task caps its own
+ * concurrency to 1 and always picks the oldest queued task next, which is what
+ * guarantees the earlier task finishes before a later one touching the same user
+ * starts - a write performed here in place, outside that queue, would have no such
+ * ordering guarantee at all.
+ *
+ * @package   tool_mergeusers
+ * @author    Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2026 onwards to Universitat Rovira i Virgili (https://www.urv.cat)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+final class merge_orchestrator {
+    /** @var user_searcher */
+    private user_searcher $searcher;
+
+    /** @var logger */
+    private logger $logger;
+
+    /**
+     * Constructor.
+     *
+     * @param user_searcher|null $searcher defaults to a new instance.
+     * @param logger|null $logger defaults to a new instance.
+     */
+    public function __construct(?user_searcher $searcher = null, ?logger $logger = null) {
+        $this->searcher = $searcher ?? new user_searcher();
+        $this->logger = $logger ?? new logger();
+    }
+
+    /**
+     * Resolves both the "from" and "to" users - enough to reject an obviously invalid
+     * request immediately (not found/ambiguous, or a "to" that cannot possibly be
+     * renamed right now either) - then either resolves and acts on the "to" side right
+     * away (synchronous request), or queues a merge_users_task that will do so later,
+     * evaluated fresh at that point (asynchronous request) - see this class's own
+     * docblock for why. Deliberately never decides merge-vs-rename here: a "to" user
+     * that is missing but could currently be renamed to is still just queued as-is: by
+     * the time the task actually runs, a real "to" user may exist after all (see
+     * resolve_and_act()), so nothing about that outcome is fixed at this point. Every
+     * outcome, a rename included, is always persisted with its own log id - never a
+     * silent, unlogged side effect.
+     *
+     * @param string $fromfield field identifying the user to remove.
+     * @param string $fromvalue value identifying the user to remove.
+     * @param string $tofield field identifying the user to keep.
+     * @param string $tovalue value identifying the user to keep.
+     * @param int $requestedbyuserid user.id of the user requesting the merge/rename.
+     * @param bool|null $async when true, always queues, deferring evaluation of the
+     * "to" side to task execution time; when false, evaluates and acts immediately;
+     * when null (the default), follows the tool_mergeusers/enableadhocmerge setting.
+     * @param bool $notify whether a queued request's eventual completion should notify
+     * the requester - false for a web service call, whose caller is expected to poll
+     * tool_mergeusers_get_merge_request_status instead, not to read a notification.
+     * @param origin $origin where this request originated - stored once on the log
+     * entry created for it (or the existing one returned unchanged, for a duplicate
+     * request), never changed afterwards. Defaults to WEB, matching logger's own
+     * default; a caller that is not really web-originated must always pass this
+     * explicitly instead of relying on the default.
+     * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
+     * fromuser?: array, touser?: array} fromuser/touser are only present when ok=true -
+     * confirmation of who was identified, the same information the web form's own
+     * review step shows. ok is false only for a validation failure (not found/
+     * ambiguous/same user, or a "to" that cannot possibly be renamed right now either)
+     * that could be determined synchronously.
+     */
+    public function request(
+        string $fromfield,
+        string $fromvalue,
+        string $tofield,
+        string $tovalue,
+        int $requestedbyuserid,
+        ?bool $async = null,
+        bool $notify = true,
+        origin $origin = origin::WEB,
+    ): array {
+        [$fromuser, $frommessage, $fromambiguous] = $this->searcher->verify_user($fromvalue, $fromfield);
+
+        if ($fromambiguous || $fromuser === null) {
+            return self::error($frommessage);
+        }
+
+        [$touser, $tomessage, $toambiguous] = $this->searcher->verify_user($tovalue, $tofield);
+
+        if ($toambiguous) {
+            return self::error($tomessage);
+        }
+
+        if ($touser === null && !$this->can_rename_now($tofield)) {
+            return self::error($tomessage);
+        }
+
+        if ($touser !== null && (int) $touser->id === (int) $fromuser->id) {
+            return self::error(get_string('errorsameuser', 'tool_mergeusers'));
+        }
+
+        $async ??= (bool) get_config('tool_mergeusers', 'enableadhocmerge');
+
+        if ($async) {
+            return $this->queue_deferred($fromuser, $touser, $tofield, $tovalue, $requestedbyuserid, $notify, $origin);
+        }
+
+        if ($touser === null) {
+            return $this->rename_or_error($fromuser, $tofield, $tovalue, $requestedbyuserid, $origin);
+        }
+
+        return $this->run_merge($touser, $fromuser, $requestedbyuserid, $origin);
+    }
+
+    /**
+     * Whether $tofield could currently trigger a #250 rename - the same conditions
+     * user_searcher::rename_if_eligible() itself enforces, checked here up front only
+     * to reject an obviously-doomed request immediately (a "to" that is missing and
+     * could never be renamed to either) instead of queuing it for nothing.
+     *
+     * @param string $tofield field identifying the (missing) user to keep.
+     * @return bool
+     */
+    private function can_rename_now(string $tofield): bool {
+        return $this->searcher->is_login_identifier_field($tofield)
+            && !empty(get_config('tool_mergeusers', 'renamewhenmissingtarget'));
+    }
+
+    /**
+     * Queues a merge_users_task carrying the raw "to" field/value, deliberately
+     * unresolved - resolve_and_act() evaluates them fresh once the task actually
+     * runs, regardless of what is captured here: nothing about how the "to" side is
+     * handled at execution time depends on $touser, and it is never queued on the
+     * task itself. $touser, when already resolved here, IS used for the log's own
+     * initial snapshot - so the report (and the WS response's confirmation) is
+     * accurate from the moment the log is created, rather than showing a "not
+     * found" placeholder for a user that is known to exist - and for this method's
+     * own return value.
+     *
+     * @param stdClass $fromuser the already-resolved user to remove.
+     * @param stdClass|null $touser the already-resolved user to keep, if found now.
+     * @param string $tofield field identifying the user to keep.
+     * @param string $tovalue value identifying the user to keep.
+     * @param int $requestedbyuserid user.id of the user requesting the merge/rename.
+     * @param bool $notify whether the queued task should notify the requester once done.
+     * @param origin $origin where this request originated.
+     * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
+     * fromuser: array, touser: array}
+     */
+    private function queue_deferred(
+        stdClass $fromuser,
+        ?stdClass $touser,
+        string $tofield,
+        string $tovalue,
+        int $requestedbyuserid,
+        bool $notify,
+        origin $origin,
+    ): array {
+        $logid = $this->logger->create_pending_log(
+            $touser?->id ?? 0,
+            $fromuser->id,
+            $requestedbyuserid,
+            tohint: $touser === null ? ['field' => $tofield, 'value' => $tovalue] : null,
+            origin: $origin,
+        );
+        if (!$logid) {
+            return self::error(get_string('error_log_creation_failed', 'tool_mergeusers'));
+        }
+
+        $task = new merge_users_task();
+        $task->set_custom_data([
+            'fromid' => $fromuser->id,
+            'tofield' => $tofield,
+            'tovalue' => $tovalue,
+            'logid' => $logid,
+            'notify' => $notify,
+        ]);
+        if (!empty($requestedbyuserid)) {
+            $task->set_userid($requestedbyuserid);
+        }
+        manager::queue_adhoc_task($task);
+
+        return [
+            'ok' => true,
+            'message' => '',
+            'logid' => $logid,
+            'status' => status::PENDING->value,
+            'renamed' => false,
+            'fromuser' => self::describe_user($fromuser),
+            'touser' => $touser !== null
+                ? self::describe_user($touser) + ['exists' => true, 'note' => '']
+                : self::describe_missing_user($tofield, $tovalue),
+        ];
+    }
+
+    /**
+     * Evaluates a previously queued, deferred request - see queue_deferred() - against
+     * live state, exactly once, at actual execution time: resolves the "to" side fresh
+     * and either merges into it (retargeting the log first, in case its own snapshot is
+     * stale or was captured as "not found" when queued), renames the "from" user in
+     * place, or marks the already-existing log as an error. Called only by
+     * merge_users_task::execute().
+     *
+     * @param int $fromuserid the user to remove, already resolved when queued.
+     * @param string $tofield field identifying the user to keep.
+     * @param string $tovalue value identifying the user to keep.
+     * @param int $logid an existing pending log entry, as created by queue_deferred().
+     * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
+     * touserid: int} touserid is the real user merged into, or 0 for a rename/error.
+     */
+    public function resolve_and_act(int $fromuserid, string $tofield, string $tovalue, int $logid): array {
+        global $DB;
+
+        $fromuser = $DB->get_record('user', ['id' => $fromuserid, 'deleted' => 0]);
+        if (!$fromuser) {
+            $message = get_string('invaliduser', 'tool_mergeusers', ['field' => 'id', 'value' => (string) $fromuserid]);
+            $this->logger->update_log_status($logid, status::ERROR->value, [$message]);
+            return self::error($message, $logid);
+        }
+
+        [$touser, $tomessage, $toambiguous] = $this->searcher->verify_user($tovalue, $tofield);
+
+        if ($toambiguous) {
+            $this->logger->update_log_status($logid, status::ERROR->value, [$tomessage]);
+            return self::error($tomessage, $logid);
+        }
+
+        if ($touser === null) {
+            $result = $this->perform_rename($fromuser->id, $tofield, $tovalue, $logid);
+            return $result + ['touserid' => 0];
+        }
+
+        if ((int) $touser->id === (int) $fromuser->id) {
+            $message = get_string('errorsameuser', 'tool_mergeusers');
+            $this->logger->update_log_status($logid, status::ERROR->value, [$message]);
+            return self::error($message, $logid);
+        }
+
+        // A real target now exists: refresh the log's snapshot before merging into
+        // it, in case it is stale (e.g. captured as "not found" when queued, or the
+        // target resolved differently since).
+        $this->logger->retarget_pending_log($logid, $touser->id);
+        $this->logger->update_log_status($logid, status::INPROGRESS->value, []);
+
+        $merger = new user_merger();
+        [$success, , $loggedid] = $merger->merge($touser->id, $fromuser->id, $logid);
+
+        return [
+            'ok' => true,
+            'message' => '',
+            'logid' => $loggedid,
+            'status' => status::from_success($success)->value,
+            'renamed' => false,
+            'touserid' => (int) $touser->id,
+        ];
+    }
+
+    /**
+     * Renames $fromuser's $tofield to $tovalue instead of merging - the synchronous
+     * path only, called from request() only once can_rename_now() has already
+     * confirmed this is possible right now. Persists a pending log entry capturing
+     * $fromuser's identity BEFORE the rename - the same lifecycle a real merge uses -
+     * then performs the rename immediately.
+     *
+     * @param stdClass $fromuser the user to rename (a full {user} record, at least id).
+     * @param string $tofield field that was searched for the (non-existent) "to" user.
+     * @param string $tovalue value that was searched for the (non-existent) "to" user.
+     * @param int $requestedbyuserid user.id of the user requesting the rename.
+     * @param origin $origin where this request originated.
+     * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
+     * fromuser?: array, touser?: array}
+     */
+    private function rename_or_error(
+        stdClass $fromuser,
+        string $tofield,
+        string $tovalue,
+        int $requestedbyuserid,
+        origin $origin,
+    ): array {
+        $logid = $this->logger->create_pending_log(
+            0,
+            $fromuser->id,
+            $requestedbyuserid,
+            ['field' => $tofield, 'value' => $tovalue],
+            origin: $origin,
+        );
+        if (!$logid) {
+            return self::error(get_string('error_log_creation_failed', 'tool_mergeusers'));
+        }
+
+        $result = $this->perform_rename($fromuser->id, $tofield, $tovalue, $logid);
+        if ($result['ok']) {
+            $result['fromuser'] = self::describe_user($fromuser);
+            $result['touser'] = self::describe_missing_user($tofield, $tovalue);
+        }
+        return $result;
+    }
+
+    /**
+     * Performs the actual rename write and finalizes its (already pending) log entry -
+     * shared by rename_or_error()'s synchronous path and resolve_and_act()'s
+     * asynchronous one, so both go through the exact same logic.
+     *
+     * @param int $fromuserid the user to rename.
+     * @param string $field the field to update (username or email).
+     * @param string $value the new value for that field.
+     * @param int $logid an existing pending log entry.
+     * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool}
+     */
+    public function perform_rename(int $fromuserid, string $field, string $value, int $logid): array {
+        global $DB;
+
+        try {
+            $fromuser = $DB->get_record('user', ['id' => $fromuserid, 'deleted' => 0], '*', MUST_EXIST);
+            // Only ever consumed below when $renamed is true, which itself requires
+            // $field to be a real login identifier field (a real {user} column) - the
+            // fallback is never actually shown, just here so an unexpected/legacy
+            // $field can never trigger an undefined-property notice on its own.
+            $oldvalue = $fromuser->$field ?? '';
+            $renamed = $this->searcher->rename_if_eligible($fromuser, $field, $value);
+        } catch (Throwable $e) {
+            $this->logger->update_log_status($logid, status::ERROR->value, ['Exception: ' . $e->getMessage()]);
+            return self::error($e->getMessage(), $logid);
+        }
+
+        if (!$renamed) {
+            // Not eligible right now (setting off, or the field never qualifies) - keep
+            // the log as evidence either way.
+            $message = get_string('invaliduser', 'tool_mergeusers', ['field' => $field, 'value' => $value]);
+            $this->logger->update_log_status($logid, status::ERROR->value, [$message]);
+            return self::error($message, $logid);
+        }
+
+        $action = get_string(
+            'renamelogaction',
+            'tool_mergeusers',
+            (object) ['field' => $field, 'oldvalue' => $oldvalue, 'value' => $value],
+        );
+        $this->logger->update_log_status($logid, status::RENAMED->value, [$action]);
+
+        return ['ok' => true, 'message' => '', 'logid' => $logid, 'status' => status::RENAMED->value, 'renamed' => true];
+    }
+
+    /**
+     * Creates a pending log and runs the merge synchronously - the request()'s
+     * synchronous path only, both sides already resolved to real, distinct users.
+     *
+     * @param stdClass $touser the user kept.
+     * @param stdClass $fromuser the user removed.
+     * @param int $requestedbyuserid user.id of the user requesting the merge.
+     * @param origin $origin where this request originated.
+     * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool,
+     * fromuser: array, touser: array}
+     */
+    private function run_merge(stdClass $touser, stdClass $fromuser, int $requestedbyuserid, origin $origin): array {
+        $logid = $this->logger->create_pending_log($touser->id, $fromuser->id, $requestedbyuserid, origin: $origin);
+        if (!$logid) {
+            return self::error(get_string('error_log_creation_failed', 'tool_mergeusers'));
+        }
+
+        $merger = new user_merger();
+        [$success, , $loggedid] = $merger->merge($touser->id, $fromuser->id, $logid);
+
+        return [
+            'ok' => true,
+            'message' => '',
+            'logid' => $loggedid,
+            'status' => status::from_success($success)->value,
+            'renamed' => false,
+            'fromuser' => self::describe_user($fromuser),
+            'touser' => self::describe_user($touser) + ['exists' => true, 'note' => ''],
+        ];
+    }
+
+    /**
+     * Builds the web-service-facing detail for a resolved user - confirmation that the
+     * right user was found, the same information the web form's own review step shows.
+     *
+     * @param stdClass $user a {user} record (at least id/username/firstname/lastname/email).
+     * @return array{id: int, username: string, fullname: string, email: string}
+     */
+    public static function describe_user(stdClass $user): array {
+        return [
+            'id' => (int) $user->id,
+            'username' => $user->username,
+            'fullname' => fullname($user),
+            'email' => $user->email,
+        ];
+    }
+
+    /**
+     * Builds the web-service-facing detail for a "to" user that does not exist (yet):
+     * the value searched for is echoed back into whichever field was actually searched
+     * by, so the caller can see exactly what will be attempted.
+     *
+     * @param string $field the field that was searched by.
+     * @param string $value the value that was searched for.
+     * @return array{id: int, username: string, fullname: string, email: string,
+     * exists: bool, note: string}
+     */
+    public static function describe_missing_user(string $field, string $value): array {
+        $detail = ['id' => 0, 'username' => '', 'fullname' => '', 'email' => '', 'exists' => false];
+        if ($field === 'username' || $field === 'email') {
+            $detail[$field] = $value;
+        }
+        $detail['note'] = get_string('wstousernotfoundyet', 'tool_mergeusers');
+        return $detail;
+    }
+
+    /**
+     * Builds an error result.
+     *
+     * @param string $message the error message to report.
+     * @param int $logid an already-existing log entry this error was recorded against,
+     * if any - 0 when the failure was a pure validation error with no log created.
+     * @return array{ok: bool, message: string, logid: int, status: string, renamed: bool}
+     */
+    private static function error(string $message, int $logid = 0): array {
+        return ['ok' => false, 'message' => $message, 'logid' => $logid, 'status' => '', 'renamed' => false];
+    }
+}
