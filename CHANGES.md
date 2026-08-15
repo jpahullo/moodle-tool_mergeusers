@@ -10,6 +10,13 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    added it to the response, same as the two other places (`log.php`,
    `view.php`) that already show it.
 
+2. fix: #250: the action logged for a #250 rename only showed the new
+   value, and named the field by its translated label (`Username`/
+   `Email`) instead of its real API name - now it shows both the old and
+   new values, and the real field name (`username`/`email`), so the log
+   is unambiguous on its own without needing the fieldlabel's language to
+   match the API's field naming.
+
 ## 2026081404
 
 1. fix: #218: `log.php`'s detail page did not show the request's origin

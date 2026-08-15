@@ -367,6 +367,7 @@ final class merge_orchestrator {
 
         try {
             $fromuser = $DB->get_record('user', ['id' => $fromuserid, 'deleted' => 0], '*', MUST_EXIST);
+            $oldvalue = $fromuser->$field;
             $renamed = $this->searcher->rename_if_eligible($fromuser, $field, $value);
         } catch (Throwable $e) {
             $this->logger->update_log_status($logid, status::ERROR->value, ['Exception: ' . $e->getMessage()]);
@@ -381,11 +382,10 @@ final class merge_orchestrator {
             return self::error($message, $logid);
         }
 
-        $fieldlabel = $field === 'email' ? get_string('email') : get_string('username');
         $action = get_string(
             'renamelogaction',
             'tool_mergeusers',
-            (object) ['fieldlabel' => $fieldlabel, 'value' => $value],
+            (object) ['field' => $field, 'oldvalue' => $oldvalue, 'value' => $value],
         );
         $this->logger->update_log_status($logid, status::RENAMED->value, [$action]);
 

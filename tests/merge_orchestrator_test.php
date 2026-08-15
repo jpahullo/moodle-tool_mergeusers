@@ -239,6 +239,11 @@ final class merge_orchestrator_test extends advanced_testcase {
         $stored = (new logger())->detail_from($logid);
         $this->assertSame(status::RENAMED->value, $stored->status);
         $this->assertSame('olduser', $stored->log->user_snapshots->from_user->username);
+        // The logged action names the real field (not a translated label) and both
+        // the old and new values, so it is unambiguous on its own.
+        $this->assertStringContainsString('username', $stored->log->actions[0]);
+        $this->assertStringContainsString('olduser', $stored->log->actions[0]);
+        $this->assertStringContainsString('newuser', $stored->log->actions[0]);
     }
 
     /**
