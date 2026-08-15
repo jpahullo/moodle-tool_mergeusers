@@ -24,6 +24,11 @@ It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
    merge never go through it at all. Made that explicit instead of
    leaving it to be inferred from the code.
 
+4. fix: #218: `wstousernotfoundyet`'s note ended with "will be renamed
+   instead of merged" - reworded to "will be renamed instead of doing a
+   full merge", clearer about what "renamed" is actually being contrasted
+   with.
+
 ## 2026081404
 
 1. fix: #218: `log.php`'s detail page did not show the request's origin
