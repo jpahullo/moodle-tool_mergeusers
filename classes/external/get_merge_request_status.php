@@ -136,6 +136,7 @@ class get_merge_request_status extends external_api {
                 'fromuserid' => (int) $log->fromuserid,
                 'mergedbyuserid' => (int) $log->mergedbyuserid,
                 'status' => status::safe_from($log->status)->value,
+                'origin' => $log->origin ?? '',
                 'timecreated' => (int) $log->timecreated,
                 'timemodified' => (int) $log->timemodified,
                 'log' => $log->log,
@@ -159,6 +160,10 @@ class get_merge_request_status extends external_api {
                     'fromuserid' => new external_value(PARAM_INT, 'User removed'),
                     'mergedbyuserid' => new external_value(PARAM_INT, 'User who initiated the merge'),
                     'status' => new external_value(PARAM_ALPHA, 'pending, inprogress, success, error, renamed'),
+                    'origin' => new external_value(
+                        PARAM_ALPHA,
+                        'web, cli, or ws - empty for a legacy log recorded before this column existed',
+                    ),
                     'timecreated' => new external_value(PARAM_INT, 'Unix timestamp'),
                     'timemodified' => new external_value(PARAM_INT, 'Unix timestamp'),
                     'log' => new external_value(PARAM_RAW, 'JSON-encoded log detail (user snapshots and actions performed)'),

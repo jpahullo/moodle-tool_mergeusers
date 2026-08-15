@@ -20,6 +20,7 @@ use core_external\external_api;
 use required_capability_exception;
 use tool_mergeusers\external\get_merge_request_status;
 use tool_mergeusers\local\logger;
+use tool_mergeusers\local\origin;
 use tool_mergeusers\local\status;
 
 /**
@@ -97,6 +98,28 @@ final class external_get_merge_request_status_test extends \advanced_testcase {
         $this->assertSame((int) $this->users[0]->id, $result['logs'][0]['fromuserid']);
         $this->assertSame((int) $this->users[1]->id, $result['logs'][0]['touserid']);
         $this->assertSame(status::PENDING->value, $result['logs'][0]['status']);
+    }
+
+    /**
+     * The response includes each log's own origin - already selected by
+     * logger::get(), but silently dropped until now.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_external
+     */
+    public function test_get_by_logid_includes_origin(): void {
+        global $USER;
+
+        $logid = (new logger())->create_pending_log(
+            $this->users[1]->id,
+            $this->users[0]->id,
+            $USER->id,
+            origin: origin::WS,
+        );
+
+        $result = $this->call(logid: $logid);
+
+        $this->assertSame(origin::WS->value, $result['logs'][0]['origin']);
     }
 
     /**

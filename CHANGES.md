@@ -3,6 +3,13 @@
 If not specified, each change is performed in the version date.
 It means that if version is YYYYMMDDOO, the change was performed on YYYY-MM-DD.
 
+## 2026081405
+
+1. fix: #218: `tool_mergeusers_get_merge_request_status` did not return
+   `origin` for any log, even though `logger::get()` already selects it -
+   added it to the response, same as the two other places (`log.php`,
+   `view.php`) that already show it.
+
 ## 2026081404
 
 1. fix: #218: `log.php`'s detail page did not show the request's origin
