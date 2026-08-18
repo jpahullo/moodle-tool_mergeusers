@@ -66,6 +66,12 @@ if (!$option) {
     }
 }
 
+// Require sesskey if action requested.
+$actions = ['clearselection', 'continueselection', 'mergeusers', 'saveselection', 'searchusers'];
+if (in_array($option, $actions, true)) {
+    require_sesskey();
+}
+
 // Define the form.
 $mergeuserform = new merge_user_form();
 // phpcs:disable
