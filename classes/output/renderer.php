@@ -451,10 +451,10 @@ class renderer extends plugin_renderer_base {
         if ($deleted) {
             $text = get_string('deleted');
         } else {
-            $text = fullname($user);
-            $text .= " &lt;{$user->email}&gt;";
-            $text .= " ({$user->username})";
-            $text .= " {$user->idnumber}";
+            $text = s(fullname($user));
+            $text .= " &lt;" . s($user->email) . "&gt;";
+            $text .= " (" . s($user->username) . ")";
+            $text .= " " . s($user->idnumber);
             if ($user->suspended) {
                 $suspendedstr = get_string('suspended', 'moodle');
             }
@@ -858,10 +858,9 @@ class renderer extends plugin_renderer_base {
     private function get_merge_detail_data(int $userid, int $timemodified, int $logid, string $status): array {
         $profileuser = core_user::get_user($userid);
         $time = userdate($timemodified);
-        $profilelink = !empty($profileuser) ? html_writer::link(
-            new moodle_url('/user/profile.php', ['id' => $userid]),
-            fullname($profileuser)
-        ) : get_string('unknownprofile', 'tool_mergeusers', $userid);
+        $profilelink = !empty($profileuser)
+            ? html_writer::link(new moodle_url('/user/profile.php', ['id' => $userid]), s(fullname($profileuser)))
+            : get_string('unknownprofile', 'tool_mergeusers', $userid);
         $loglink = html_writer::link(
             new moodle_url('/admin/tool/mergeusers/log.php', ['id' => $logid]),
             get_string('openlog', 'tool_mergeusers')
