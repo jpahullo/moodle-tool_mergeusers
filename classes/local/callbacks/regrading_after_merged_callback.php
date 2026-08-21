@@ -67,6 +67,18 @@ class regrading_after_merged_callback {
         $dbman = $DB->get_manager();
 
         foreach ($iteminstances as $iteminstance) {
+            // Module registered in the database but its code is gone: regrading it would make core throw
+            // a coding exception from component_callback_exists(). Skip it instead of aborting the merge.
+            if (\core_component::get_component_directory('mod_' . $iteminstance->itemmodule) === null) {
+                $hook->add_log(sprintf(
+                    'Skipped regrading grade item with id "%s" from course "%s": module type "%s" is not installed.',
+                    $iteminstance->id,
+                    $iteminstance->courseid,
+                    $iteminstance->itemmodule,
+                ));
+                continue;
+            }
+
             // Check if the plugin table exists (critical: module registered but table missing = corruption).
             if (!$dbman->table_exists($iteminstance->itemmodule)) {
                 throw new moodle_exception(
