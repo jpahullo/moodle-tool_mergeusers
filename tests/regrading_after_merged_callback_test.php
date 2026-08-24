@@ -41,6 +41,12 @@ use tool_mergeusers\local\callbacks\regrading_after_merged_callback;
  * @covers    \tool_mergeusers\local\callbacks\regrading_after_merged_callback
  */
 final class regrading_after_merged_callback_test extends advanced_testcase {
+    /**
+     * Synthetic module name used to simulate a module registered in {modules} with no code on disk.
+     * It must never match a real plugin, so it is not any current or historic Moodle module name.
+     */
+    private const MISSINGCODEMODULE = 'tmuphantommod';
+
     /** @var object Course object */
     private object $course;
 
@@ -317,14 +323,144 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
     }
 
     /**
+     * Test that a course containing a grade item whose module code is gone is skipped entirely.
+     *
+     * The module stays registered in {modules} (so the callback's SQL still returns its siblings),
+     * but its code directory is absent. Regrading any activity of that course would make core
+     * regrade every grade item of the course and throw a coding exception from
+     * component_callback_exists(), so the whole course must be skipped.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_regrade
+     */
+    public function test_regrade_skips_course_with_uninstalled_module_code(): void {
+        // Valid activity that would otherwise be regraded.
+        $this->create_activity_with_grades('assign');
+
+        $this->create_orphaned_grade_item($this->course->id);
+
+        $logs = [];
+        $errors = [];
+        $hook = new after_merged_all_tables($this->user1->id, $this->user2->id, $logs, $errors);
+
+        regrading_after_merged_callback::regrade($hook);
+
+        $this->assertEmpty($errors, 'No errors should be generated');
+
+        $skiplogs = $this->filter_logs($logs, 'Skipped regrading course');
+        $this->assertCount(1, $skiplogs, 'The course should be reported as skipped');
+        $this->assertStringContainsString((string)$this->course->id, $skiplogs[0]);
+        $this->assertStringContainsString(self::MISSINGCODEMODULE, $skiplogs[0], 'The uninstalled module should be named');
+
+        $this->assertEmpty(
+            $this->filter_logs($logs, 'Regraded grade item'),
+            'No grade item of the affected course should be regraded'
+        );
+    }
+
+    /**
+     * Test that skipping a broken course does not stop other courses from being regraded.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_regrade
+     */
+    public function test_regrade_continues_with_other_courses_when_one_is_skipped(): void {
+        $othercourse = $this->getDataGenerator()->create_course();
+        $this->getDataGenerator()->enrol_user($this->user1->id, $othercourse->id);
+        $this->getDataGenerator()->enrol_user($this->user2->id, $othercourse->id);
+
+        $this->create_activity_with_grades('assign', 'Broken course assignment');
+        $this->create_orphaned_grade_item($this->course->id);
+        $this->create_activity_with_grades('assign', 'Healthy course assignment', $othercourse);
+
+        $logs = [];
+        $errors = [];
+        $hook = new after_merged_all_tables($this->user1->id, $this->user2->id, $logs, $errors);
+
+        regrading_after_merged_callback::regrade($hook);
+
+        $this->assertEmpty($errors, 'No errors should be generated');
+        $this->assertCount(1, $this->filter_logs($logs, 'Skipped regrading course'));
+
+        $regradelogs = $this->filter_logs($logs, 'Regraded grade item');
+        $this->assertCount(1, $regradelogs, 'Only the healthy course should be regraded');
+        $this->assertStringContainsString(
+            'from course "' . $othercourse->id . '"',
+            $regradelogs[0],
+            'The regraded item should belong to the healthy course'
+        );
+    }
+
+    /**
+     * Test that a skipped course is reported once, no matter how many grade items it holds.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_regrade
+     */
+    public function test_regrade_logs_skipped_course_only_once(): void {
+        $this->create_activity_with_grades('assign', 'Assignment 1');
+        $this->create_activity_with_grades('assign', 'Assignment 2');
+        $this->create_orphaned_grade_item($this->course->id);
+
+        $logs = [];
+        $errors = [];
+        $hook = new after_merged_all_tables($this->user1->id, $this->user2->id, $logs, $errors);
+
+        regrading_after_merged_callback::regrade($hook);
+
+        $this->assertCount(
+            1,
+            $this->filter_logs($logs, 'Skipped regrading course'),
+            'The skipped course should be logged once, not once per grade item'
+        );
+        $this->assertEmpty($errors, 'No errors should be generated');
+    }
+
+    /**
+     * Test that an orphaned grade item breaks the course even without grades for the merged users.
+     *
+     * The orphan is found through the course, not through the merged users' grades, so it must
+     * still be detected when only the valid activity has grades for them.
+     *
+     * @group tool_mergeusers
+     * @group tool_mergeusers_regrade
+     */
+    public function test_regrade_detects_orphaned_item_without_grades_for_merged_users(): void {
+        global $DB;
+
+        $this->create_activity_with_grades('assign');
+        $orphanid = $this->create_orphaned_grade_item($this->course->id);
+
+        // Make sure the orphan is unreachable from the callback's own grade_grades lookup.
+        $this->assertEmpty($DB->get_records('grade_grades', ['itemid' => $orphanid]));
+
+        $logs = [];
+        $errors = [];
+        $hook = new after_merged_all_tables($this->user1->id, $this->user2->id, $logs, $errors);
+
+        regrading_after_merged_callback::regrade($hook);
+
+        $this->assertCount(1, $this->filter_logs($logs, 'Skipped regrading course'));
+        $this->assertEmpty($this->filter_logs($logs, 'Regraded grade item'));
+        $this->assertEmpty($errors, 'No errors should be generated');
+    }
+
+    /**
      * Helper method to create an activity with grades for both test users.
      *
      * @param string $modulename Module name (e.g., 'assign', 'data')
      * @param string $activityname Optional activity name
+     * @param object|null $course Course to create the activity in, defaults to the shared one
      * @return object The created activity instance
      */
-    private function create_activity_with_grades(string $modulename, string $activityname = ''): object {
+    private function create_activity_with_grades(
+        string $modulename,
+        string $activityname = '',
+        ?object $course = null
+    ): object {
         global $DB;
+
+        $course = $course ?? $this->course;
 
         if (empty($activityname)) {
             $activityname = ucfirst($modulename) . ' Test';
@@ -335,7 +471,7 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
 
         // Create the activity using create_module (grade_item is auto-created).
         $activity = $this->getDataGenerator()->create_module($modulename, [
-            'course' => $this->course->id,
+            'course' => $course->id,
             'name' => $activityname,
             'grade' => 100, // Enable grading.
         ]);
@@ -345,7 +481,7 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
             'itemtype' => 'mod',
             'itemmodule' => $modulename,
             'iteminstance' => $activity->id,
-            'courseid' => $this->course->id,
+            'courseid' => $course->id,
         ]);
 
         // Create grades for both users if grade item exists.
@@ -355,7 +491,7 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
 
             grade_update(
                 'mod/' . $modulename,
-                $this->course->id,
+                $course->id,
                 'mod',
                 $modulename,
                 $activity->id,
@@ -365,7 +501,7 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
 
             grade_update(
                 'mod/' . $modulename,
-                $this->course->id,
+                $course->id,
                 'mod',
                 $modulename,
                 $activity->id,
@@ -375,5 +511,55 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
         }
 
         return $activity;
+    }
+
+    /**
+     * Creates a grade item for a module that is registered in {modules} but has no code on disk.
+     *
+     * @param int $courseid
+     * @return int The new grade_items.id
+     */
+    private function create_orphaned_grade_item(int $courseid): int {
+        global $DB;
+
+        $this->assertNull(
+            \core_component::get_component_directory('mod_' . self::MISSINGCODEMODULE),
+            'The synthetic module name must not resolve to a real plugin directory'
+        );
+
+        $DB->insert_record('modules', (object)[
+            'name' => self::MISSINGCODEMODULE,
+            'cron' => 0,
+            'lastcron' => 0,
+            'search' => '',
+            'visible' => 1,
+        ]);
+
+        return $DB->insert_record('grade_items', (object)[
+            'courseid' => $courseid,
+            'itemname' => 'Orphaned grade item',
+            'itemtype' => 'mod',
+            'itemmodule' => self::MISSINGCODEMODULE,
+            'iteminstance' => 999999,
+            'itemnumber' => 0,
+            'gradetype' => GRADE_TYPE_VALUE,
+            'grademax' => 10,
+            'grademin' => 0,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+    }
+
+    /**
+     * Returns the log lines containing the given needle.
+     *
+     * @param array $logs
+     * @param string $needle
+     * @return array
+     */
+    private function filter_logs(array $logs, string $needle): array {
+        return array_values(array_filter($logs, function ($log) use ($needle) {
+            return strpos($log, $needle) !== false;
+        }));
     }
 }
