@@ -63,19 +63,27 @@ class regrading_after_merged_callback {
 
         $iteminstances = $DB->get_records_sql($sql, ['itemtype' => 'mod', 'toid' => $hook->toid, 'fromid' => $hook->fromid]);
 
+        // Regrading a single activity makes core regrade every grade item of its course, so one grade item
+        // whose module code is gone breaks the whole course, not just itself. Detect those courses up front.
+        $uninstalledmodules = self::get_uninstalled_modules_per_course(
+            array_unique(array_column($iteminstances, 'courseid'))
+        );
+        $loggedcourses = [];
+
         // Get database manager once for reuse in the loop.
         $dbman = $DB->get_manager();
 
         foreach ($iteminstances as $iteminstance) {
-            // Module registered in the database but its code is gone: regrading it would make core throw
-            // a coding exception from component_callback_exists(). Skip it instead of aborting the merge.
-            if (\core_component::get_component_directory('mod_' . $iteminstance->itemmodule) === null) {
-                $hook->add_log(sprintf(
-                    'Skipped regrading grade item with id "%s" from course "%s": module type "%s" is not installed.',
-                    $iteminstance->id,
-                    $iteminstance->courseid,
-                    $iteminstance->itemmodule,
-                ));
+            if (isset($uninstalledmodules[$iteminstance->courseid])) {
+                if (!isset($loggedcourses[$iteminstance->courseid])) {
+                    $loggedcourses[$iteminstance->courseid] = true;
+                    $hook->add_log(sprintf(
+                        'Skipped regrading course "%s": it has grade items of uninstalled module types (%s), ' .
+                        'which would make the course-wide regrade fail.',
+                        $iteminstance->courseid,
+                        implode(', ', $uninstalledmodules[$iteminstance->courseid]),
+                    ));
+                }
                 continue;
             }
 
@@ -135,5 +143,42 @@ class regrading_after_merged_callback {
                 $hook->add_log(htmlspecialchars($regradeoutput));
             }
         }
+    }
+
+    /**
+     * Finds, for the given courses, the module types that have grade items but are no longer installed.
+     *
+     * @param array $courseids
+     * @return array course id => list of uninstalled module names. Courses without any are not present.
+     * @throws dml_exception
+     */
+    private static function get_uninstalled_modules_per_course(array $courseids): array {
+        global $DB;
+
+        if (empty($courseids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'cid');
+        $params['itemtype'] = 'mod';
+        $sql = "SELECT DISTINCT courseid, itemmodule
+                  FROM {grade_items}
+                 WHERE itemtype = :itemtype AND courseid $insql";
+
+        $uninstalled = [];
+        $installed = [];
+        $records = $DB->get_recordset_sql($sql, $params);
+        foreach ($records as $record) {
+            if (!isset($installed[$record->itemmodule])) {
+                $installed[$record->itemmodule] =
+                    \core_component::get_component_directory('mod_' . $record->itemmodule) !== null;
+            }
+            if (!$installed[$record->itemmodule]) {
+                $uninstalled[$record->courseid][$record->itemmodule] = $record->itemmodule;
+            }
+        }
+        $records->close();
+
+        return $uninstalled;
     }
 }
