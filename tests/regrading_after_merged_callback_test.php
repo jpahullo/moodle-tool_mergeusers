@@ -41,6 +41,12 @@ use tool_mergeusers\local\callbacks\regrading_after_merged_callback;
  * @covers    \tool_mergeusers\local\callbacks\regrading_after_merged_callback
  */
 final class regrading_after_merged_callback_test extends advanced_testcase {
+    /**
+     * Synthetic module name used to simulate a module registered in {modules} with no code on disk.
+     * It must never match a real plugin, so it is not any current or historic Moodle module name.
+     */
+    private const MISSINGCODEMODULE = 'tmuphantommod';
+
     /** @var object Course object */
     private object $course;
 
@@ -344,7 +350,7 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
         $skiplogs = $this->filter_logs($logs, 'Skipped regrading course');
         $this->assertCount(1, $skiplogs, 'The course should be reported as skipped');
         $this->assertStringContainsString((string)$this->course->id, $skiplogs[0]);
-        $this->assertStringContainsString('journal', $skiplogs[0], 'The uninstalled module should be named');
+        $this->assertStringContainsString(self::MISSINGCODEMODULE, $skiplogs[0], 'The uninstalled module should be named');
 
         $this->assertEmpty(
             $this->filter_logs($logs, 'Regraded grade item'),
@@ -510,9 +516,6 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
     /**
      * Creates a grade item for a module that is registered in {modules} but has no code on disk.
      *
-     * 'journal' is used because it is a real historic Moodle module name that no longer ships with
-     * core, so core_component cannot resolve a directory for it.
-     *
      * @param int $courseid
      * @return int The new grade_items.id
      */
@@ -520,25 +523,23 @@ final class regrading_after_merged_callback_test extends advanced_testcase {
         global $DB;
 
         $this->assertNull(
-            \core_component::get_component_directory('mod_journal'),
-            'This test needs mod_journal to be absent from the codebase'
+            \core_component::get_component_directory('mod_' . self::MISSINGCODEMODULE),
+            'The synthetic module name must not resolve to a real plugin directory'
         );
 
-        if (!$DB->record_exists('modules', ['name' => 'journal'])) {
-            $DB->insert_record('modules', (object)[
-                'name' => 'journal',
-                'cron' => 0,
-                'lastcron' => 0,
-                'search' => '',
-                'visible' => 1,
-            ]);
-        }
+        $DB->insert_record('modules', (object)[
+            'name' => self::MISSINGCODEMODULE,
+            'cron' => 0,
+            'lastcron' => 0,
+            'search' => '',
+            'visible' => 1,
+        ]);
 
         return $DB->insert_record('grade_items', (object)[
             'courseid' => $courseid,
-            'itemname' => 'Orphaned journal',
+            'itemname' => 'Orphaned grade item',
             'itemtype' => 'mod',
-            'itemmodule' => 'journal',
+            'itemmodule' => self::MISSINGCODEMODULE,
             'iteminstance' => 999999,
             'itemnumber' => 0,
             'gradetype' => GRADE_TYPE_VALUE,
